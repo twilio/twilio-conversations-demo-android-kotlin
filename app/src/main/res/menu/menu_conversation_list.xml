@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item android:id="@+id/filter_conversations"
+        android:icon="@drawable/ic_filter_list"
+        android:title="@string/filter_conversations"
+        app:showAsAction="collapseActionView|always"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"/>
+
+    <item android:id="@+id/show_conversation_add"
+        android:icon="@drawable/ic_add"
+        android:title="@string/add_conversation"
+        app:showAsAction="always" />
+
+</menu>

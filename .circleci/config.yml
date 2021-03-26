@@ -1,0 +1,151 @@
+version: 2.1
+
+aliases:
+  - &workspace
+    ~/convo-demo-app
+  - build-type-parameter: &build-type-parameter
+      build-type:
+        description: "Build type to build"
+        type: string
+
+executors:
+  android-executor:
+    docker:
+      - image: cibuilderbot/docker-circleci-linux-android
+    working_directory: *workspace
+    resource_class: xlarge
+    environment:
+      JVM_OPTS: -Xmx15g
+
+commands:
+  download_dependencies:
+    description: Download Dependencies
+    steps:
+      - restore_cache:
+          key: jars-{{ checksum "build.gradle" }}-{{ checksum "app/build.gradle" }}
+      - run:
+          name: Download Dependencies
+          command: ./gradlew androidDependencies
+      - save_cache:
+          paths:
+            - ~/.gradle
+          key: jars-{{ checksum "build.gradle" }}-{{ checksum "app/build.gradle" }}
+
+  generate_gcloud_settings:
+    description: "Generate GCloud settings"
+    steps:
+      - run:
+          name: Decode Google Cloud key.json
+          command: echo "$GCLOUD_SETTINGS" | base64 --decode > gcloud-settings.json
+      - run:
+          name: Set Google Cloud target project
+          command: gcloud config set project $GCLOUD_PROJECT
+      - run:
+          name: Authenticate with Google Cloud
+          command: gcloud auth activate-service-account $GCLOUD_PROJECT@appspot.gserviceaccount.com --key-file=gcloud-settings.json --project=$GCLOUD_PROJECT
+
+  generate_signing_config:
+    steps:
+      - run:
+          name: Decode Signing Settings
+          command: |
+            echo "$KEYSTORE" | base64 --decode > app/apk-test-runner.keystore
+            echo "$BUILD_GRADLE_ADDON" | base64 --decode >> app/build.gradle
+
+  generate_google_service_json:
+    steps:
+      - run:
+          name: Decode google-services.json
+          command: |
+            echo "$GOOGLE_SERVICES_JSON" | base64 --decode >> app/google-services.json
+
+  setup_token_service:
+    steps:
+      - run:
+          name: Setup Token Service Url
+          command: |
+            echo "ACCESS_TOKEN_SERVICE_URL=$ACCESS_TOKEN_SERVICE_URL" >> gradle.properties
+            echo "ACCESS_TOKEN_SERVICE_IDENTITY=$ACCESS_TOKEN_SERVICE_IDENTITY" >> gradle.properties
+            echo "ACCESS_TOKEN_SERVICE_PASSWORD=$ACCESS_TOKEN_SERVICE_PASSWORD" >> gradle.properties
+
+jobs:
+  build:
+    executor: android-executor
+    parameters:
+      <<: *build-type-parameter
+    steps:
+      - checkout
+      - generate_signing_config
+      - generate_google_service_json
+      - setup_token_service
+      - download_dependencies
+      - run: 
+          name: Assemble APKs
+          command: ./gradlew assemble<< parameters.build-type >> assembleAndroidTest -DtestBuildType=<< parameters.build-type >>
+      - store_artifacts: 
+          name: Uploading APKs
+          path: app/build/outputs/apk
+          destination: apk
+      - run: 
+          name: Run unit tests
+          command: ./gradlew lint<< parameters.build-type >> test<< parameters.build-type >>
+      - store_artifacts:
+          name: Uploading unit tests artifacts
+          path: app/build/reports
+          destination: reports
+      - store_test_results:
+          path: app/build/test-results
+      - persist_to_workspace:
+          root: .
+          paths: 
+            - app/build/outputs/apk
+
+  test_in_ftl:
+    executor: android-executor
+    parameters:
+      <<: *build-type-parameter
+    steps:
+      - checkout
+      - generate_gcloud_settings
+      - attach_workspace:
+          at: *workspace
+      - run: 
+          name: Run androidTest in Firebase Test Lab
+          command: |
+            ./bin/run-tests-in-gcloud.sh \
+                app/build/outputs/apk/<< parameters.build-type >>/app-<< parameters.build-type >>.apk \
+                app/build/outputs/apk/androidTest/<< parameters.build-type >>/app-<< parameters.build-type >>-androidTest.apk \
+                /tmp/junit \
+                /tmp/gcloud-results \
+                -<< parameters.build-type >>
+      - store_artifacts:
+          name: Uploading FTL tests artifacts
+          path: /tmp/gcloud-results
+          destination: gcloud-results
+      - store_test_results:
+          path: /tmp/junit
+
+workflows:
+  version: 2.1
+  workflow:
+    jobs:
+      - build:
+          name: build-debug
+          build-type: Debug
+          context: rtd-android-chat-demo-app-release
+      - build:
+          name: build-release
+          build-type: Release
+          context: rtd-android-chat-demo-app-release
+      - test_in_ftl:
+          name: test-in-ftl-debug
+          build-type: debug
+          context: rtd-ci-testing
+          requires:
+            - build-debug
+      - test_in_ftl:
+          name: test-in-ftl-release
+          build-type: release
+          context: rtd-ci-testing
+          requires:
+            - build-release

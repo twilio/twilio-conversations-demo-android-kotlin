@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#008577</color>
+    <color name="colorPrimaryDark">#00574B</color>
+    <color name="colorAccent">#D81B60</color>
+
+    <color name="text_title">#333</color>
+    <color name="text_subtitle">#aaa</color>
+    <color name="counter_background">#aaa</color>
+    <color name="counter_text">#fff</color>
+    <color name="divider_conversations">#aaa</color>
+    <color name="icon_tint">#aaa</color>
+    <color name="dialog_background">#fff</color>
+    <color name="list_item_background">#fff</color>
+    <color name="sheet_background">#80000000</color>
+    <color name="message_incoming_background">#D1FDDD</color>
+    <color name="message_outgoing_background">#fff</color>
+    <color name="message_input_background">#fff</color>
+    <color name="message_send_background">#9CCC65</color>
+    <color name="message_sending_background">#E3E3E3</color>
+    <color name="message_failed_background">#FFAB91</color>
+    <color name="emoji_counter_text">#333</color>
+    <color name="emoji_background">#eee</color>
+    <color name="reaction_background">#fff</color>
+    <color name="participant_background">#aaa</color>
+    <color name="divider">#aaa</color>
+    <color name="drawer_background">#fff</color>
+    <color name="drawer_header_background">#80000000</color>
+    <color name="drawer_header_text">#fff</color>
+
+</resources>

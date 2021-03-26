@@ -1,0 +1,120 @@
+<resources>
+    <string name="app_name">Conversations Demo</string>
+    <string name="activity_title_conversations_list">Conversations</string>
+    <string name="drawer_close">Close navigation drawer</string>
+    <string name="drawer_open">Open navigation drawer</string>
+
+    <!-- Credentials -->
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+
+    <string name="sign_in">Sign in</string>
+    <string name="sign_out">Sign out</string>
+    <string name="retry_sign_in">Retry</string>
+
+    <!-- Login Errors -->
+    <string name="sign_in_error">Sign in failed. Try again</string>
+    <string name="token_error">Could not get token. Error occurred</string>
+
+    <!-- Splash status text -->
+    <string name="splash_connecting">Connecting</string>
+    <string name="splash_connection_error">Connection error</string>
+
+    <!-- Splash error text -->
+    <string name="splash_invalid_credentials">Invalid credentials. Please check login and password and try again</string>
+
+    <!-- Conversations list -->
+    <string name="conversation_info">%1$s Participants | Created %2$s</string>
+    <string name="err_failed_to_create_conversation">Failed to create conversation</string>
+    <string name="err_failed_to_join_conversation">Failed to join conversation</string>
+    <string name="err_failed_to_remove_conversation">Failed to remove conversation</string>
+    <string name="err_failed_to_leave_conversation">Failed to leave conversation</string>
+    <string name="err_failed_to_fetch_user_conversations">Failed to fetch user conversations</string>
+    <string name="err_failed_to_mute_conversations">Failed to mute conversation</string>
+    <string name="err_failed_to_unmute_conversation">Failed to unmute conversation</string>
+    <string name="err_failed_to_update_reaction">Failed to update reaction</string>
+    <string name="err_failed_to_rename_conversation">Failed to rename conversation</string>
+    <string name="err_failed_to_get_conversation">Failed to get conversation</string>
+    <string name="err_failed_to_fetch_participants">Failed to fetch participants</string>
+    <string name="err_failed_to_add_participant">Failed to add participant</string>
+    <string name="err_failed_to_remove_participant">Failed to remove participant</string>
+    <string name="err_failed_to_update_user">Failed to update user</string>
+    <string name="err_conversation_generic_error">Request failed, please try again later</string>
+    <string name="filter_conversations">Filter Conversations</string>
+
+    <!-- Conversation add dialog -->
+    <string name="hint_conversation_name">Conversation name</string>
+    <string name="add_conversation">Add Conversation</string>
+    <string name="remove_conversation">Remove Conversation</string>
+    <string name="leave_conversation">Leave Conversation</string>
+    <string name="cancel">Cancel</string>
+    <string name="remove_conversation_title">Are you sure you wish to remove this conversation?</string>
+    <string name="conversation_filter_hint">Filter Conversations</string>
+
+    <!-- Message list -->
+    <string name="enter_message">Enter message…</string>
+
+    <plurals name="typing_indicator">
+        <item quantity="zero">%s</item>
+        <item quantity="one">%s is typing…</item>
+        <item quantity="other">%s are typing…</item>
+    </plurals>
+    <string name="typing_indicator_overflow">and others</string>
+
+    <!-- Conversation details -->
+    <string name="details_title">Conversation Details</string>
+    <string name="details_created_by">Created by: %1$s</string>
+    <string name="details_created_date">Date: %1$s</string>
+    <string name="details_actions">Actions</string>
+    <string name="details_add_participant">Add Participant</string>
+    <string name="details_participant_list">Participant List</string>
+    <string name="details_rename_conversation">Rename Conversation</string>
+    <string name="details_mute_conversation">Mute Conversation</string>
+    <string name="details_unmute_conversation">Unmute Conversation</string>
+    <string name="details_delete_conversation">Delete Conversation</string>
+
+    <!-- Add participant dialog -->
+    <string name="hint_add_participant">Participant identity</string>
+    <string name="participant_added_message">Participant %s added</string>
+
+    <!-- Reactions -->
+    <string name="reaction_heart">&#x2764;</string>
+    <string name="reaction_laugh">&#x1F602;</string>
+    <string name="reaction_sad">&#x1F622;</string>
+    <string name="reaction_thumbs_up">&#x1F44D;</string>
+    <string name="reaction_thumbs_down">&#x1F44E;</string>
+
+    <!-- Media messages -->
+    <string name="attachment_icon_description">Attachment icon</string>
+    <string name="button_download_attachment">Download</string>
+    <string name="button_open_attachment">Open</string>
+    <string name="attachment_file_name_unknown">Unknown</string>
+    <string name="attachment_choose_image">Choose Image</string>
+    <string name="attachment_take_picture">Take Picture</string>
+    <string name="err_failed_to_capture_image">Failed to capture image</string>
+    <string name="err_failed_to_send_media">Failed to send media</string>
+    <string name="err_failed_to_resend_media">Failed to re-send media</string>
+    <string name="err_failed_to_download_media">Failed to download media</string>
+
+    <!-- Participant list -->
+    <string name="participant_filter_hint">Filter Participants</string>
+    <string name="participant_title">Participant List</string>
+    <string name="participant_details_status">Status</string>
+    <string name="participant_details_remove">Remove</string>
+    <string name="participant_online">Online</string>
+    <string name="participant_offline">Away</string>
+    <string name="user_profile_friendly_name">Friendly name</string>
+    <string name="user_profile_identity">Identity</string>
+    <string name="user_profile_update">Update</string>
+
+    <!-- Notifications -->
+    <string name="notification_new_message">Twilio: New Message</string>
+    <string name="notification_added_to_conversation">Twilio: Added to Conversation</string>
+    <string name="notification_removed_from_conversation">Twilio: Removed from Conversation</string>
+    <string name="notification_generic">Twilio Notification</string>
+    <string name="crash_in_tm_client">TMClient.cpp</string>
+    <string name="crash_in_chat_client">ChatClient.cpp</string>
+    <string name="crash_in_conversation_list_activity">ConversationListActivity.kt</string>
+    <string name="simulate_crash_in">Simulate crash in:</string>
+
+</resources>

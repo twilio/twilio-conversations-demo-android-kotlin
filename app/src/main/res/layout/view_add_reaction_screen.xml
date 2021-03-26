@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/dialog_background"
+    android:elevation="5dp"
+    app:behavior_hideable="true"
+    app:behavior_peekHeight="0dp"
+    app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="16dp">
+
+        <androidx.emoji.widget.EmojiTextView
+            android:id="@+id/reaction_heart"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:gravity="center"
+            android:textSize="28sp"
+            android:textColor="#000"
+            android:text="@string/reaction_heart"
+            android:background="@drawable/bg_reaction" />
+
+        <androidx.emoji.widget.EmojiTextView
+            android:id="@+id/reaction_laugh"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:gravity="center"
+            android:textSize="28sp"
+            android:textColor="#000"
+            android:text="@string/reaction_laugh"
+            android:background="@drawable/bg_reaction" />
+
+        <androidx.emoji.widget.EmojiTextView
+            android:id="@+id/reaction_sad"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:gravity="center"
+            android:textSize="28sp"
+            android:textColor="#000"
+            android:text="@string/reaction_sad"
+            android:background="@drawable/bg_reaction" />
+
+        <androidx.emoji.widget.EmojiTextView
+            android:id="@+id/reaction_thumbs_up"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:gravity="center"
+            android:textSize="28sp"
+            android:textColor="#000"
+            android:text="@string/reaction_thumbs_up"
+            android:background="@drawable/bg_reaction" />
+
+        <androidx.emoji.widget.EmojiTextView
+            android:id="@+id/reaction_thumbs_down"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:gravity="center"
+            android:textSize="28sp"
+            android:textColor="#000"
+            android:text="@string/reaction_thumbs_down"
+            android:background="@drawable/bg_reaction" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>
