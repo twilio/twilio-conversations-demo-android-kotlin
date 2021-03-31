@@ -42,6 +42,8 @@ class ConversationDetailsActivityTest {
 
     private val conversationSid = "conversationSid"
     private val participantSid = "participantSid"
+    private val participantPhone = "111"
+    private val participantProxyPhone = "222"
 
     @Before
     fun setUp() {
@@ -65,7 +67,22 @@ class ConversationDetailsActivityTest {
     }
 
     @Test
-    fun addChatParticipantFailed() {
+    fun addNonChatParticipantSuccess() {
+        WaitForViewMatcher.performOnView(withId(R.id.add_non_chat_participant_button), click())
+        BottomSheetBehavior.from(activityRule.activity.add_non_chat_participant_sheet).waitUntilPopupStateChanged(BottomSheetBehavior.STATE_EXPANDED)
+        WaitForViewMatcher.performOnView(withId(R.id.add_non_chat_participant_phone_input), replaceText(participantPhone), closeSoftKeyboard())
+        WaitForViewMatcher.performOnView(withId(R.id.add_non_chat_participant_proxy_input), replaceText(participantProxyPhone), closeSoftKeyboard())
+        WaitForViewMatcher.performOnView(withId(R.id.add_non_chat_participant_id_cancel_button), click())
+
+        UiThreadStatement.runOnUiThread {
+            conversationDetailsViewModel.onParticipantAdded.value = participantPhone
+        }
+        onView(withText(activityRule.activity.getString(R.string.participant_added_message, participantPhone)))
+            .check(matches(withEffectiveVisibility(Visibility.VISIBLE)))
+    }
+
+    @Test
+    fun addParticipantFailed() {
         UiThreadStatement.runOnUiThread {
             conversationDetailsViewModel.onDetailsError.value = ConversationsError.PARTICIPANT_ADD_FAILED
         }
