@@ -59,7 +59,7 @@ class ParticipantListViewModel(
         conversationsRepository.getConversationParticipants(conversationSid).collect { (list, status) ->
             unfilteredParticipantsList = list.asParticipantListViewItems()
             if (status is RepositoryRequestStatus.Error) {
-                onParticipantError.value = ConversationsError.MEMBER_FETCH_FAILED
+                onParticipantError.value = ConversationsError.PARTICIPANT_FETCH_FAILED
             }
         }
     }
@@ -70,7 +70,7 @@ class ParticipantListViewModel(
             onParticipantRemoved.call()
         } catch (e: ConversationsException) {
             Timber.d("Failed to remove participant")
-            onParticipantError.value = ConversationsError.MEMBER_REMOVE_FAILED
+            onParticipantError.value = ConversationsError.PARTICIPANT_REMOVE_FAILED
         }
     }
 }

@@ -90,7 +90,7 @@ class ParticipantListActivityTest {
     @Test
     fun participantFetchFailed() {
         UiThreadStatement.runOnUiThread {
-            participantListViewModel.onParticipantError.value = ConversationsError.MEMBER_FETCH_FAILED
+            participantListViewModel.onParticipantError.value = ConversationsError.PARTICIPANT_FETCH_FAILED
         }
 
         onView(withText(R.string.err_failed_to_fetch_participants)).check(matches(withEffectiveVisibility(Visibility.VISIBLE)))

@@ -7,7 +7,7 @@ import com.twilio.conversations.app.common.extensions.waitForSynchronization
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 
 interface ParticipantListManager {
-    suspend fun addParticipant(identity: String)
+    suspend fun addChatParticipant(identity: String)
     suspend fun removeParticipant(identity: String)
 }
 
@@ -16,7 +16,7 @@ class ParticipantListManagerImpl(
     private val conversationsClient: ConversationsClientWrapper
 ) : ParticipantListManager {
 
-    override suspend fun addParticipant(identity: String) {
+    override suspend fun addChatParticipant(identity: String) {
         val conversation = conversationsClient.getConversationsClient().getConversation(conversationSid)
         conversation.waitForSynchronization()
         conversation.addParticipantByIdentity(identity)

@@ -51,11 +51,11 @@ class ConversationDetailsActivityTest {
     }
 
     @Test
-    fun addParticipantSuccess() {
-        WaitForViewMatcher.performOnView(withId(R.id.add_participant_button), click())
-        BottomSheetBehavior.from(activityRule.activity.add_participant_sheet).waitUntilPopupStateChanged(BottomSheetBehavior.STATE_EXPANDED)
-        WaitForViewMatcher.performOnView(withId(R.id.add_participant_id_input), replaceText(participantSid), closeSoftKeyboard())
-        WaitForViewMatcher.performOnView(withId(R.id.add_participant_id_cancel_button), click())
+    fun addChatParticipantSuccess() {
+        WaitForViewMatcher.performOnView(withId(R.id.add_chat_participant_button), click())
+        BottomSheetBehavior.from(activityRule.activity.add_chat_participant_sheet).waitUntilPopupStateChanged(BottomSheetBehavior.STATE_EXPANDED)
+        WaitForViewMatcher.performOnView(withId(R.id.add_chat_participant_id_input), replaceText(participantSid), closeSoftKeyboard())
+        WaitForViewMatcher.performOnView(withId(R.id.add_chat_participant_id_cancel_button), click())
 
         UiThreadStatement.runOnUiThread {
             conversationDetailsViewModel.onParticipantAdded.value = participantSid
@@ -65,9 +65,9 @@ class ConversationDetailsActivityTest {
     }
 
     @Test
-    fun addParticipantFailed() {
+    fun addChatParticipantFailed() {
         UiThreadStatement.runOnUiThread {
-            conversationDetailsViewModel.onDetailsError.value = ConversationsError.MEMBER_ADD_FAILED
+            conversationDetailsViewModel.onDetailsError.value = ConversationsError.PARTICIPANT_ADD_FAILED
         }
         onView(withText(R.string.err_failed_to_add_participant))
             .check(matches(withEffectiveVisibility(Visibility.VISIBLE)))

@@ -135,12 +135,12 @@ class ParticipantListViewModelTest {
     fun `participantListViewModel_removeParticipant() should call onParticipantError on failure`() = runBlocking {
         coEvery { conversationsRepository.getConversationParticipants(any()) } returns
                 flowOf(RepositoryResult(listOf(), RepositoryRequestStatus.COMPLETE))
-        coEvery { participantListManager.removeParticipant(participantIdentity) } throws ConversationsException(ConversationsError.MEMBER_REMOVE_FAILED)
+        coEvery { participantListManager.removeParticipant(participantIdentity) } throws ConversationsException(ConversationsError.PARTICIPANT_REMOVE_FAILED)
 
         val participantListViewModel = ParticipantListViewModel(conversationSid, conversationsRepository, participantListManager)
         participantListViewModel.removeParticipant(participantIdentity)
 
         coVerify { participantListManager.removeParticipant(participantIdentity) }
-        assertTrue(participantListViewModel.onParticipantError.waitValue(ConversationsError.MEMBER_REMOVE_FAILED))
+        assertTrue(participantListViewModel.onParticipantError.waitValue(ConversationsError.PARTICIPANT_REMOVE_FAILED))
     }
 }

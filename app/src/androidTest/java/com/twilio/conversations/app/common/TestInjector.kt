@@ -65,7 +65,7 @@ open class TestInjector : Injector() {
     }
 
     private val participantListManagerMock: ParticipantListManager = com.nhaarman.mockitokotlin2.mock {
-        onBlocking { addParticipant(any()) } doReturn Unit
+        onBlocking { addChatParticipant(any()) } doReturn Unit
         onBlocking { removeParticipant(any()) } doReturn Unit
     }
 

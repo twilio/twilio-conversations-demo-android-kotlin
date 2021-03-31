@@ -196,28 +196,28 @@ class ConversationDetailsViewModelTest {
     }
 
     @Test
-    fun `conversationDetailViewModel_addParticipant() should call onParticipantAdded on success`() = runBlocking {
+    fun `conversationDetailViewModel_addChatParticipant() should call onParticipantAdded on success`() = runBlocking {
         coEvery { conversationsRepository.getConversationParticipants(any()) } returns
                 flowOf(RepositoryResult(listOf(), RepositoryRequestStatus.COMPLETE))
-        coEvery { participantListManager.addParticipant(participantIdentity) } returns Unit
+        coEvery { participantListManager.addChatParticipant(participantIdentity) } returns Unit
 
         val conversationDetailViewModel = ConversationDetailsViewModel(conversationSid, conversationsRepository, conversationListManager, participantListManager)
-        conversationDetailViewModel.addParticipant(participantIdentity)
+        conversationDetailViewModel.addChatParticipant(participantIdentity)
 
-        coVerify { participantListManager.addParticipant(participantIdentity) }
+        coVerify { participantListManager.addChatParticipant(participantIdentity) }
         assertTrue(conversationDetailViewModel.onParticipantAdded.waitCalled())
     }
 
     @Test
-    fun `conversationDetailViewModel_addParticipant() should call onParticipantError on failure`() = runBlocking {
+    fun `conversationDetailViewModel_addChatParticipant() should call onParticipantError on failure`() = runBlocking {
         coEvery { conversationsRepository.getConversationParticipants(any()) } returns
                 flowOf(RepositoryResult(listOf(), RepositoryRequestStatus.COMPLETE))
-        coEvery { participantListManager.addParticipant(participantIdentity) } throws ConversationsException(ConversationsError.MEMBER_ADD_FAILED)
+        coEvery { participantListManager.addChatParticipant(participantIdentity) } throws ConversationsException(ConversationsError.PARTICIPANT_ADD_FAILED)
 
         val conversationDetailViewModel = ConversationDetailsViewModel(conversationSid, conversationsRepository, conversationListManager, participantListManager)
-        conversationDetailViewModel.addParticipant(participantIdentity)
+        conversationDetailViewModel.addChatParticipant(participantIdentity)
 
-        coVerify { participantListManager.addParticipant(participantIdentity) }
-        assertTrue(conversationDetailViewModel.onDetailsError.waitValue(ConversationsError.MEMBER_ADD_FAILED))
+        coVerify { participantListManager.addChatParticipant(participantIdentity) }
+        assertTrue(conversationDetailViewModel.onDetailsError.waitValue(ConversationsError.PARTICIPANT_ADD_FAILED))
     }
 }
