@@ -9,6 +9,7 @@ import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.ConversationDetailsViewItem
+import com.twilio.conversations.app.data.models.ParticipantListViewItem
 import com.twilio.conversations.app.data.models.UserViewItem
 import java.util.*
 
@@ -66,6 +67,20 @@ fun createTestParticipantDataItem(
     typing: Boolean = false
 ) = ParticipantDataItem(sid, identity, conversationSid, friendlyName, true,
     lastReadMessageIndex, lastReadTimestamp, typing)
+
+fun createTestParticipantListViewItem(
+    sid: String = "",
+    identity: String = "",
+    conversationSid: String = "",
+    friendlyName: String = "",
+    isOnline: Boolean = false,
+) = ParticipantListViewItem(
+    sid = sid,
+    identity = identity,
+    conversationSid = conversationSid,
+    friendlyName = friendlyName,
+    isOnline = isOnline,
+)
 
 fun createTestConversationDetailsViewItem(
     conversationName: String = "",

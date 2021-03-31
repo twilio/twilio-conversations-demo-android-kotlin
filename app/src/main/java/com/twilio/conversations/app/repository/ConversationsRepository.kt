@@ -322,7 +322,7 @@ class ConversationsRepositoryImpl(
             val conversation = conversationsClientWrapper.getConversationsClient().getConversation(conversationSid)
             conversation.waitForSynchronization()
             conversation.participantsList.forEach { participant ->
-                // Getting user is only supported for participants with type == CHAT
+                // Getting user is currently supported for chat participants only
                 val user = if (participant.type == CHAT) participant.getAndSubscribeUser() else null
                 localCache.participantsDao().insertOrReplace(participant.asParticipantDataItem(user = user))
             }

@@ -17,7 +17,7 @@ import androidx.test.internal.runner.junit4.statement.UiThreadStatement
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.twilio.conversations.app.MEMBER_COUNT
+import com.twilio.conversations.app.PARTICIPANT_COUNT
 import com.twilio.conversations.app.R
 import com.twilio.conversations.app.adapters.ConversationListAdapter
 import com.twilio.conversations.app.common.asParticipantListViewItems
@@ -65,14 +65,14 @@ class ParticipantListActivityTest {
 
     @Test
     fun participantsListVisible() {
-        val participants = getMockedParticipants(MEMBER_COUNT, participantName)
+        val participants = getMockedParticipants(PARTICIPANT_COUNT, participantName)
         updateAndValidateParticipantsList(participants)
     }
 
     @Test
     fun participantListChanged() {
         // Given a list of user participants
-        val participants: MutableList<ParticipantDataItem> = getMockedParticipants(MEMBER_COUNT, participantName)
+        val participants: MutableList<ParticipantDataItem> = getMockedParticipants(PARTICIPANT_COUNT, participantName)
         updateAndValidateParticipantsList(participants)
 
         // .. when new participant is added
@@ -90,7 +90,7 @@ class ParticipantListActivityTest {
     @Test
     fun participantFetchFailed() {
         UiThreadStatement.runOnUiThread {
-            participantListViewModel.onParticipantError.value = ConversationsError.PARTICIPANT_FETCH_FAILED
+            participantListViewModel.onParticipantError.value = ConversationsError.PARTICIPANTS_FETCH_FAILED
         }
 
         onView(withText(R.string.err_failed_to_fetch_participants)).check(matches(withEffectiveVisibility(Visibility.VISIBLE)))
@@ -113,7 +113,7 @@ class ParticipantListActivityTest {
 
     @Test
     fun participantRemoved() {
-        val participants: MutableList<ParticipantDataItem> = getMockedParticipants(MEMBER_COUNT, participantName)
+        val participants: MutableList<ParticipantDataItem> = getMockedParticipants(PARTICIPANT_COUNT, participantName)
         val participantToRemove = participants[participants.size - 1]
         updateAndValidateParticipantsList(participants)
 
