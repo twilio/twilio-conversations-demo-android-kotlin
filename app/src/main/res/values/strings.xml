@@ -67,6 +67,7 @@
     <string name="details_created_date">Date: %1$s</string>
     <string name="details_actions">Actions</string>
     <string name="details_add_chat_participant">Add Chat Participant</string>
+    <string name="details_add_non_chat_participant">Add SMS or WhatsApp Participant</string>
     <string name="details_participant_list">Participant List</string>
     <string name="details_rename_conversation">Rename Conversation</string>
     <string name="details_mute_conversation">Mute Conversation</string>
@@ -75,7 +76,10 @@
 
     <!-- Add participant dialog -->
     <string name="hint_add_chat_participant">Participant identity</string>
+    <string name="hint_add_non_chat_participant_phone">Phone number</string>
+    <string name="hint_add_non_chat_participant_proxy">Proxy number</string>
     <string name="participant_added_message">Participant %s added</string>
+    <string name="add_participant_button">Add Participant</string>
 
     <!-- Reactions -->
     <string name="reaction_heart">&#x2764;</string>

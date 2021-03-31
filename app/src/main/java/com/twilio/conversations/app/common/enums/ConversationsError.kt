@@ -24,7 +24,7 @@ enum class ConversationsError(val code: Int, val message: String) {
     MESSAGE_FETCH_FAILED(73, "Failed to fetch messages"),
     MESSAGE_SEND_FAILED(74, "Failed to send message"),
     REACTION_UPDATE_FAILED(75, "Failed to update reaction"),
-    PARTICIPANT_FETCH_FAILED(76, "Failed to fetch participants"),
+    PARTICIPANTS_FETCH_FAILED(76, "Failed to fetch participants"),
     PARTICIPANT_ADD_FAILED(77, "Failed to add participant"),
     PARTICIPANT_REMOVE_FAILED(78, "Failed to remove participant"),
     USER_UPDATE_FAILED(79, "Failed to update user"),

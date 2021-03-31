@@ -11,12 +11,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.twilio.conversations.app.R
 import com.twilio.conversations.app.adapters.ParticipantListAdapter
 import com.twilio.conversations.app.common.SheetListener
-import com.twilio.conversations.app.common.extensions.getErrorMessage
-import com.twilio.conversations.app.common.extensions.hide
-import com.twilio.conversations.app.common.extensions.isShowing
-import com.twilio.conversations.app.common.extensions.lazyViewModel
-import com.twilio.conversations.app.common.extensions.show
-import com.twilio.conversations.app.common.extensions.showSnackbar
+import com.twilio.conversations.app.common.extensions.*
 import com.twilio.conversations.app.common.injector
 import kotlinx.android.synthetic.main.activity_participants.*
 import kotlinx.android.synthetic.main.view_participant_details_screen.*
@@ -87,7 +82,7 @@ class ParticipantListActivity : AppCompatActivity() {
         title = getString(R.string.participant_title)
         val adapter = ParticipantListAdapter { participant ->
             Timber.d("Participant clicked: $participant")
-            participantListViewModel.selectedParticipantIdentity = participant.identity
+            participantListViewModel.selectedParticipant = participant
             participant_details_name.text = participant.friendlyName
             participant_details_status.setText(if (participant.isOnline) R.string.participant_online else R.string.participant_offline)
             sheetBehavior.show()
@@ -101,11 +96,9 @@ class ParticipantListActivity : AppCompatActivity() {
         }
 
         participant_details_remove.setOnClickListener {
-            Timber.d("Participant remove clicked: ${participantListViewModel.selectedParticipantIdentity}")
-            participantListViewModel.selectedParticipantIdentity?.let { identity ->
-                participantListViewModel.removeParticipant(identity)
-                sheetBehavior.hide()
-            }
+            Timber.d("Participant remove clicked: ${participantListViewModel.selectedParticipant?.sid}")
+            participantListViewModel.removeSelectedParticipant()
+            sheetBehavior.hide()
         }
 
         participantListViewModel.participantsList.observe(this, { participants ->

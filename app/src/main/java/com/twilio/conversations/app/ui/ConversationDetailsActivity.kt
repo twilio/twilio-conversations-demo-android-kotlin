@@ -15,7 +15,7 @@ import com.twilio.conversations.app.common.injector
 import com.twilio.conversations.app.databinding.ActivityConversationDetailsBinding
 import kotlinx.android.synthetic.main.activity_conversation_details.*
 import kotlinx.android.synthetic.main.view_add_chat_participant_screen.*
-import kotlinx.android.synthetic.main.view_add_participant_screen.*
+import kotlinx.android.synthetic.main.view_add_non_chat_participant_screen.*
 import kotlinx.android.synthetic.main.view_conversation_rename_screen.*
 import timber.log.Timber
 
@@ -23,6 +23,7 @@ class ConversationDetailsActivity : AppCompatActivity() {
 
     private val renameConversationSheet by lazy { BottomSheetBehavior.from(rename_conversation_sheet) }
     private val addChatParticipantSheet by lazy { BottomSheetBehavior.from(add_chat_participant_sheet) }
+    private val addNonChatParticipantSheet by lazy { BottomSheetBehavior.from(add_non_chat_participant_sheet) }
     private val sheetListener by lazy { SheetListener(sheet_background) { hideKeyboard() } }
     private val progressDialog: AlertDialog by lazy {
         AlertDialog.Builder(this)
@@ -56,6 +57,10 @@ class ConversationDetailsActivity : AppCompatActivity() {
             addChatParticipantSheet.hide()
             return
         }
+        if (addNonChatParticipantSheet.isShowing()) {
+            addNonChatParticipantSheet.hide()
+            return
+        }
         super.onBackPressed()
     }
 
@@ -65,12 +70,20 @@ class ConversationDetailsActivity : AppCompatActivity() {
         binding.conversationDetailsToolbar.setNavigationOnClickListener { onBackPressed() }
         renameConversationSheet.addBottomSheetCallback(sheetListener)
         addChatParticipantSheet.addBottomSheetCallback(sheetListener)
+        addNonChatParticipantSheet.addBottomSheetCallback(sheetListener)
         title = getString(R.string.details_title)
 
         binding.addChatParticipantButton.setOnClickListener {
-            Timber.d("Add participant clicked")
+            Timber.d("Add chat participant clicked")
             add_chat_participant_id_input.text?.clear()
             addChatParticipantSheet.show()
+        }
+
+        binding.addNonChatParticipantButton.setOnClickListener {
+            Timber.d("Add non-chat participant clicked")
+            add_non_chat_participant_phone_input.text?.clear()
+            add_non_chat_participant_proxy_input.text?.clear()
+            addNonChatParticipantSheet.show()
         }
 
         binding.participantsListButton.setOnClickListener {
@@ -100,6 +113,7 @@ class ConversationDetailsActivity : AppCompatActivity() {
         sheet_background.setOnClickListener {
             renameConversationSheet.hide()
             addChatParticipantSheet.hide()
+            addNonChatParticipantSheet.hide()
         }
 
         rename_conversation_cancel_button.setOnClickListener {
@@ -117,9 +131,22 @@ class ConversationDetailsActivity : AppCompatActivity() {
         }
 
         add_chat_participant_id_button.setOnClickListener {
-            Timber.d("Add participant clicked")
+            Timber.d("Add chat participant clicked")
             addChatParticipantSheet.hide()
             conversationDetailsViewModel.addChatParticipant(add_chat_participant_id_input.text.toString())
+        }
+
+        add_non_chat_participant_id_cancel_button.setOnClickListener {
+            addNonChatParticipantSheet.hide()
+        }
+
+        add_non_chat_participant_id_button.setOnClickListener {
+            Timber.d("Add non-chat participant clicked")
+            addNonChatParticipantSheet.hide()
+            conversationDetailsViewModel.addNonChatParticipant(
+                    add_non_chat_participant_phone_input.text.toString(),
+                    add_non_chat_participant_proxy_input.text.toString(),
+            )
         }
 
         conversationDetailsViewModel.isShowProgress.observe(this, { show ->

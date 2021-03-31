@@ -50,7 +50,7 @@ fun Context.getErrorMessage(error: ConversationsError): String {
         ConversationsError.CONVERSATION_UNMUTE_FAILED -> getString(R.string.err_failed_to_unmute_conversation)
         ConversationsError.CONVERSATION_RENAME_FAILED-> getString(R.string.err_failed_to_rename_conversation)
         ConversationsError.REACTION_UPDATE_FAILED -> getString(R.string.err_failed_to_update_reaction)
-        ConversationsError.PARTICIPANT_FETCH_FAILED -> getString(R.string.err_failed_to_fetch_participants)
+        ConversationsError.PARTICIPANTS_FETCH_FAILED -> getString(R.string.err_failed_to_fetch_participants)
         ConversationsError.PARTICIPANT_ADD_FAILED -> getString(R.string.err_failed_to_add_participant)
         ConversationsError.PARTICIPANT_REMOVE_FAILED -> getString(R.string.err_failed_to_remove_participant)
         ConversationsError.USER_UPDATE_FAILED -> getString(R.string.err_failed_to_update_user)

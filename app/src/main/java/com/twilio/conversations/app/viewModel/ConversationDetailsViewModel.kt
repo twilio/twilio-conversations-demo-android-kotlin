@@ -139,5 +139,22 @@ class ConversationDetailsViewModel(
         }
     }
 
+    fun addNonChatParticipant(phone: String, proxyPhone: String) = viewModelScope.launch {
+        if (isShowProgress.value == true) {
+            return@launch
+        }
+        Timber.d("Adding non-chat participant: ($phone; $proxyPhone)")
+        try {
+            setShowProgress(true)
+            participantListManager.addNonChatParticipant(phone, proxyPhone, friendlyName = "$phone")
+            onParticipantAdded.value = phone
+        } catch (e: ConversationsException) {
+            Timber.d("Failed to add non-chat participant")
+            onDetailsError.value = ConversationsError.PARTICIPANT_ADD_FAILED
+        } finally {
+            setShowProgress(false)
+        }
+    }
+
     fun isConversationMuted() = conversationDetails.value?.isMuted == true
 }
