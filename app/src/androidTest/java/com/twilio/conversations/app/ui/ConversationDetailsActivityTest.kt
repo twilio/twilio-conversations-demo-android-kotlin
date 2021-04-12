@@ -42,6 +42,8 @@ class ConversationDetailsActivityTest {
 
     private val conversationSid = "conversationSid"
     private val participantSid = "participantSid"
+    private val participantPhone = "111"
+    private val participantProxyPhone = "222"
 
     @Before
     fun setUp() {
@@ -51,11 +53,11 @@ class ConversationDetailsActivityTest {
     }
 
     @Test
-    fun addParticipantSuccess() {
-        WaitForViewMatcher.performOnView(withId(R.id.add_participant_button), click())
-        BottomSheetBehavior.from(activityRule.activity.add_participant_sheet).waitUntilPopupStateChanged(BottomSheetBehavior.STATE_EXPANDED)
-        WaitForViewMatcher.performOnView(withId(R.id.add_participant_id_input), replaceText(participantSid), closeSoftKeyboard())
-        WaitForViewMatcher.performOnView(withId(R.id.add_participant_id_cancel_button), click())
+    fun addChatParticipantSuccess() {
+        WaitForViewMatcher.performOnView(withId(R.id.add_chat_participant_button), click())
+        BottomSheetBehavior.from(activityRule.activity.add_chat_participant_sheet).waitUntilPopupStateChanged(BottomSheetBehavior.STATE_EXPANDED)
+        WaitForViewMatcher.performOnView(withId(R.id.add_chat_participant_id_input), replaceText(participantSid), closeSoftKeyboard())
+        WaitForViewMatcher.performOnView(withId(R.id.add_chat_participant_id_cancel_button), click())
 
         UiThreadStatement.runOnUiThread {
             conversationDetailsViewModel.onParticipantAdded.value = participantSid
@@ -65,9 +67,24 @@ class ConversationDetailsActivityTest {
     }
 
     @Test
+    fun addNonChatParticipantSuccess() {
+        WaitForViewMatcher.performOnView(withId(R.id.add_non_chat_participant_button), click())
+        BottomSheetBehavior.from(activityRule.activity.add_non_chat_participant_sheet).waitUntilPopupStateChanged(BottomSheetBehavior.STATE_EXPANDED)
+        WaitForViewMatcher.performOnView(withId(R.id.add_non_chat_participant_phone_input), replaceText(participantPhone), closeSoftKeyboard())
+        WaitForViewMatcher.performOnView(withId(R.id.add_non_chat_participant_proxy_input), replaceText(participantProxyPhone), closeSoftKeyboard())
+        WaitForViewMatcher.performOnView(withId(R.id.add_non_chat_participant_id_cancel_button), click())
+
+        UiThreadStatement.runOnUiThread {
+            conversationDetailsViewModel.onParticipantAdded.value = participantPhone
+        }
+        onView(withText(activityRule.activity.getString(R.string.participant_added_message, participantPhone)))
+            .check(matches(withEffectiveVisibility(Visibility.VISIBLE)))
+    }
+
+    @Test
     fun addParticipantFailed() {
         UiThreadStatement.runOnUiThread {
-            conversationDetailsViewModel.onDetailsError.value = ConversationsError.MEMBER_ADD_FAILED
+            conversationDetailsViewModel.onDetailsError.value = ConversationsError.PARTICIPANT_ADD_FAILED
         }
         onView(withText(R.string.err_failed_to_add_participant))
             .check(matches(withEffectiveVisibility(Visibility.VISIBLE)))

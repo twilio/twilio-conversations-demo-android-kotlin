@@ -15,6 +15,7 @@ import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.*
+import com.twilio.conversations.app.manager.friendlyName
 
 fun Conversation.toConversationDataItem() : ConversationDataItem {
     return ConversationDataItem(
@@ -100,7 +101,7 @@ fun Participant.asParticipantDataItem(typing : Boolean = false, user: User? = nu
     sid = this.sid,
     conversationSid = this.conversation.sid,
     identity = this.identity,
-    friendlyName = user?.identity ?: "",
+    friendlyName = user?.friendlyName?.takeIf { it.isNotEmpty() } ?: this.friendlyName ?: this.identity,
     isOnline = user?.isOnline ?: false,
     lastReadMessageIndex = this.lastReadMessageIndex,
     lastReadTimestamp = this.lastReadTimestamp,

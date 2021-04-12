@@ -35,7 +35,7 @@ class ParticipantListViewModel(
     }
     val onParticipantError = SingleLiveEvent<ConversationsError>()
     val onParticipantRemoved = SingleLiveEvent<Unit>()
-    var selectedParticipantIdentity: String? = null
+    var selectedParticipant: ParticipantListViewItem? = null
 
     init {
         Timber.d("init")
@@ -59,18 +59,20 @@ class ParticipantListViewModel(
         conversationsRepository.getConversationParticipants(conversationSid).collect { (list, status) ->
             unfilteredParticipantsList = list.asParticipantListViewItems()
             if (status is RepositoryRequestStatus.Error) {
-                onParticipantError.value = ConversationsError.MEMBER_FETCH_FAILED
+                onParticipantError.value = ConversationsError.PARTICIPANTS_FETCH_FAILED
             }
         }
     }
 
-    fun removeParticipant(identity: String) = viewModelScope.launch {
+    fun removeSelectedParticipant() = viewModelScope.launch {
+        val participant = selectedParticipant ?: return@launch
+
         try {
-            participantListManager.removeParticipant(identity)
+            participantListManager.removeParticipant(participant.sid)
             onParticipantRemoved.call()
         } catch (e: ConversationsException) {
             Timber.d("Failed to remove participant")
-            onParticipantError.value = ConversationsError.MEMBER_REMOVE_FAILED
+            onParticipantError.value = ConversationsError.PARTICIPANT_REMOVE_FAILED
         }
     }
 }

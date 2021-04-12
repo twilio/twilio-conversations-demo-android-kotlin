@@ -48,6 +48,9 @@ class ConversationDetailsViewModelTest {
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
     private val participantIdentity = "participantIdentity"
+    private val participantPhone = "participantPhone"
+    private val participantProxyPhone = "participantProxyPhone"
+    private val participantFriendlyName = "$participantPhone"
     private val conversationSid = "conversationSid"
     private val conversationName = "Test Conversation"
     private val conversationCreator = "User 01"
@@ -196,28 +199,54 @@ class ConversationDetailsViewModelTest {
     }
 
     @Test
-    fun `conversationDetailViewModel_addParticipant() should call onParticipantAdded on success`() = runBlocking {
+    fun `conversationDetailViewModel_addChatParticipant() should call onParticipantAdded on success`() = runBlocking {
         coEvery { conversationsRepository.getConversationParticipants(any()) } returns
                 flowOf(RepositoryResult(listOf(), RepositoryRequestStatus.COMPLETE))
-        coEvery { participantListManager.addParticipant(participantIdentity) } returns Unit
+        coEvery { participantListManager.addChatParticipant(participantIdentity) } returns Unit
 
         val conversationDetailViewModel = ConversationDetailsViewModel(conversationSid, conversationsRepository, conversationListManager, participantListManager)
-        conversationDetailViewModel.addParticipant(participantIdentity)
+        conversationDetailViewModel.addChatParticipant(participantIdentity)
 
-        coVerify { participantListManager.addParticipant(participantIdentity) }
+        coVerify { participantListManager.addChatParticipant(participantIdentity) }
         assertTrue(conversationDetailViewModel.onParticipantAdded.waitCalled())
     }
 
     @Test
-    fun `conversationDetailViewModel_addParticipant() should call onParticipantError on failure`() = runBlocking {
+    fun `conversationDetailViewModel_addChatParticipant() should call onParticipantError on failure`() = runBlocking {
         coEvery { conversationsRepository.getConversationParticipants(any()) } returns
                 flowOf(RepositoryResult(listOf(), RepositoryRequestStatus.COMPLETE))
-        coEvery { participantListManager.addParticipant(participantIdentity) } throws ConversationsException(ConversationsError.MEMBER_ADD_FAILED)
+        coEvery { participantListManager.addChatParticipant(participantIdentity) } throws ConversationsException(ConversationsError.PARTICIPANT_ADD_FAILED)
 
         val conversationDetailViewModel = ConversationDetailsViewModel(conversationSid, conversationsRepository, conversationListManager, participantListManager)
-        conversationDetailViewModel.addParticipant(participantIdentity)
+        conversationDetailViewModel.addChatParticipant(participantIdentity)
 
-        coVerify { participantListManager.addParticipant(participantIdentity) }
-        assertTrue(conversationDetailViewModel.onDetailsError.waitValue(ConversationsError.MEMBER_ADD_FAILED))
+        coVerify { participantListManager.addChatParticipant(participantIdentity) }
+        assertTrue(conversationDetailViewModel.onDetailsError.waitValue(ConversationsError.PARTICIPANT_ADD_FAILED))
+    }
+
+    @Test
+    fun `conversationDetailViewModel_addNonChatParticipant() should call onParticipantAdded on success`() = runBlocking {
+        coEvery { conversationsRepository.getConversationParticipants(any()) } returns
+                flowOf(RepositoryResult(listOf(), RepositoryRequestStatus.COMPLETE))
+        coEvery { participantListManager.addNonChatParticipant(participantPhone, participantProxyPhone, participantFriendlyName) } returns Unit
+
+        val conversationDetailViewModel = ConversationDetailsViewModel(conversationSid, conversationsRepository, conversationListManager, participantListManager)
+        conversationDetailViewModel.addNonChatParticipant(participantPhone, participantProxyPhone)
+
+        coVerify { participantListManager.addNonChatParticipant(participantPhone, participantProxyPhone, participantFriendlyName) }
+        assertTrue(conversationDetailViewModel.onParticipantAdded.waitCalled())
+    }
+
+    @Test
+    fun `conversationDetailViewModel_addNonChatParticipant() should call onParticipantError on failure`() = runBlocking {
+        coEvery { conversationsRepository.getConversationParticipants(any()) } returns
+                flowOf(RepositoryResult(listOf(), RepositoryRequestStatus.COMPLETE))
+        coEvery { participantListManager.addNonChatParticipant(participantPhone, participantProxyPhone, participantFriendlyName) } throws ConversationsException(ConversationsError.PARTICIPANT_ADD_FAILED)
+
+        val conversationDetailViewModel = ConversationDetailsViewModel(conversationSid, conversationsRepository, conversationListManager, participantListManager)
+        conversationDetailViewModel.addNonChatParticipant(participantPhone, participantProxyPhone)
+
+        coVerify { participantListManager.addNonChatParticipant(participantPhone, participantProxyPhone, participantFriendlyName) }
+        assertTrue(conversationDetailViewModel.onDetailsError.waitValue(ConversationsError.PARTICIPANT_ADD_FAILED))
     }
 }

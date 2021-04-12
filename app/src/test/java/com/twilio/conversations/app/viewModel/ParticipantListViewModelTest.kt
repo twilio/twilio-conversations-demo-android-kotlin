@@ -2,11 +2,12 @@ package com.twilio.conversations.app.viewModel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.twilio.conversations.Participant
-import com.twilio.conversations.app.MEMBER_COUNT
+import com.twilio.conversations.app.PARTICIPANT_COUNT
 import com.twilio.conversations.app.common.asParticipantListViewItems
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.createTestParticipantDataItem
+import com.twilio.conversations.app.createTestParticipantListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.data.models.RepositoryResult
 import com.twilio.conversations.app.getMockedParticipants
@@ -37,7 +38,7 @@ import org.powermock.modules.junit4.PowerMockRunner
 class ParticipantListViewModelTest {
 
     private val conversationSid = "conversationSid"
-    private val participantIdentity = "participantIdentity"
+    private val participant = createTestParticipantListViewItem(sid = "sid")
 
     @Rule
     var coroutineTestRule = CoroutineTestRule()
@@ -57,17 +58,17 @@ class ParticipantListViewModelTest {
     }
 
     @Test
-    fun `participantListViewModel_participantsList() should contain all participants stored in local cache`() = runBlocking {
-        val expectedParticipants = getMockedParticipants(MEMBER_COUNT, "User Conversations").toList()
+    fun `participantListViewModel_participantsList should contain all participants stored in local cache`() = runBlocking {
+        val expectedParticipants = getMockedParticipants(PARTICIPANT_COUNT, "User Conversations").toList()
         coEvery { conversationsRepository.getConversationParticipants(any()) } returns
                 flowOf(RepositoryResult(expectedParticipants, RepositoryRequestStatus.COMPLETE))
         val participantListViewModel = ParticipantListViewModel(conversationSid, conversationsRepository, participantListManager)
         assertTrue(participantListViewModel.participantsList.waitValue(expectedParticipants.asParticipantListViewItems()))
-        assertEquals(MEMBER_COUNT, participantListViewModel.participantsList.waitValue().size)
+        assertEquals(PARTICIPANT_COUNT, participantListViewModel.participantsList.waitValue().size)
     }
 
     @Test
-    fun `participantListViewModel_participantsLis should contain only filtered items`() = runBlocking {
+    fun `participantListViewModel_participantsList should contain only filtered items`() = runBlocking {
         val participantAbc = createTestParticipantDataItem(friendlyName = "abc")
         val participantBcd = createTestParticipantDataItem(friendlyName = "bcd")
         val participantCde = createTestParticipantDataItem(friendlyName = "cde")
@@ -96,7 +97,7 @@ class ParticipantListViewModelTest {
     @Test
     fun `participantListViewModel_filteredUserConversationItems should ignore filter case`() = runBlocking {
         val namePrefix = "User Conversations"
-        val expectedParticipants = getMockedParticipants(MEMBER_COUNT, namePrefix).toList()
+        val expectedParticipants = getMockedParticipants(PARTICIPANT_COUNT, namePrefix).toList()
         coEvery { conversationsRepository.getConversationParticipants(any()) } returns
                 flowOf(RepositoryResult(expectedParticipants, RepositoryRequestStatus.COMPLETE))
         val participantListViewModel = ParticipantListViewModel(conversationSid, conversationsRepository, participantListManager)
@@ -105,7 +106,7 @@ class ParticipantListViewModelTest {
         participantListViewModel.participantFilter = namePrefix.toUpperCase()
 
         // Then verify that all conversations match the filter
-        assertEquals(MEMBER_COUNT, participantListViewModel.participantsList.waitValue().size)
+        assertEquals(PARTICIPANT_COUNT, participantListViewModel.participantsList.waitValue().size)
         assertTrue(participantListViewModel.participantsList.waitValue(expectedParticipants.asParticipantListViewItems()))
     }
 
@@ -122,12 +123,13 @@ class ParticipantListViewModelTest {
     fun `participantListViewModel_removeParticipant() should call onParticipantRemoved on success`() = runBlocking {
         coEvery { conversationsRepository.getConversationParticipants(any()) } returns
                 flowOf(RepositoryResult(listOf(), RepositoryRequestStatus.COMPLETE))
-        coEvery { participantListManager.removeParticipant(participantIdentity) } returns Unit
+        coEvery { participantListManager.removeParticipant(participant.sid) } returns Unit
 
         val participantListViewModel = ParticipantListViewModel(conversationSid, conversationsRepository, participantListManager)
-        participantListViewModel.removeParticipant(participantIdentity)
+        participantListViewModel.selectedParticipant = participant
+        participantListViewModel.removeSelectedParticipant()
 
-        coVerify { participantListManager.removeParticipant(participantIdentity) }
+        coVerify { participantListManager.removeParticipant(participant.sid) }
         assertTrue(participantListViewModel.onParticipantRemoved.waitCalled())
     }
 
@@ -135,12 +137,13 @@ class ParticipantListViewModelTest {
     fun `participantListViewModel_removeParticipant() should call onParticipantError on failure`() = runBlocking {
         coEvery { conversationsRepository.getConversationParticipants(any()) } returns
                 flowOf(RepositoryResult(listOf(), RepositoryRequestStatus.COMPLETE))
-        coEvery { participantListManager.removeParticipant(participantIdentity) } throws ConversationsException(ConversationsError.MEMBER_REMOVE_FAILED)
+        coEvery { participantListManager.removeParticipant(participant.sid) } throws ConversationsException(ConversationsError.PARTICIPANT_REMOVE_FAILED)
 
         val participantListViewModel = ParticipantListViewModel(conversationSid, conversationsRepository, participantListManager)
-        participantListViewModel.removeParticipant(participantIdentity)
+        participantListViewModel.selectedParticipant = participant
+        participantListViewModel.removeSelectedParticipant()
 
-        coVerify { participantListManager.removeParticipant(participantIdentity) }
-        assertTrue(participantListViewModel.onParticipantError.waitValue(ConversationsError.MEMBER_REMOVE_FAILED))
+        coVerify { participantListManager.removeParticipant(participant.sid) }
+        assertTrue(participantListViewModel.onParticipantError.waitValue(ConversationsError.PARTICIPANT_REMOVE_FAILED))
     }
 }

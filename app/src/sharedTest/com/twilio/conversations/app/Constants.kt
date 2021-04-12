@@ -14,4 +14,4 @@ const val SPLASH_TEXT_OTHER = ""
 
 const val USER_CONVERSATION_COUNT = 6
 const val MESSAGE_COUNT = 10
-const val MEMBER_COUNT = 10
+const val PARTICIPANT_COUNT = 10

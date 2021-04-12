@@ -11,11 +11,7 @@ import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.data.models.RepositoryResult
-import com.twilio.conversations.app.manager.ConversationListManager
-import com.twilio.conversations.app.manager.MessageListManager
-import com.twilio.conversations.app.manager.LoginManager
-import com.twilio.conversations.app.manager.ParticipantListManager
-import com.twilio.conversations.app.manager.UserManager
+import com.twilio.conversations.app.manager.*
 import com.twilio.conversations.app.repository.ConversationsRepository
 import com.twilio.conversations.app.testUtil.mockito.mock
 import com.twilio.conversations.app.testUtil.mockito.whenCall
@@ -65,7 +61,8 @@ open class TestInjector : Injector() {
     }
 
     private val participantListManagerMock: ParticipantListManager = com.nhaarman.mockitokotlin2.mock {
-        onBlocking { addParticipant(any()) } doReturn Unit
+        onBlocking { addChatParticipant(any()) } doReturn Unit
+        onBlocking { addNonChatParticipant(any(), any(), any()) } doReturn Unit
         onBlocking { removeParticipant(any()) } doReturn Unit
     }
 

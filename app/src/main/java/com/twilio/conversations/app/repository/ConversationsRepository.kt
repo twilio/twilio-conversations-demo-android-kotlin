@@ -2,6 +2,7 @@ package com.twilio.conversations.app.repository
 
 import androidx.paging.PagedList
 import com.twilio.conversations.*
+import com.twilio.conversations.Participant.Type.CHAT
 import com.twilio.conversations.app.common.*
 import com.twilio.conversations.app.common.enums.CrashIn
 import com.twilio.conversations.app.common.extensions.*
@@ -321,12 +322,13 @@ class ConversationsRepositoryImpl(
             val conversation = conversationsClientWrapper.getConversationsClient().getConversation(conversationSid)
             conversation.waitForSynchronization()
             conversation.participantsList.forEach { participant ->
-                val user = participant.getAndSubscribeUser()
+                // Getting user is currently supported for chat participants only
+                val user = if (participant.type == CHAT) participant.getAndSubscribeUser() else null
                 localCache.participantsDao().insertOrReplace(participant.asParticipantDataItem(user = user))
             }
             emit(COMPLETE)
         } catch (e: ConversationsException) {
-            Timber.d("fetchConversations error: ${e.error.message}")
+            Timber.d("fetchParticipants error: ${e.error.message}")
             emit(Error(e.error))
         }
     }

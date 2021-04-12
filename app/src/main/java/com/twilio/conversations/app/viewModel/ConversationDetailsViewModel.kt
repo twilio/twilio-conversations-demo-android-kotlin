@@ -122,18 +122,35 @@ class ConversationDetailsViewModel(
         }
     }
 
-    fun addParticipant(identity: String) = viewModelScope.launch {
+    fun addChatParticipant(identity: String) = viewModelScope.launch {
         if (isShowProgress.value == true) {
             return@launch
         }
-        Timber.d("Adding participant: $identity")
+        Timber.d("Adding chat participant: $identity")
         try {
             setShowProgress(true)
-            participantListManager.addParticipant(identity)
+            participantListManager.addChatParticipant(identity)
             onParticipantAdded.value = identity
         } catch (e: ConversationsException) {
-            Timber.d("Failed to remove conversation")
-            onDetailsError.value = ConversationsError.MEMBER_ADD_FAILED
+            Timber.d("Failed to add chat participant")
+            onDetailsError.value = ConversationsError.PARTICIPANT_ADD_FAILED
+        } finally {
+            setShowProgress(false)
+        }
+    }
+
+    fun addNonChatParticipant(phone: String, proxyPhone: String) = viewModelScope.launch {
+        if (isShowProgress.value == true) {
+            return@launch
+        }
+        Timber.d("Adding non-chat participant: ($phone; $proxyPhone)")
+        try {
+            setShowProgress(true)
+            participantListManager.addNonChatParticipant(phone, proxyPhone, friendlyName = "$phone")
+            onParticipantAdded.value = phone
+        } catch (e: ConversationsException) {
+            Timber.d("Failed to add non-chat participant")
+            onDetailsError.value = ConversationsError.PARTICIPANT_ADD_FAILED
         } finally {
             setShowProgress(false)
         }

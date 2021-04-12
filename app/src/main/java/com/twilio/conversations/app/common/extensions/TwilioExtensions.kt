@@ -108,8 +108,8 @@ suspend fun Conversation.waitForSynchronization() {
     }
 }
 
-suspend fun Conversation.removeParticipantByIdentity(identity: String): Unit = suspendCancellableCoroutine { continuation ->
-    removeParticipantByIdentity(identity, object : StatusListener {
+suspend fun Conversation.removeParticipant(participant: Participant): Unit = suspendCancellableCoroutine { continuation ->
+    removeParticipant(participant, object : StatusListener {
 
         override fun onSuccess() = continuation.resume(Unit)
 
@@ -119,6 +119,15 @@ suspend fun Conversation.removeParticipantByIdentity(identity: String): Unit = s
 
 suspend fun Conversation.addParticipantByIdentity(identity: String, attributes: Attributes = Attributes.DEFAULT): Unit = suspendCancellableCoroutine { continuation ->
     addParticipantByIdentity(identity, attributes, object : StatusListener {
+
+        override fun onSuccess() = continuation.resume(Unit)
+
+        override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
+    })
+}
+
+suspend fun Conversation.addParticipantByAddress(address: String, proxyAddress: String, attributes: Attributes = Attributes.DEFAULT): Unit = suspendCancellableCoroutine { continuation ->
+    addParticipantByAddress(address, proxyAddress, attributes, object : StatusListener {
 
         override fun onSuccess() = continuation.resume(Unit)
 

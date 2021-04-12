@@ -114,14 +114,26 @@
                             android:textSize="16sp" />
 
                         <TextView
-                            android:id="@+id/add_participant_button"
+                            android:id="@+id/add_chat_participant_button"
                             android:layout_width="match_parent"
                             android:layout_height="48dp"
                             android:background="@drawable/bg_list_item"
                             android:gravity="center_vertical"
-                            android:drawableStart="@drawable/ic_participant_add"
+                            android:drawableStart="@drawable/ic_chat_participant_add"
                             android:drawablePadding="16dp"
-                            android:text="@string/details_add_participant"
+                            android:text="@string/details_add_chat_participant"
+                            android:textColor="@color/text_title"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/add_non_chat_participant_button"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:background="@drawable/bg_list_item"
+                            android:gravity="center_vertical"
+                            android:drawableStart="@drawable/ic_non_chat_participant_add"
+                            android:drawablePadding="16dp"
+                            android:text="@string/details_add_non_chat_participant"
                             android:textColor="@color/text_title"
                             android:textSize="14sp" />
 
@@ -195,8 +207,12 @@
             layout="@layout/view_conversation_rename_screen" />
 
         <include
-            android:id="@+id/add_participant_sheet"
-            layout="@layout/view_add_participant_screen" />
+            android:id="@+id/add_chat_participant_sheet"
+            layout="@layout/view_add_chat_participant_screen" />
+
+        <include
+            android:id="@+id/add_non_chat_participant_sheet"
+            layout="@layout/view_add_non_chat_participant_screen" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
