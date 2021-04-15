@@ -1,8 +1,5 @@
 package com.twilio.conversations.app
 
-const val VALID_IDENTITY = BuildConfig.ACCESS_TOKEN_SERVICE_IDENTITY
-const val VALID_PASSWORD = BuildConfig.ACCESS_TOKEN_SERVICE_PASSWORD
-
 const val INVALID_IDENTITY = "s"
 const val INVALID_PASSWORD = "s"
 

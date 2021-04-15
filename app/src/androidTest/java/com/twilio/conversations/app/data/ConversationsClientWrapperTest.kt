@@ -5,11 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.twilio.conversations.app.INVALID_IDENTITY
 import com.twilio.conversations.app.INVALID_PASSWORD
-import com.twilio.conversations.app.VALID_IDENTITY
-import com.twilio.conversations.app.VALID_PASSWORD
-import com.twilio.conversations.app.data.models.Client
 import com.twilio.conversations.app.data.models.Error
-import com.twilio.conversations.app.data.models.Response
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
@@ -28,12 +24,6 @@ class ConversationsClientWrapperTest {
 
         ConversationsClientWrapper.recreateInstance()
         conversationsClientWrapper = ConversationsClientWrapper.INSTANCE
-    }
-
-    @Test
-    fun create_withValidCredentials_returnsClient() = runBlocking {
-        val response: Response = conversationsClientWrapper.create(context.applicationContext, VALID_IDENTITY, VALID_PASSWORD)
-        assertTrue(response is Client)
     }
 
     @Test
