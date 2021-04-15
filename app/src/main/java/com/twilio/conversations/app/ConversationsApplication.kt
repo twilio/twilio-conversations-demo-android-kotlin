@@ -6,6 +6,7 @@ import androidx.emoji.bundled.BundledEmojiCompatConfig
 import androidx.emoji.text.EmojiCompat
 import com.google.firebase.FirebaseApp
 import com.twilio.conversations.ConversationsClient
+import com.twilio.conversations.ConversationsClient.LogLevel
 import com.twilio.conversations.app.common.LineNumberDebugTree
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.localCache.LocalCacheProvider
@@ -18,7 +19,7 @@ class ConversationsApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         if (BuildConfig.DEBUG) {
-            ConversationsClient.setLogLevel(ConversationsClient.LogLevel.VERBOSE)
+            ConversationsClient.setLogLevel(LogLevel.DEBUG)
             Timber.plant(LineNumberDebugTree("Demo"))
         }
 
