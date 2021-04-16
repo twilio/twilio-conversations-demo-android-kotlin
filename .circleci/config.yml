@@ -65,8 +65,6 @@ commands:
           name: Setup Token Service Url
           command: |
             echo "ACCESS_TOKEN_SERVICE_URL=$ACCESS_TOKEN_SERVICE_URL" >> gradle.properties
-            echo "ACCESS_TOKEN_SERVICE_IDENTITY=$ACCESS_TOKEN_SERVICE_IDENTITY" >> gradle.properties
-            echo "ACCESS_TOKEN_SERVICE_PASSWORD=$ACCESS_TOKEN_SERVICE_PASSWORD" >> gradle.properties
 
 jobs:
   build:

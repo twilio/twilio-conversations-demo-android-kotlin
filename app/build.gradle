@@ -17,8 +17,6 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField "String", "ACCESS_TOKEN_SERVICE_URL", "\"$ACCESS_TOKEN_SERVICE_URL\""
-        buildConfigField "String", "ACCESS_TOKEN_SERVICE_IDENTITY", "\"${project.findProperty('ACCESS_TOKEN_SERVICE_IDENTITY') ?: ''}\""
-        buildConfigField "String", "ACCESS_TOKEN_SERVICE_PASSWORD", "\"${project.findProperty('ACCESS_TOKEN_SERVICE_PASSWORD') ?: ''}\""
     }
 
     buildTypes {

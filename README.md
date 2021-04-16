@@ -23,20 +23,18 @@ What you'll minimally need to get started:
 ### Set the value of `ACCESS_TOKEN_SERVICE_URL`
 
 Set the value of `ACCESS_TOKEN_SERVICE_URL` in `gradle.properties` file to point to a valid Access-Token server.
+So your Access-Token server should provide valid token for valid credentials by URL:
 
-Optionally provide test credentials for your token generator by setting variables `ACCESS_TOKEN_SERVICE_IDENTITY` and `ACCESS_TOKEN_SERVICE_PASSWORD`.
-Credential are used by tests. So for executing tests your token generator should provide valid token for the given identity by URL:
+ ```
+$ACCESS_TOKEN_SERVICE_URL?identity=<USER_PROVIDED_USERNAME>&password=<USER_PROVIDED_PASSWORD>
+ ```
 
-```
-$ACCESS_TOKEN_SERVICE_URL?identity=$ACCESS_TOKEN_SERVICE_IDENTITY&password=$ACCESS_TOKEN_SERVICE_PASSWORD"
-```
+and return HTTP 401 if case of invalid credentials.
 
 Create the `gradle.properties` file if it doesn't exist with the following contents:
 
 ```
 ACCESS_TOKEN_SERVICE_URL=http://example.com/get-token/
-ACCESS_TOKEN_SERVICE_IDENTITY=myUsername
-ACCESS_TOKEN_SERVICE_PASSWORD=myPassword
 ```
 
 NOTE: no need for quotes around the URL, they will be added automatically.
