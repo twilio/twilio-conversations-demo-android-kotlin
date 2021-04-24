@@ -3,17 +3,13 @@ package com.twilio.conversations.app.services
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.twilio.conversations.NotificationPayload
-import com.twilio.conversations.app.common.DefaultDispatcherProvider
 import com.twilio.conversations.app.common.injector
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import timber.log.Timber
 
 class FCMListenerService : FirebaseMessagingService() {
 
-    private val serviceScope = CoroutineScope(DefaultDispatcherProvider().io() + SupervisorJob())
+    private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private fun launch(block: suspend CoroutineScope.() -> Unit) = serviceScope.launch(
         context = CoroutineExceptionHandler { _, e -> Timber.e(e, "Coroutine failed ${e.localizedMessage}") },
         block = block
