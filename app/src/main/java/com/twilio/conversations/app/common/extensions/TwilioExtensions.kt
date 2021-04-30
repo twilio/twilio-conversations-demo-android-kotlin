@@ -69,6 +69,15 @@ suspend fun ConversationsClient.unregisterFCMToken(token: String) = suspendCance
     })
 }
 
+suspend fun ConversationsClient.updateToken(token: String) = suspendCancellableCoroutine<Unit> { continuation ->
+    updateToken(token, object : StatusListener {
+
+        override fun onSuccess() = continuation.resume(Unit)
+
+        override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
+    })
+}
+
 fun ConversationsClient.simulateCrash(where: CrashIn) {
     val method = this::class.java.getDeclaredMethod("simulateCrash", Int::class.java)
     method.isAccessible = true
