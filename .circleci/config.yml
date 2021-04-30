@@ -80,7 +80,10 @@ jobs:
       - run: 
           name: Assemble APKs
           command: ./gradlew assemble<< parameters.build-type >> assembleAndroidTest -DtestBuildType=<< parameters.build-type >>
-      - store_artifacts: 
+      - run:
+          name: Upload symbols to crashlytics
+          command: ./gradlew uploadCrashlyticsSymbolFile<< parameters.build-type >>
+      - store_artifacts:
           name: Uploading APKs
           path: app/build/outputs/apk
           destination: apk
