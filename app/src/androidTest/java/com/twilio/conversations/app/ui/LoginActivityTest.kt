@@ -5,12 +5,10 @@ import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.intent.rule.IntentsTestRule
+import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.espresso.matcher.ViewMatchers.Visibility.VISIBLE
-import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
-import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
-import androidx.test.espresso.matcher.ViewMatchers.withId
-import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.twilio.conversations.app.R
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.data.ConversationsClientWrapper
@@ -40,7 +38,8 @@ class LoginActivityTest {
 
     @Before
     fun setUp() {
-        ConversationsClientWrapper.recreateInstance()
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        ConversationsClientWrapper.recreateInstance(context)
 
         val activity = activityRule.activity
         loginViewModel = activity.loginViewModel

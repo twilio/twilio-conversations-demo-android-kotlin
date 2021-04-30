@@ -1,6 +1,5 @@
 package com.twilio.conversations.app.manager
 
-import android.content.Context
 import com.twilio.conversations.app.common.FirebaseTokenRetriever
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.ConversationsError.EMPTY_CREDENTIALS
@@ -16,8 +15,8 @@ import com.twilio.conversations.app.repository.ConversationsRepository
 import timber.log.Timber
 
 interface LoginManager {
-    suspend fun signIn(applicationContext: Context, identity: String, password: String): Response
-    suspend fun signInUsingStoredCredentials(applicationContext: Context): Response
+    suspend fun signIn(identity: String, password: String): Response
+    suspend fun signInUsingStoredCredentials(): Response
     suspend fun signOut()
     suspend fun registerForFcm()
     suspend fun unregisterFromFcm()
@@ -54,9 +53,9 @@ class LoginManagerImpl(
         }
     }
 
-    override suspend fun signIn(applicationContext: Context, identity: String, password: String): Response {
+    override suspend fun signIn(identity: String, password: String): Response {
         Timber.d("signIn")
-        val response = conversationsClient.create(applicationContext, identity, password)
+        val response = conversationsClient.create(identity, password)
         if (response is Client) {
             credentialStorage.storeCredentials(identity, password)
             conversationsRepository.subscribeToConversationsClientEvents()
@@ -65,12 +64,12 @@ class LoginManagerImpl(
         return response
     }
 
-    override suspend fun signInUsingStoredCredentials(applicationContext: Context): Response {
+    override suspend fun signInUsingStoredCredentials(): Response {
         Timber.d("signInUsingStoredCredentials")
         if (credentialStorage.isEmpty()) return Error(EMPTY_CREDENTIALS)
         val identity = credentialStorage.identity
         val password = credentialStorage.password
-        val response = conversationsClient.create(applicationContext, identity, password)
+        val response = conversationsClient.create(identity, password)
         if (response is Error) {
             handleError(response.error)
         } else {

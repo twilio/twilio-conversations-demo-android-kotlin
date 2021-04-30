@@ -71,7 +71,8 @@ class MessageListActivityTest {
     @Before
     fun setUp() {
         activityRule.launchActivity(MessageListActivity.getStartIntent(InstrumentationRegistry.getInstrumentation().targetContext, conversationSid))
-        ConversationsClientWrapper.recreateInstance()
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        ConversationsClientWrapper.recreateInstance(context)
         messageListViewModel = activityRule.activity.messageListViewModel
         removeProgressBarIndeterminateDrawables(activityRule.activity)
     }

@@ -20,7 +20,7 @@ class ConversationsException(val error: ConversationsError) : Exception("$error"
     constructor(errorInfo: ErrorInfo) : this(ConversationsError.fromErrorInfo(errorInfo))
 }
 
-suspend fun createClientAsync(context: Context, token: String, properties: Properties): Response {
+suspend fun createAndSyncClient(context: Context, token: String, properties: Properties = Properties.newBuilder().createProperties()): Response {
     val client = createConversationsClient(context, token, properties)
     client.waitForSynchronization()
     return Client(client)

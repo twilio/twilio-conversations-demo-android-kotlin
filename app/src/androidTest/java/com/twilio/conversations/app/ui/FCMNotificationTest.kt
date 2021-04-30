@@ -1,6 +1,7 @@
 package com.twilio.conversations.app.ui
 
 import android.os.Bundle
+import androidx.test.annotation.UiThreadTest
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
@@ -26,9 +27,10 @@ class FCMNotificationTest {
     private lateinit var fcmManager: FCMManager
 
     @Before
+    @UiThreadTest
     fun setUp() {
-        ConversationsClientWrapper.recreateInstance()
         val context = InstrumentationRegistry.getInstrumentation().targetContext
+        ConversationsClientWrapper.recreateInstance(context)
         credentialStorage = CredentialStorage(context)
         fcmManager = FCMManagerImpl(context, ConversationsClientWrapper.INSTANCE, credentialStorage)
     }

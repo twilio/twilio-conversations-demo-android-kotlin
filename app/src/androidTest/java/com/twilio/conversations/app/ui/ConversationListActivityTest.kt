@@ -9,6 +9,7 @@ import androidx.test.espresso.contrib.RecyclerViewActions.scrollToPosition
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.internal.runner.junit4.statement.UiThreadStatement
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.twilio.conversations.Conversation
@@ -49,7 +50,8 @@ class ConversationListActivityTest {
 
     @Before
     fun setUp() {
-        ConversationsClientWrapper.recreateInstance()
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        ConversationsClientWrapper.recreateInstance(context)
         conversationListViewModel = activityRule.activity.conversationsListViewModel
     }
 

@@ -22,13 +22,13 @@ class ConversationsClientWrapperTest {
     fun setUp() {
         context = InstrumentationRegistry.getInstrumentation().targetContext
 
-        ConversationsClientWrapper.recreateInstance()
+        ConversationsClientWrapper.recreateInstance(context)
         conversationsClientWrapper = ConversationsClientWrapper.INSTANCE
     }
 
     @Test
     fun create_withInvalidCredentials_returnsError() = runBlocking {
-        val response = conversationsClientWrapper.create(context.applicationContext, INVALID_IDENTITY, INVALID_PASSWORD)
+        val response = conversationsClientWrapper.create(INVALID_IDENTITY, INVALID_PASSWORD)
         assertTrue(response is Error)
     }
 }
