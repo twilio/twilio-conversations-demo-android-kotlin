@@ -8,7 +8,7 @@ buildscript {
     ext.kotlinx_coroutines_version = '1.4.1'
     ext.mockk_version = '1.10.0'
     ext.paging_version = '2.1.2'
-    ext.room_version = '2.2.6'
+    ext.room_version = '2.3.0'
 
     repositories {
         google()
