@@ -9,6 +9,7 @@ import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.google.firebase.FirebaseApp
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.twilio.conversations.ConversationsClient
 import com.twilio.conversations.ConversationsClient.LogLevel
 import com.twilio.conversations.app.common.LineNumberDebugTree
@@ -39,6 +40,7 @@ class ConversationsApplication : Application(), LifecycleObserver {
             Timber.plant(LineNumberDebugTree("Demo"))
         }
 
+        FirebaseAnalytics.getInstance(this)
         FirebaseApp.initializeApp(this)
         EmojiCompat.init(BundledEmojiCompatConfig(this))
         ConversationsClientWrapper.createInstance(this)

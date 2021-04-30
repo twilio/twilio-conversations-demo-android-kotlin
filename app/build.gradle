@@ -137,6 +137,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging:21.0.1'
     implementation 'com.google.firebase:firebase-crashlytics:17.4.0'
     implementation 'com.google.firebase:firebase-crashlytics-ndk:17.4.0'
+    implementation 'com.google.firebase:firebase-analytics:18.0.3'
 
     // Test
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
