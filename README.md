@@ -52,9 +52,11 @@ You can also pass these parameters to gradle during build without need to create
 3. Uncheck the **Check for valid Twilio signature** checkbox
 4. Insert the following code:
 ```
+// If you do not want to pay for other people using your Twilio service for their benefit,
+// generate user and password pairs different from what is presented here
 let users = {
-    user00: "password00",
-    user01: "password01"
+    user00: "password00", !!! CHANGE THE PASSWORD AND REMOVE THIS NOTE !!!
+    user01: "password01"  !!! CHANGE THE PASSWORD AND REMOVE THIS NOTE !!!
 };
 
 exports.handler = function(context, event, callback) {
