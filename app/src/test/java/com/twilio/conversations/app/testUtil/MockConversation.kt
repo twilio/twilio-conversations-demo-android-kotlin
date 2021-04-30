@@ -2,10 +2,10 @@ package com.twilio.conversations.app.testUtil
 
 import com.twilio.conversations.Attributes
 import com.twilio.conversations.Conversation
+import com.twilio.conversations.Conversation.ConversationStatus
+import com.twilio.conversations.Conversation.NotificationLevel
 import com.twilio.conversations.Conversation.SynchronizationStatus.ALL
 import com.twilio.conversations.ConversationListener
-import com.twilio.conversations.app.common.ConversationStatusFromInt
-import com.twilio.conversations.app.common.NotificationLevelFromInt
 import com.twilio.conversations.app.common.extensions.asDateString
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
 import org.mockito.ArgumentCaptor
@@ -28,9 +28,9 @@ fun ConversationDataItem.toConversationMock(
     whenCall(conversation.dateCreatedAsDate).thenReturn(Date(dateCreated))
     whenCall(conversation.createdBy).thenReturn(createdBy)
     whenCall(conversation.synchronizationStatus).thenReturn(synchronizationStatus)
-    whenCall(conversation.status).thenReturn(ConversationStatusFromInt(participatingStatus))
+    whenCall(conversation.status).thenReturn(ConversationStatus.fromInt(participatingStatus))
     whenCall(conversation.attributes).thenReturn(Attributes(attributes))
-    whenCall(conversation.notificationLevel).thenReturn(NotificationLevelFromInt(notificationLevel))
+    whenCall(conversation.notificationLevel).thenReturn(NotificationLevel.fromInt(notificationLevel))
 
     if (conversationListenerCaptor != null) {
         whenCall(conversation.addListener(conversationListenerCaptor.capture())).then {  }

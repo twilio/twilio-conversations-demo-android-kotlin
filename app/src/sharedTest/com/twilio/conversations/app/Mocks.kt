@@ -4,7 +4,6 @@ import com.twilio.conversations.Conversation
 import com.twilio.conversations.Message
 import com.twilio.conversations.app.common.enums.Direction
 import com.twilio.conversations.app.common.enums.SendStatus
-import com.twilio.conversations.app.common.value
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem

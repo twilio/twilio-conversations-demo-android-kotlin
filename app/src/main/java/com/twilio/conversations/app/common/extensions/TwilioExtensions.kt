@@ -6,7 +6,6 @@ import com.twilio.conversations.ConversationsClient.Properties
 import com.twilio.conversations.ErrorInfo.CONVERSATION_NOT_SYNCHRONIZED
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.CrashIn
-import com.twilio.conversations.app.common.value
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.suspendCancellableCoroutine
 import timber.log.Timber

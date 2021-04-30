@@ -23,7 +23,6 @@ import com.twilio.conversations.app.common.extensions.getMessageByIndex
 import com.twilio.conversations.app.common.extensions.sendMessage
 import com.twilio.conversations.app.common.extensions.setAttributes
 import com.twilio.conversations.app.common.getReactions
-import com.twilio.conversations.app.common.value
 import com.twilio.conversations.app.createTestMessageDataItem
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.models.ReactionAttributes
