@@ -22,18 +22,21 @@ open class Injector {
 
     private var fcmManagerImpl: FCMManagerImpl? = null
 
+    open fun createLoginManager(applicationContext: Context): LoginManager = LoginManagerImpl(
+        ConversationsClientWrapper.INSTANCE,
+        ConversationsRepositoryImpl.INSTANCE,
+        CredentialStorage(applicationContext),
+        FirebaseTokenRetriever()
+    )
+
     open fun createLoginViewModel(application: Application): LoginViewModel {
-        val credentialStorage = CredentialStorage(application.applicationContext)
-        val loginManager = LoginManagerImpl(ConversationsClientWrapper.INSTANCE,
-            ConversationsRepositoryImpl.INSTANCE, credentialStorage, FirebaseTokenRetriever())
+        val loginManager = createLoginManager(application)
 
         return LoginViewModel(loginManager)
     }
 
     open fun createSplashViewModel(application: Application): SplashViewModel {
-        val credentialStorage = CredentialStorage(application.applicationContext)
-        val loginManager = LoginManagerImpl(ConversationsClientWrapper.INSTANCE,
-            ConversationsRepositoryImpl.INSTANCE, credentialStorage, FirebaseTokenRetriever())
+        val loginManager = createLoginManager(application)
 
         val viewModel = SplashViewModel(loginManager, application)
         viewModel.initialize()
@@ -43,10 +46,8 @@ open class Injector {
 
     open fun createConversationListViewModel(application: Application): ConversationListViewModel {
         val conversationListManager = ConversationListManagerImpl(ConversationsClientWrapper.INSTANCE)
-        val credentialStorage = CredentialStorage(application.applicationContext)
         val userManager = UserManagerImpl(ConversationsClientWrapper.INSTANCE)
-        val loginManager = LoginManagerImpl(ConversationsClientWrapper.INSTANCE,
-            ConversationsRepositoryImpl.INSTANCE, credentialStorage, FirebaseTokenRetriever())
+        val loginManager = createLoginManager(application)
 
         return ConversationListViewModel(ConversationsRepositoryImpl.INSTANCE, conversationListManager, userManager, loginManager)
     }
