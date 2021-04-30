@@ -6,15 +6,19 @@ import androidx.paging.PagedList
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.doAnswer
 import com.nhaarman.mockitokotlin2.doReturn
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.whenever
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.data.models.RepositoryResult
-import com.twilio.conversations.app.manager.*
+import com.twilio.conversations.app.manager.ConversationListManager
+import com.twilio.conversations.app.manager.LoginManager
+import com.twilio.conversations.app.manager.MessageListManager
+import com.twilio.conversations.app.manager.ParticipantListManager
+import com.twilio.conversations.app.manager.UserManager
 import com.twilio.conversations.app.repository.ConversationsRepository
-import com.twilio.conversations.app.testUtil.mockito.mock
-import com.twilio.conversations.app.testUtil.mockito.whenCall
 import com.twilio.conversations.app.viewModel.ConversationDetailsViewModel
 import com.twilio.conversations.app.viewModel.ConversationListViewModel
 import com.twilio.conversations.app.viewModel.MessageListViewModel
@@ -24,7 +28,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.runBlocking
 
 val testInjector: TestInjector get() = injector as? TestInjector ?: error("You must call setupTestInjector() first")
 
@@ -41,17 +44,15 @@ open class TestInjector : Injector() {
     var messageResult = messageResultConversation.asFlow()
 
     private val repositoryMock: ConversationsRepository = mock {
-        whenCall(getUserConversations()) doAnswer { userConversationRepositoryResult }
-        whenCall(getConversationParticipants(any())) doAnswer { participantRepositoryResult }
-        whenCall(getTypingParticipants(any())) doAnswer { typingParticipantsList }
-        whenCall(getMessages(any(), any())) doAnswer { messageResult }
-        whenCall(getSelfUser()) doAnswer { emptyFlow() }
-        runBlocking {
-            whenCall(getConversation(any())) doAnswer { flowOf(RepositoryResult(null as ConversationDataItem?, RepositoryRequestStatus.COMPLETE)) }
-        }
+        whenever(it.getUserConversations()) doAnswer { userConversationRepositoryResult }
+        whenever(it.getConversationParticipants(any())) doAnswer { participantRepositoryResult }
+        whenever(it.getTypingParticipants(any())) doAnswer { typingParticipantsList }
+        whenever(it.getMessages(any(), any())) doAnswer { messageResult }
+        whenever(it.getSelfUser()) doAnswer { emptyFlow() }
+        whenever(it.getConversation(any())) doAnswer { flowOf(RepositoryResult(null, RepositoryRequestStatus.COMPLETE)) }
     }
 
-    private val messageListManagerMock: ConversationListManager = com.nhaarman.mockitokotlin2.mock {
+    private val messageListManagerMock: ConversationListManager = mock {
         onBlocking { createConversation(any()) } doReturn  ""
         onBlocking { joinConversation(any()) } doReturn Unit
         onBlocking { removeConversation(any()) } doReturn Unit
@@ -60,19 +61,19 @@ open class TestInjector : Injector() {
         onBlocking { unmuteConversation(any()) } doReturn Unit
     }
 
-    private val participantListManagerMock: ParticipantListManager = com.nhaarman.mockitokotlin2.mock {
+    private val participantListManagerMock: ParticipantListManager = mock {
         onBlocking { addChatParticipant(any()) } doReturn Unit
         onBlocking { addNonChatParticipant(any(), any(), any()) } doReturn Unit
         onBlocking { removeParticipant(any()) } doReturn Unit
     }
 
-    private val userManagerMock: UserManager = com.nhaarman.mockitokotlin2.mock {
+    private val userManagerMock: UserManager = mock {
         onBlocking { setFriendlyName(any()) } doReturn Unit
     }
 
-    private val messageListManager: MessageListManager = com.nhaarman.mockitokotlin2.mock()
+    private val messageListManager: MessageListManager = mock()
 
-    private val loginManagerMock: LoginManager = com.nhaarman.mockitokotlin2.mock()
+    private val loginManagerMock: LoginManager = mock()
 
     override fun createConversationListViewModel(application: Application)
             = ConversationListViewModel(repositoryMock, messageListManagerMock, userManagerMock, loginManagerMock)
