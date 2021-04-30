@@ -1,6 +1,6 @@
 # Conversations Demo Application Overview
 
-This demo app SDK version: ![](https://img.shields.io/badge/SDK%20version-1.3.1-blue.svg)
+This demo app SDK version: ![](https://img.shields.io/badge/SDK%20version-1.4.1-blue.svg)
 
 Latest available SDK version: [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.twilio/conversations-android/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.twilio/conversations-android)
 

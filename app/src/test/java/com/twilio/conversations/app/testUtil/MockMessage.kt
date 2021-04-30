@@ -5,7 +5,6 @@ package com.twilio.conversations.app.testUtil
 import com.twilio.conversations.Attributes
 import com.twilio.conversations.Message
 import com.twilio.conversations.Participant
-import com.twilio.conversations.app.common.MessageTypeFromInt
 import com.twilio.conversations.app.common.extensions.asDateString
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 import org.powermock.api.mockito.PowerMockito
@@ -23,7 +22,7 @@ fun MessageDataItem.toMessageMock(participant: Participant): Message {
     whenCall(message.dateCreated).thenReturn(dateCreated.asDateString())
     whenCall(message.dateCreatedAsDate).thenReturn(Date(dateCreated))
     whenCall(message.participantSid).thenReturn(participantSid)
-    whenCall(message.type).thenReturn(MessageTypeFromInt(type))
+    whenCall(message.type).thenReturn(Message.Type.fromInt(type))
     whenCall(message.attributes).thenReturn(Attributes(attributes))
     whenCall(message.messageBody).thenReturn(body)
     whenCall(message.messageIndex).thenReturn(index)
