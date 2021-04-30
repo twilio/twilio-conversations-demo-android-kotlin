@@ -10,8 +10,7 @@ import com.twilio.conversations.app.common.SingleLiveEvent
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.ConversationsError.EMPTY_CREDENTIALS
 import com.twilio.conversations.app.common.enums.ConversationsError.TOKEN_ACCESS_DENIED
-import com.twilio.conversations.app.data.models.Client
-import com.twilio.conversations.app.data.models.Error
+import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.manager.LoginManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -59,14 +58,11 @@ class SplashViewModel(
         isProgressVisible.value = true
 
         viewModelScope.launch {
-            when (val response =
-                loginManager.signInUsingStoredCredentials()) {
-                is Client -> {
-                    onCloseSplashScreen.call()
-                }
-                is Error -> {
-                    handleError(response.error)
-                }
+            try {
+                loginManager.signInUsingStoredCredentials()
+                onCloseSplashScreen.call()
+            } catch (e: ConversationsException) {
+                handleError(e.error)
             }
         }
     }

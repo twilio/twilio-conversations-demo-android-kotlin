@@ -3,10 +3,9 @@ package com.twilio.conversations.app.manager
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.twilio.conversations.app.common.FirebaseTokenRetriever
 import com.twilio.conversations.app.common.enums.ConversationsError
+import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.CredentialStorage
-import com.twilio.conversations.app.data.models.Client
-import com.twilio.conversations.app.data.models.Error
 import com.twilio.conversations.app.repository.ConversationsRepository
 import com.twilio.conversations.app.testUtil.*
 import io.mockk.MockKAnnotations
@@ -37,8 +36,6 @@ import org.powermock.modules.junit4.PowerMockRunner
     ConversationsClientWrapper::class,
     CredentialStorage::class,
     ConversationsRepository::class,
-    Client::class,
-    Error::class
 )
 class LoginManagerTest {
     @Rule
@@ -47,12 +44,9 @@ class LoginManagerTest {
     private val mainThreadSurrogate = newSingleThreadContext("UI thread")
 
     private lateinit var loginManager: LoginManager
-    private lateinit var error: Error
 
     @MockK
     private lateinit var firebaseTokenRetriever: FirebaseTokenRetriever
-    @Mock
-    private lateinit var client: Client
     @Mock
     private lateinit var conversationsClientWrapper: ConversationsClientWrapper
     @Mock
@@ -90,46 +84,44 @@ class LoginManagerTest {
     @Test
     fun `signInUsingStoredCredentials() should not attempt sign in when credential storage is empty`() = runBlockingTest {
         credentialStorageEmpty(credentialStorage)
-        loginManager.signInUsingStoredCredentials()
+        runCatching { loginManager.signInUsingStoredCredentials() }
         verify(conversationsClientWrapper, times(0)).create(INVALID_CREDENTIAL, INVALID_CREDENTIAL)
     }
 
     @Test
-    fun `signIn() should attempt to store credentials when response is Client`() = runBlockingTest {
-        whenCall(conversationsClientWrapper.create(VALID_CREDENTIAL, VALID_CREDENTIAL)).thenReturn(client)
+    fun `signIn() should attempt to store credentials when client is created`() = runBlockingTest {
         loginManager.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
         verify(credentialStorage, times(1)).storeCredentials(VALID_CREDENTIAL, VALID_CREDENTIAL)
     }
 
     @Test
-    fun `signIn() should not attempt to clear credentials when response is fatal error`() = runBlockingTest {
-        error = Error(ConversationsError.TOKEN_ACCESS_DENIED)
-        whenCall(conversationsClientWrapper.create(INVALID_CREDENTIAL, INVALID_CREDENTIAL)).thenReturn(error)
-        loginManager.signIn(INVALID_CREDENTIAL, INVALID_CREDENTIAL)
+    fun `signIn() should not attempt to clear credentials when fatal error occurred`() = runBlockingTest {
+        val error = ConversationsError.TOKEN_ACCESS_DENIED
+        whenCall(conversationsClientWrapper.create(INVALID_CREDENTIAL, INVALID_CREDENTIAL)).then { throw ConversationsException(error) }
+        runCatching { loginManager.signIn(INVALID_CREDENTIAL, INVALID_CREDENTIAL) }
         verify(credentialStorage, times(0)).clearCredentials()
     }
 
     @Test
-    fun `signIn() should not attempt to store credentials when response is not Client`() = runBlockingTest {
-        error = Error(ConversationsError.GENERIC_ERROR)
-        whenCall(conversationsClientWrapper.create(INVALID_CREDENTIAL, INVALID_CREDENTIAL)).thenReturn(error)
-        loginManager.signIn(INVALID_CREDENTIAL, INVALID_CREDENTIAL)
+    fun `signIn() should not attempt to store credentials when error occurred`() = runBlockingTest {
+        val error = ConversationsError.GENERIC_ERROR
+        whenCall(conversationsClientWrapper.create(INVALID_CREDENTIAL, INVALID_CREDENTIAL)).then { throw ConversationsException(error) }
+        runCatching { loginManager.signIn(INVALID_CREDENTIAL, INVALID_CREDENTIAL) }
         verify(credentialStorage, times(0)).storeCredentials(INVALID_CREDENTIAL, INVALID_CREDENTIAL)
     }
 
     @Test
     fun `signInUsingStoredCredentials() should not attempt to store credentials`() = runBlockingTest {
-        whenCall(conversationsClientWrapper.create(VALID_CREDENTIAL, VALID_CREDENTIAL)).thenReturn(client)
         loginManager.signInUsingStoredCredentials()
         verify(credentialStorage, times(0)).storeCredentials(VALID_CREDENTIAL, VALID_CREDENTIAL)
     }
 
     @Test
-    fun `signInUsingStoredCredentials() should attempt to clear credentials when response is fatal error`() = runBlockingTest {
+    fun `signInUsingStoredCredentials() should attempt to clear credentials when fatal error occurred`() = runBlockingTest {
         credentialStorageNotEmpty(credentialStorage, OUTDATED_CREDENTIAL)
-        error = Error(ConversationsError.TOKEN_ACCESS_DENIED)
-        whenCall(conversationsClientWrapper.create(OUTDATED_CREDENTIAL, OUTDATED_CREDENTIAL)).thenReturn(error)
-        loginManager.signInUsingStoredCredentials()
+        val error = ConversationsError.TOKEN_ACCESS_DENIED
+        whenCall(conversationsClientWrapper.create(OUTDATED_CREDENTIAL, OUTDATED_CREDENTIAL)).then { throw ConversationsException(error) }
+        runCatching { loginManager.signInUsingStoredCredentials() }
         verify(credentialStorage, times(1)).clearCredentials()
     }
 
