@@ -1,16 +1,12 @@
 package com.twilio.conversations.app.viewModel
 
 import android.app.Application
-import android.content.Context
-import android.content.res.Resources
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.twilio.conversations.app.R
 import com.twilio.conversations.app.SPLASH_TEXT_CONNECTING
 import com.twilio.conversations.app.SPLASH_TEXT_OTHER
 import com.twilio.conversations.app.common.enums.ConversationsError
-import com.twilio.conversations.app.common.enums.ConversationsError.GENERIC_ERROR
-import com.twilio.conversations.app.common.enums.ConversationsError.TOKEN_ACCESS_DENIED
-import com.twilio.conversations.app.common.enums.ConversationsError.TOKEN_ERROR
+import com.twilio.conversations.app.common.enums.ConversationsError.*
 import com.twilio.conversations.app.data.CredentialStorage
 import com.twilio.conversations.app.data.models.Client
 import com.twilio.conversations.app.data.models.Error
@@ -18,9 +14,7 @@ import com.twilio.conversations.app.manager.LoginManager
 import com.twilio.conversations.app.testUtil.waitCalled
 import com.twilio.conversations.app.testUtil.waitValue
 import com.twilio.conversations.app.testUtil.whenCall
-import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertFalse
-import junit.framework.TestCase.assertTrue
+import junit.framework.TestCase.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
@@ -34,10 +28,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.reset
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
+import org.mockito.Mockito.*
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
 
@@ -60,8 +51,6 @@ class SplashViewModelTest {
     @Mock
     private lateinit var application: Application
     @Mock
-    private lateinit var context: Context
-    @Mock
     private lateinit var client: Client
     @Mock
     private lateinit var loginManager: LoginManager
@@ -74,12 +63,7 @@ class SplashViewModelTest {
 
         splashViewModel = SplashViewModel(loginManager, application)
 
-        whenCall(application.applicationContext).thenReturn(context)
-        whenCall(context.applicationContext).thenReturn(context)
-        whenCall(context.resources).thenReturn(mock(Resources::class.java))
-        whenCall(application.getString(R.string.splash_connecting)).thenReturn(
-            SPLASH_TEXT_CONNECTING
-        )
+        whenCall(application.getString(R.string.splash_connecting)).thenReturn(SPLASH_TEXT_CONNECTING)
     }
 
     @After
@@ -95,7 +79,7 @@ class SplashViewModelTest {
         splashViewModel.signInOrLaunchSignInActivity()
 
         verify(loginManager).isLoggedIn()
-        verify(loginManager).signInUsingStoredCredentials(context)
+        verify(loginManager).signInUsingStoredCredentials()
         assertFalse(splashViewModel.onCloseSplashScreen.waitCalled())
     }
 
@@ -106,7 +90,7 @@ class SplashViewModelTest {
         splashViewModel.initialize()
 
         verify(loginManager).isLoggedIn()
-        verify(loginManager).signInUsingStoredCredentials(context)
+        verify(loginManager).signInUsingStoredCredentials()
         assertFalse(splashViewModel.onCloseSplashScreen.waitCalled())
     }
 
@@ -115,7 +99,7 @@ class SplashViewModelTest {
         whenCall(loginManager.isLoggedIn()).thenReturn(true)
         splashViewModel.signInOrLaunchSignInActivity()
         verify(loginManager).isLoggedIn()
-        verify(loginManager, times(0)).signInUsingStoredCredentials(context)
+        verify(loginManager, times(0)).signInUsingStoredCredentials()
         assertTrue(splashViewModel.onCloseSplashScreen.waitCalled())
     }
 
@@ -126,7 +110,7 @@ class SplashViewModelTest {
 
         splashViewModel.signInOrLaunchSignInActivity()
 
-        verify(loginManager, times(1)).signInUsingStoredCredentials(context)
+        verify(loginManager, times(1)).signInUsingStoredCredentials()
     }
 
     @Test
@@ -136,7 +120,7 @@ class SplashViewModelTest {
 
         splashViewModel.signInOrLaunchSignInActivity()
 
-        verify(loginManager, times(0)).signInUsingStoredCredentials(context)
+        verify(loginManager, times(0)).signInUsingStoredCredentials()
     }
 
     @Test
@@ -163,9 +147,7 @@ class SplashViewModelTest {
                 SPLASH_TEXT_OTHER
             )
 
-            whenCall(loginManager.signInUsingStoredCredentials(application.applicationContext)).thenReturn(
-                err
-            )
+            whenCall(loginManager.signInUsingStoredCredentials()).thenReturn(err)
             splashViewModel.signInOrLaunchSignInActivity()
 
             assertEquals(true, splashViewModel.isRetryVisible.waitValue())
@@ -184,9 +166,7 @@ class SplashViewModelTest {
                 SPLASH_TEXT_OTHER
             )
 
-            whenCall(loginManager.signInUsingStoredCredentials(application.applicationContext)).thenReturn(
-                err
-            )
+            whenCall(loginManager.signInUsingStoredCredentials()).thenReturn(err)
             splashViewModel.signInOrLaunchSignInActivity()
 
             assertEquals(true, splashViewModel.isRetryVisible.waitValue())
@@ -200,9 +180,7 @@ class SplashViewModelTest {
     fun `Should call onShowLoginScreen when response is fatal error`() = runBlocking {
         val err = Error(TOKEN_ACCESS_DENIED)
         whenCall(loginManager.isLoggedIn()).thenReturn(false)
-        whenCall(loginManager.signInUsingStoredCredentials(application.applicationContext)).thenReturn(
-            err
-        )
+        whenCall(loginManager.signInUsingStoredCredentials()).thenReturn(err)
 
         splashViewModel.signInOrLaunchSignInActivity()
 
@@ -213,9 +191,7 @@ class SplashViewModelTest {
     fun `Should call onShowLoginScreen when response is empty credentials error`() = runBlocking {
         val err = Error(ConversationsError.EMPTY_CREDENTIALS)
         whenCall(loginManager.isLoggedIn()).thenReturn(false)
-        whenCall(loginManager.signInUsingStoredCredentials(application.applicationContext)).thenReturn(
-            err
-        )
+        whenCall(loginManager.signInUsingStoredCredentials()).thenReturn(err)
 
         splashViewModel.signInOrLaunchSignInActivity()
 
@@ -225,7 +201,7 @@ class SplashViewModelTest {
     @Test
     fun `Should call onCloseSplashScreen when sign in successful`() = runBlockingTest {
         whenCall(loginManager.isLoggedIn()).thenReturn(false)
-        whenCall(loginManager.signInUsingStoredCredentials(context)).thenReturn(client)
+        whenCall(loginManager.signInUsingStoredCredentials()).thenReturn(client)
 
         splashViewModel.signInOrLaunchSignInActivity()
 

@@ -7,7 +7,7 @@ import androidx.annotation.RestrictTo.Scope
 import com.twilio.conversations.ConversationsClient
 import com.twilio.conversations.app.BuildConfig
 import com.twilio.conversations.app.common.enums.ConversationsError
-import com.twilio.conversations.app.common.extensions.createClientAsync
+import com.twilio.conversations.app.common.extensions.createAndSyncClient
 import com.twilio.conversations.app.data.models.Client
 import com.twilio.conversations.app.data.models.Error
 import com.twilio.conversations.app.data.models.Response
@@ -17,7 +17,7 @@ import timber.log.Timber
 import java.io.FileNotFoundException
 import java.net.URL
 
-class ConversationsClientWrapper {
+class ConversationsClientWrapper(private val applicationContext: Context) {
 
     private var deferredClient = CompletableDeferred<ConversationsClient>()
 
@@ -31,13 +31,13 @@ class ConversationsClientWrapper {
     /**
      * Get token and call createClient if token is not null
      */
-    suspend fun create(applicationContext: Context, identity: String, password: String): Response {
+    suspend fun create(identity: String, password: String): Response {
         Timber.d("create")
         return when (val tokenResponse = getToken(identity, password)) {
             is Error -> tokenResponse
             is Token -> {
                 Timber.d("token: ${tokenResponse.token}")
-                val createClientResponse = createClient(applicationContext, tokenResponse.token)
+                val createClientResponse = createAndSyncClient(applicationContext, tokenResponse.token)
                 if (createClientResponse is Client) {
                     this@ConversationsClientWrapper.identity = identity
                     this@ConversationsClientWrapper.password = password
@@ -52,17 +52,6 @@ class ConversationsClientWrapper {
     suspend fun shutdown() {
         getConversationsClient().shutdown()
         deferredClient = CompletableDeferred()
-    }
-
-    /**
-     * Create client and return it on success, otherwise return error
-     */
-    private suspend fun createClient(applicationContext: Context, token: String): Response {
-        return createClientAsync(
-            applicationContext,
-            token,
-            ConversationsClient.Properties.newBuilder().createProperties()
-        )
     }
 
     /**
@@ -110,20 +99,20 @@ class ConversationsClientWrapper {
 
         private var _instance: ConversationsClientWrapper? = null
 
-        fun createInstance() {
+        fun createInstance(applicationContext: Context) {
             check(_instance == null) { "ConversationsClientWrapper singleton instance has been already created" }
-            _instance = ConversationsClientWrapper()
+            _instance = ConversationsClientWrapper(applicationContext)
         }
 
         @RestrictTo(Scope.TESTS)
-        fun recreateInstance() {
+        fun recreateInstance(applicationContext: Context) {
             _instance?.let { instance ->
                 // Shutdown old client if it will ever be created
                 GlobalScope.launch { instance.getConversationsClient().shutdown() }
             }
 
             _instance = null
-            createInstance()
+            createInstance(applicationContext)
         }
     }
 }

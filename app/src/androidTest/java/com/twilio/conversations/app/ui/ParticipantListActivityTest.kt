@@ -5,36 +5,26 @@ import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.typeTextIntoFocusedView
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.contrib.RecyclerViewActions.scrollToPosition
-import androidx.test.espresso.matcher.ViewMatchers.Visibility
-import androidx.test.espresso.matcher.ViewMatchers.hasDescendant
-import androidx.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed
-import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
-import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
-import androidx.test.espresso.matcher.ViewMatchers.withId
-import androidx.test.espresso.matcher.ViewMatchers.withText
+import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.internal.runner.junit4.statement.UiThreadStatement
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.twilio.conversations.app.PARTICIPANT_COUNT
-import com.twilio.conversations.app.R
+import com.twilio.conversations.app.*
 import com.twilio.conversations.app.adapters.ConversationListAdapter
 import com.twilio.conversations.app.common.asParticipantListViewItems
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.setupTestInjector
 import com.twilio.conversations.app.common.testInjector
-import com.twilio.conversations.app.createTestParticipantDataItem
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.ParticipantListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.data.models.RepositoryResult
-import com.twilio.conversations.app.getMockedParticipants
 import com.twilio.conversations.app.testUtil.WaitForViewMatcher
 import com.twilio.conversations.app.testUtil.atPosition
 import com.twilio.conversations.app.testUtil.waitUntilPopupStateChanged
-import com.twilio.conversations.app.verifyCalled
 import com.twilio.conversations.app.viewModel.ParticipantListViewModel
 import kotlinx.android.synthetic.main.activity_participants.*
 import kotlinx.coroutines.flow.flowOf
@@ -59,7 +49,8 @@ class ParticipantListActivityTest {
     @Before
     fun setUp() {
         activityRule.launchActivity(ParticipantListActivity.getStartIntent(InstrumentationRegistry.getInstrumentation().targetContext, conversationSid))
-        ConversationsClientWrapper.recreateInstance()
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        ConversationsClientWrapper.recreateInstance(context)
         participantListViewModel = activityRule.activity.participantListViewModel
     }
 

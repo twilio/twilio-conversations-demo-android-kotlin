@@ -60,7 +60,7 @@ class SplashViewModel(
 
         viewModelScope.launch {
             when (val response =
-                loginManager.signInUsingStoredCredentials(application.applicationContext)) {
+                loginManager.signInUsingStoredCredentials()) {
                 is Client -> {
                     onCloseSplashScreen.call()
                 }

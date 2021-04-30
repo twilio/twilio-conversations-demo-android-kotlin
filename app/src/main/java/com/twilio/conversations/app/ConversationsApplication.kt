@@ -25,7 +25,7 @@ class ConversationsApplication : Application() {
 
         FirebaseApp.initializeApp(this)
         EmojiCompat.init(BundledEmojiCompatConfig(this))
-        ConversationsClientWrapper.createInstance()
+        ConversationsClientWrapper.createInstance(this)
         LocalCacheProvider.createInstance(this)
         ConversationsRepositoryImpl.createInstance(ConversationsClientWrapper.INSTANCE, LocalCacheProvider.INSTANCE)
 

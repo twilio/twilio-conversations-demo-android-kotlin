@@ -27,7 +27,7 @@ open class Injector {
         val loginManager = LoginManagerImpl(ConversationsClientWrapper.INSTANCE,
             ConversationsRepositoryImpl.INSTANCE, credentialStorage, FirebaseTokenRetriever())
 
-        return LoginViewModel(loginManager, application)
+        return LoginViewModel(loginManager)
     }
 
     open fun createSplashViewModel(application: Application): SplashViewModel {

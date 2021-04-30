@@ -1,16 +1,9 @@
 package com.twilio.conversations.app.ui
 
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.action.ViewActions.click
-import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
-import androidx.test.espresso.action.ViewActions.replaceText
-import androidx.test.espresso.action.ViewActions.scrollTo
+import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.matcher.ViewMatchers.Visibility
-import androidx.test.espresso.matcher.ViewMatchers.hasDescendant
-import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
-import androidx.test.espresso.matcher.ViewMatchers.withId
-import androidx.test.espresso.matcher.ViewMatchers.withText
+import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.internal.runner.junit4.statement.UiThreadStatement
 import androidx.test.platform.app.InstrumentationRegistry
@@ -48,7 +41,8 @@ class ConversationDetailsActivityTest {
     @Before
     fun setUp() {
         activityRule.launchActivity(ConversationDetailsActivity.getStartIntent(InstrumentationRegistry.getInstrumentation().targetContext, conversationSid))
-        ConversationsClientWrapper.recreateInstance()
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        ConversationsClientWrapper.recreateInstance(context)
         conversationDetailsViewModel = activityRule.activity.conversationDetailsViewModel
     }
 

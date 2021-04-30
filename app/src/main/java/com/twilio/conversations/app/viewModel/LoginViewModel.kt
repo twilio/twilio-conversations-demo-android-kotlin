@@ -1,6 +1,5 @@
 package com.twilio.conversations.app.viewModel
 
-import android.app.Application
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,7 +13,6 @@ import timber.log.Timber
 
 class LoginViewModel(
     private val loginManager: LoginManager,
-    private val application: Application
 ) : ViewModel() {
 
     val isLoading = MutableLiveData<Boolean>()
@@ -41,7 +39,7 @@ class LoginViewModel(
         Timber.d("creds valid")
         isLoading.value = true
         viewModelScope.launch {
-            when (val response = loginManager.signIn(application.applicationContext, identity, password)) {
+            when (val response = loginManager.signIn(identity, password)) {
                 is Client -> onSignInSuccess.call()
                 is Error -> {
                     isLoading.value = false
