@@ -8,15 +8,12 @@ import com.twilio.conversations.app.common.extensions.registerFCMToken
 import com.twilio.conversations.app.common.extensions.unregisterFCMToken
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.CredentialStorage
-import com.twilio.conversations.app.data.models.Client
-import com.twilio.conversations.app.data.models.Error
-import com.twilio.conversations.app.data.models.Response
 import com.twilio.conversations.app.repository.ConversationsRepository
 import timber.log.Timber
 
 interface LoginManager {
-    suspend fun signIn(identity: String, password: String): Response
-    suspend fun signInUsingStoredCredentials(): Response
+    suspend fun signIn(identity: String, password: String)
+    suspend fun signInUsingStoredCredentials()
     suspend fun signOut()
     suspend fun registerForFcm()
     suspend fun unregisterFromFcm()
@@ -53,30 +50,29 @@ class LoginManagerImpl(
         }
     }
 
-    override suspend fun signIn(identity: String, password: String): Response {
+    override suspend fun signIn(identity: String, password: String) {
         Timber.d("signIn")
-        val response = conversationsClient.create(identity, password)
-        if (response is Client) {
-            credentialStorage.storeCredentials(identity, password)
-            conversationsRepository.subscribeToConversationsClientEvents()
-            registerForFcm()
-        }
-        return response
+        conversationsClient.create(identity, password)
+        credentialStorage.storeCredentials(identity, password)
+        conversationsRepository.subscribeToConversationsClientEvents()
+        registerForFcm()
     }
 
-    override suspend fun signInUsingStoredCredentials(): Response {
+    override suspend fun signInUsingStoredCredentials() {
         Timber.d("signInUsingStoredCredentials")
-        if (credentialStorage.isEmpty()) return Error(EMPTY_CREDENTIALS)
+        if (credentialStorage.isEmpty()) throw ConversationsException(EMPTY_CREDENTIALS)
+
         val identity = credentialStorage.identity
         val password = credentialStorage.password
-        val response = conversationsClient.create(identity, password)
-        if (response is Error) {
-            handleError(response.error)
-        } else {
+
+        try {
+            conversationsClient.create(identity, password)
             conversationsRepository.subscribeToConversationsClientEvents()
             registerForFcm()
+        } catch (e: ConversationsException) {
+            handleError(e.error)
+            throw e
         }
-        return response
     }
 
     override suspend fun signOut() {

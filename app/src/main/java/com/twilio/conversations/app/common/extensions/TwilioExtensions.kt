@@ -7,8 +7,6 @@ import com.twilio.conversations.ErrorInfo.CONVERSATION_NOT_SYNCHRONIZED
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.CrashIn
 import com.twilio.conversations.app.common.value
-import com.twilio.conversations.app.data.models.Client
-import com.twilio.conversations.app.data.models.Response
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.suspendCancellableCoroutine
 import timber.log.Timber
@@ -20,10 +18,10 @@ class ConversationsException(val error: ConversationsError) : Exception("$error"
     constructor(errorInfo: ErrorInfo) : this(ConversationsError.fromErrorInfo(errorInfo))
 }
 
-suspend fun createAndSyncClient(context: Context, token: String, properties: Properties = Properties.newBuilder().createProperties()): Response {
+suspend fun createAndSyncClient(context: Context, token: String, properties: Properties = Properties.newBuilder().createProperties()): ConversationsClient {
     val client = createConversationsClient(context, token, properties)
     client.waitForSynchronization()
-    return Client(client)
+    return client
 }
 
 private suspend fun createConversationsClient(applicationContext: Context, token: String, properties: Properties) =

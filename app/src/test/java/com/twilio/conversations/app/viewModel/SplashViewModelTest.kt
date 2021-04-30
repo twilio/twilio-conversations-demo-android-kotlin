@@ -6,10 +6,8 @@ import com.twilio.conversations.app.R
 import com.twilio.conversations.app.SPLASH_TEXT_CONNECTING
 import com.twilio.conversations.app.SPLASH_TEXT_OTHER
 import com.twilio.conversations.app.common.enums.ConversationsError
-import com.twilio.conversations.app.common.enums.ConversationsError.*
+import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.data.CredentialStorage
-import com.twilio.conversations.app.data.models.Client
-import com.twilio.conversations.app.data.models.Error
 import com.twilio.conversations.app.manager.LoginManager
 import com.twilio.conversations.app.testUtil.waitCalled
 import com.twilio.conversations.app.testUtil.waitValue
@@ -39,7 +37,6 @@ import org.powermock.modules.junit4.PowerMockRunner
     SplashViewModel::class,
     LoginManager::class,
     CredentialStorage::class,
-    Client::class
 )
 class SplashViewModelTest {
 
@@ -50,8 +47,6 @@ class SplashViewModelTest {
 
     @Mock
     private lateinit var application: Application
-    @Mock
-    private lateinit var client: Client
     @Mock
     private lateinit var loginManager: LoginManager
     @Mock
@@ -80,7 +75,7 @@ class SplashViewModelTest {
 
         verify(loginManager).isLoggedIn()
         verify(loginManager).signInUsingStoredCredentials()
-        assertFalse(splashViewModel.onCloseSplashScreen.waitCalled())
+        assertTrue(splashViewModel.onCloseSplashScreen.waitCalled())
     }
 
     @Test
@@ -91,7 +86,7 @@ class SplashViewModelTest {
 
         verify(loginManager).isLoggedIn()
         verify(loginManager).signInUsingStoredCredentials()
-        assertFalse(splashViewModel.onCloseSplashScreen.waitCalled())
+        assertTrue(splashViewModel.onCloseSplashScreen.waitCalled())
     }
 
     @Test
@@ -132,22 +127,18 @@ class SplashViewModelTest {
         assertEquals(false, splashViewModel.isRetryVisible.waitValue())
         assertEquals(false, splashViewModel.isSignOutVisible.waitValue())
         assertEquals(true, splashViewModel.isProgressVisible.waitValue())
-        assertEquals(
-            SPLASH_TEXT_CONNECTING,
-            splashViewModel.statusText.waitValue()
+        assertEquals(SPLASH_TEXT_CONNECTING, splashViewModel.statusText.waitValue()
         )
     }
 
     @Test
-    fun `Should change visibility fields when sign in response is non-fatal error (GENERIC_ERROR case)`() =
+    fun `Should change visibility fields when non-fatal error occurred`() =
         runBlockingTest {
-            val err = Error(GENERIC_ERROR)
+            val error = ConversationsError.GENERIC_ERROR
             whenCall(loginManager.isLoggedIn()).thenReturn(false)
-            whenCall(application.getString(R.string.splash_connection_error)).thenReturn(
-                SPLASH_TEXT_OTHER
-            )
+            whenCall(application.getString(R.string.splash_connection_error)).thenReturn(SPLASH_TEXT_OTHER)
 
-            whenCall(loginManager.signInUsingStoredCredentials()).thenReturn(err)
+            whenCall(loginManager.signInUsingStoredCredentials()).then { throw ConversationsException(error) }
             splashViewModel.signInOrLaunchSignInActivity()
 
             assertEquals(true, splashViewModel.isRetryVisible.waitValue())
@@ -158,15 +149,13 @@ class SplashViewModelTest {
         }
 
     @Test
-    fun `Should change visibility fields when sign in response is non-fatal error (TOKEN_ERROR case)`() =
+    fun `Should change visibility fields when non-fatal error occurred (TOKEN_ERROR case)`() =
         runBlockingTest {
-            val err = Error(TOKEN_ERROR)
+            val error = ConversationsError.TOKEN_ERROR
             whenCall(loginManager.isLoggedIn()).thenReturn(false)
-            whenCall(application.getString(R.string.splash_connection_error)).thenReturn(
-                SPLASH_TEXT_OTHER
-            )
+            whenCall(application.getString(R.string.splash_connection_error)).thenReturn(SPLASH_TEXT_OTHER)
 
-            whenCall(loginManager.signInUsingStoredCredentials()).thenReturn(err)
+            whenCall(loginManager.signInUsingStoredCredentials()).then { throw ConversationsException(error) }
             splashViewModel.signInOrLaunchSignInActivity()
 
             assertEquals(true, splashViewModel.isRetryVisible.waitValue())
@@ -177,10 +166,10 @@ class SplashViewModelTest {
         }
 
     @Test
-    fun `Should call onShowLoginScreen when response is fatal error`() = runBlocking {
-        val err = Error(TOKEN_ACCESS_DENIED)
+    fun `Should call onShowLoginScreen when fatal error occurred`() = runBlocking {
+        val error = ConversationsError.TOKEN_ACCESS_DENIED
         whenCall(loginManager.isLoggedIn()).thenReturn(false)
-        whenCall(loginManager.signInUsingStoredCredentials()).thenReturn(err)
+        whenCall(loginManager.signInUsingStoredCredentials()).then { throw ConversationsException(error) }
 
         splashViewModel.signInOrLaunchSignInActivity()
 
@@ -189,9 +178,9 @@ class SplashViewModelTest {
 
     @Test
     fun `Should call onShowLoginScreen when response is empty credentials error`() = runBlocking {
-        val err = Error(ConversationsError.EMPTY_CREDENTIALS)
+        val error = ConversationsError.EMPTY_CREDENTIALS
         whenCall(loginManager.isLoggedIn()).thenReturn(false)
-        whenCall(loginManager.signInUsingStoredCredentials()).thenReturn(err)
+        whenCall(loginManager.signInUsingStoredCredentials()).then { throw ConversationsException(error) }
 
         splashViewModel.signInOrLaunchSignInActivity()
 
@@ -201,7 +190,6 @@ class SplashViewModelTest {
     @Test
     fun `Should call onCloseSplashScreen when sign in successful`() = runBlockingTest {
         whenCall(loginManager.isLoggedIn()).thenReturn(false)
-        whenCall(loginManager.signInUsingStoredCredentials()).thenReturn(client)
 
         splashViewModel.signInOrLaunchSignInActivity()
 

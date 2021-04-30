@@ -6,12 +6,10 @@ import androidx.annotation.RestrictTo
 import androidx.annotation.RestrictTo.Scope
 import com.twilio.conversations.ConversationsClient
 import com.twilio.conversations.app.BuildConfig
-import com.twilio.conversations.app.common.enums.ConversationsError
+import com.twilio.conversations.app.common.enums.ConversationsError.TOKEN_ACCESS_DENIED
+import com.twilio.conversations.app.common.enums.ConversationsError.TOKEN_ERROR
+import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.common.extensions.createAndSyncClient
-import com.twilio.conversations.app.data.models.Client
-import com.twilio.conversations.app.data.models.Error
-import com.twilio.conversations.app.data.models.Response
-import com.twilio.conversations.app.data.models.Token
 import kotlinx.coroutines.*
 import timber.log.Timber
 import java.io.FileNotFoundException
@@ -31,22 +29,17 @@ class ConversationsClientWrapper(private val applicationContext: Context) {
     /**
      * Get token and call createClient if token is not null
      */
-    suspend fun create(identity: String, password: String): Response {
+    suspend fun create(identity: String, password: String) {
         Timber.d("create")
-        return when (val tokenResponse = getToken(identity, password)) {
-            is Error -> tokenResponse
-            is Token -> {
-                Timber.d("token: ${tokenResponse.token}")
-                val createClientResponse = createAndSyncClient(applicationContext, tokenResponse.token)
-                if (createClientResponse is Client) {
-                    this@ConversationsClientWrapper.identity = identity
-                    this@ConversationsClientWrapper.password = password
-                    this@ConversationsClientWrapper.deferredClient.complete(createClientResponse.conversationsClient)
-                }
-                createClientResponse
-            }
-            else -> getGenericError()
-        }
+
+        val token = getToken(identity, password)
+        Timber.d("token: $token")
+
+        val client = createAndSyncClient(applicationContext, token)
+
+        this.identity = identity
+        this.password = password
+        this.deferredClient.complete(client)
     }
 
     suspend fun shutdown() {
@@ -57,38 +50,22 @@ class ConversationsClientWrapper(private val applicationContext: Context) {
     /**
      * Fetch Twilio access token and return it, if token is non-null, otherwise return error
      */
-    private suspend fun getToken(userName: String, password: String): Response {
-        return withContext(Dispatchers.IO) {
-            try {
-                val uri = Uri.parse(TOKEN_URL)
-                    .buildUpon()
-                    .appendQueryParameter(QUERY_IDENTITY, userName)
-                    .appendQueryParameter(QUERY_PASSWORD, password)
-                    .build()
-                    .toString()
-                Token(URL(uri).readText())
-            } catch (e: FileNotFoundException) {
-                getTokenAccessDeniedError()
-            } catch (e: Exception) {
-                getTokenError()
-            }
+    private suspend fun getToken(username: String, password: String) = withContext(Dispatchers.IO) {
+        try {
+            val uri = Uri.parse(TOKEN_URL)
+                .buildUpon()
+                .appendQueryParameter(QUERY_IDENTITY, username)
+                .appendQueryParameter(QUERY_PASSWORD, password)
+                .build()
+                .toString()
+
+            return@withContext URL(uri).readText()
+        } catch (e: FileNotFoundException) {
+            throw ConversationsException(TOKEN_ACCESS_DENIED)
+        } catch (e: Exception) {
+            throw ConversationsException(TOKEN_ERROR)
         }
     }
-
-    /**
-     * Construct generic token error
-     */
-    private fun getTokenError() = Error(ConversationsError.TOKEN_ERROR)
-
-    /**
-     * Construct token access denied error
-     */
-    private fun getTokenAccessDeniedError() = Error(ConversationsError.TOKEN_ACCESS_DENIED)
-
-    /**
-     * Construct generic error
-     */
-    private fun getGenericError() = Error(ConversationsError.GENERIC_ERROR)
 
     companion object {
         private const val TOKEN_URL = BuildConfig.ACCESS_TOKEN_SERVICE_URL

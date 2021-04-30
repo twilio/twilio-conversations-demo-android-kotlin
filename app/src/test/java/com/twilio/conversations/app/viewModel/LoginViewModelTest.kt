@@ -1,8 +1,8 @@
 package com.twilio.conversations.app.viewModel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.twilio.conversations.app.data.models.Client
-import com.twilio.conversations.app.data.models.Error
+import com.twilio.conversations.app.common.enums.ConversationsError
+import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.manager.LoginManager
 import com.twilio.conversations.app.testUtil.*
 import junit.framework.TestCase.*
@@ -27,8 +27,6 @@ import org.powermock.modules.junit4.PowerMockRunner
 @PrepareForTest(
         LoginViewModel::class,
         LoginManager::class,
-        Client::class,
-        Error::class
 )
 class LoginViewModelTest {
 
@@ -37,10 +35,6 @@ class LoginViewModelTest {
 
     private lateinit var loginViewModel: LoginViewModel
 
-    @Mock
-    private lateinit var client: Client
-    @Mock
-    private lateinit var error: Error
     @Mock
     private lateinit var loginManager: LoginManager
 
@@ -78,8 +72,6 @@ class LoginViewModelTest {
 
     @Test
     fun `Should set isLoading to true while attempting sign in and unchanged when done`() = runBlocking {
-            whenCall(loginManager.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)).thenReturn(client)
-
             assertEquals(false, loginViewModel.isLoading.waitValue())
 
             GlobalScope.launch {
@@ -93,28 +85,28 @@ class LoginViewModelTest {
 
     @Test
     fun `Should call onSignInSuccess when sign in successful`() = runBlockingTest {
-        whenCall(loginManager.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)).thenReturn(client)
         loginViewModel.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
         assertTrue(loginViewModel.onSignInSuccess.waitCalled())
     }
 
     @Test
     fun `Should not call onSignInError when sign in successful`() = runBlockingTest {
-        whenCall(loginManager.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)).thenReturn(client)
         loginViewModel.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
         assertFalse(loginViewModel.onSignInError.waitCalled())
     }
 
     @Test
     fun `Should call onSignInError when sign in fails`() = runBlockingTest {
-        whenCall(loginManager.signIn(INVALID_CREDENTIAL, INVALID_CREDENTIAL)).thenReturn(error)
+        val error = ConversationsError.TOKEN_ACCESS_DENIED
+        whenCall(loginManager.signIn(INVALID_CREDENTIAL, INVALID_CREDENTIAL)).then { throw ConversationsException(error) }
         loginViewModel.signIn(INVALID_CREDENTIAL, INVALID_CREDENTIAL)
         assertTrue(loginViewModel.onSignInError.waitCalled())
     }
 
     @Test
     fun `Should not call onSignInSuccess when sign in fails`() = runBlockingTest {
-        whenCall(loginManager.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)).thenReturn(error)
+        val error = ConversationsError.TOKEN_ERROR
+        whenCall(loginManager.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)).then { throw ConversationsException(error) }
         loginViewModel.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
         assertFalse(loginViewModel.onSignInSuccess.waitCalled())
     }
