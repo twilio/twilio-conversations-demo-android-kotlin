@@ -40,7 +40,7 @@ private const val REQUEST_IMAGE_CAPTURE = 2
 
 private const val SAVED_STATE_IMAGE_CAPTURE_CONTENT_URI = "SAVED_STATE_IMAGE_CAPTURE_CONTENT_URI"
 
-class MessageListActivity : AppCompatActivity() {
+class MessageListActivity : BaseActivity() {
 
     private val sheetBehavior by lazy { BottomSheetBehavior.from(addReactionSheet) }
     private val sheetListener by lazy { SheetListener(sheet_background) { hideKeyboard() } }

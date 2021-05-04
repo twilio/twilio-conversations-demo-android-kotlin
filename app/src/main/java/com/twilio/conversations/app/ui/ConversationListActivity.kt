@@ -26,7 +26,7 @@ import kotlinx.android.synthetic.main.view_drawer_header.view.*
 import kotlinx.android.synthetic.main.view_user_profile_screen.*
 import timber.log.Timber
 
-class ConversationListActivity : AppCompatActivity() {
+class ConversationListActivity : BaseActivity() {
 
     private val addConversationSheet by lazy { BottomSheetBehavior.from(add_conversation_sheet) }
     private val userProfileSheet by lazy { BottomSheetBehavior.from(user_profile_sheet) }

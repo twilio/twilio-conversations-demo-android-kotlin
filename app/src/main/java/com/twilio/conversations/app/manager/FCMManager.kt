@@ -10,6 +10,9 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationCompat.PRIORITY_HIGH
+import androidx.core.app.NotificationCompat.PRIORITY_MAX
+import androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
@@ -20,8 +23,8 @@ import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.common.extensions.registerFCMToken
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.CredentialStorage
-import com.twilio.conversations.app.ui.MessageListActivity
 import com.twilio.conversations.app.ui.ConversationListActivity
+import com.twilio.conversations.app.ui.MessageListActivity
 import timber.log.Timber
 
 private const val NOTIFICATION_CONVERSATION_ID = "twilio_notification_id"
@@ -39,10 +42,11 @@ class FCMManagerImpl(
     private val context: Context,
     private val conversationsClient: ConversationsClientWrapper,
     private val credentialStorage: CredentialStorage,
-    private var isBackgrounded: Boolean = false
 ) : FCMManager {
 
     private val notificationManager by lazy { context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
+
+    private var isBackgrounded = true
 
     init {
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
@@ -51,15 +55,19 @@ class FCMManagerImpl(
     override suspend fun onNewToken(token: String) {
         Timber.d("FCM Token received: $token")
         try {
-            conversationsClient.getConversationsClient().registerFCMToken(token)
             credentialStorage.fcmToken = token
+            if (conversationsClient.isClientCreated) {
+                conversationsClient.getConversationsClient().registerFCMToken(token)
+            }
         } catch (e: ConversationsException) {
             Timber.d("Failed to register FCM token")
         }
     }
 
     override suspend fun onMessageReceived(payload: NotificationPayload) {
-        conversationsClient.getConversationsClient().handleNotification(payload)
+        if (conversationsClient.isClientCreated) {
+            conversationsClient.getConversationsClient().handleNotification(payload)
+        }
         Timber.d("Message received: $payload, ${payload.type}, $isBackgrounded")
         // Ignore everything we don't support
         if (payload.type == NotificationPayload.Type.UNKNOWN) return
@@ -79,6 +87,8 @@ class FCMManagerImpl(
     }
 
     override fun showNotification(payload: NotificationPayload) {
+        Timber.d("showNotification: ${payload.conversationSid}")
+
         val intent = getTargetIntent(payload.type, payload.conversationSid)
         val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_ONE_SHOT)
 
@@ -94,6 +104,8 @@ class FCMManagerImpl(
             .setContentTitle(title)
             .setContentText(payload.body)
             .setAutoCancel(true)
+            .setPriority(PRIORITY_HIGH)
+            .setVisibility(VISIBILITY_PUBLIC)
             .setContentIntent(pendingIntent)
             .setColor(Color.rgb(214, 10, 37))
 
@@ -112,11 +124,11 @@ class FCMManagerImpl(
             val notificationChannel = NotificationChannel(
                 NOTIFICATION_CONVERSATION_ID,
                 NOTIFICATION_NAME,
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             )
             notificationManager.createNotificationChannel(notificationChannel)
         }
-        Timber.d("Showing notification")
+
         notificationManager.notify(NOTIFICATION_ID, notification)
     }
 

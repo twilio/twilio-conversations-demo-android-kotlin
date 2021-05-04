@@ -17,23 +17,20 @@
             android:theme="@style/AppTheme"
             tools:ignore="GoogleAppIndexingWarning">
 
-        <activity android:name=".ui.SplashActivity"
+        <activity android:name=".ui.LoginActivity"
                 android:noHistory="true"
-                android:launchMode="singleTop">
+                android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".ui.ConversationListActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:launchMode="singleTop">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".ui.LoginActivity"
-                android:noHistory="true"
-                android:windowSoftInputMode="adjustResize"/>
-
-        <activity
-            android:name=".ui.ConversationListActivity"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:launchMode="singleTop" />
 
         <activity
             android:name=".ui.MessageListActivity"

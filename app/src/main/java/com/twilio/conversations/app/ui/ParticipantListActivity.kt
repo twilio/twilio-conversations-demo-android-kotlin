@@ -17,7 +17,7 @@ import kotlinx.android.synthetic.main.activity_participants.*
 import kotlinx.android.synthetic.main.view_participant_details_screen.*
 import timber.log.Timber
 
-class ParticipantListActivity : AppCompatActivity() {
+class ParticipantListActivity : BaseActivity() {
 
     private val sheetBehavior by lazy { BottomSheetBehavior.from(participant_details_sheet) }
     private val sheetListener by lazy { SheetListener(sheet_background) }
