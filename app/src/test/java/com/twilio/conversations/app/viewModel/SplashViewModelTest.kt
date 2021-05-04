@@ -12,7 +12,9 @@ import com.twilio.conversations.app.manager.LoginManager
 import com.twilio.conversations.app.testUtil.waitCalled
 import com.twilio.conversations.app.testUtil.waitValue
 import com.twilio.conversations.app.testUtil.whenCall
-import junit.framework.TestCase.*
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertFalse
+import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
@@ -26,7 +28,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
-import org.mockito.Mockito.*
+import org.mockito.Mockito.reset
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
 
@@ -75,6 +79,8 @@ class SplashViewModelTest {
 
         verify(loginManager).isLoggedIn()
         verify(loginManager).signInUsingStoredCredentials()
+
+        assertTrue(splashViewModel.onShowSplashScreen.waitCalled())
         assertTrue(splashViewModel.onCloseSplashScreen.waitCalled())
     }
 
@@ -86,6 +92,7 @@ class SplashViewModelTest {
 
         verify(loginManager).isLoggedIn()
         verify(loginManager).signInUsingStoredCredentials()
+        assertTrue(splashViewModel.onShowSplashScreen.waitCalled())
         assertTrue(splashViewModel.onCloseSplashScreen.waitCalled())
     }
 
@@ -95,7 +102,8 @@ class SplashViewModelTest {
         splashViewModel.signInOrLaunchSignInActivity()
         verify(loginManager).isLoggedIn()
         verify(loginManager, times(0)).signInUsingStoredCredentials()
-        assertTrue(splashViewModel.onCloseSplashScreen.waitCalled())
+        assertFalse(splashViewModel.onShowSplashScreen.waitCalled())
+        assertFalse(splashViewModel.onCloseSplashScreen.waitCalled())
     }
 
     @Test
@@ -127,8 +135,7 @@ class SplashViewModelTest {
         assertEquals(false, splashViewModel.isRetryVisible.waitValue())
         assertEquals(false, splashViewModel.isSignOutVisible.waitValue())
         assertEquals(true, splashViewModel.isProgressVisible.waitValue())
-        assertEquals(SPLASH_TEXT_CONNECTING, splashViewModel.statusText.waitValue()
-        )
+        assertEquals(SPLASH_TEXT_CONNECTING, splashViewModel.statusText.waitValue())
     }
 
     @Test
@@ -145,6 +152,7 @@ class SplashViewModelTest {
             assertEquals(true, splashViewModel.isSignOutVisible.waitValue())
             assertEquals(false, splashViewModel.isProgressVisible.waitValue())
             assertEquals(SPLASH_TEXT_OTHER, splashViewModel.statusText.waitValue())
+            assertTrue(splashViewModel.onShowSplashScreen.waitCalled())
             assertFalse(splashViewModel.onCloseSplashScreen.waitCalled())
         }
 
@@ -162,6 +170,7 @@ class SplashViewModelTest {
             assertEquals(true, splashViewModel.isSignOutVisible.waitValue())
             assertEquals(false, splashViewModel.isProgressVisible.waitValue())
             assertEquals(SPLASH_TEXT_OTHER, splashViewModel.statusText.waitValue())
+            assertTrue(splashViewModel.onShowSplashScreen.waitCalled())
             assertFalse(splashViewModel.onCloseSplashScreen.waitCalled())
         }
 
@@ -193,6 +202,7 @@ class SplashViewModelTest {
 
         splashViewModel.signInOrLaunchSignInActivity()
 
+        assertTrue(splashViewModel.onShowSplashScreen.waitCalled())
         assertTrue(splashViewModel.onCloseSplashScreen.waitCalled())
     }
 }

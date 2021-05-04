@@ -11,7 +11,6 @@ import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.PRIORITY_HIGH
-import androidx.core.app.NotificationCompat.PRIORITY_MAX
 import androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
@@ -55,10 +54,10 @@ class FCMManagerImpl(
     override suspend fun onNewToken(token: String) {
         Timber.d("FCM Token received: $token")
         try {
-            credentialStorage.fcmToken = token
             if (conversationsClient.isClientCreated) {
                 conversationsClient.getConversationsClient().registerFCMToken(token)
             }
+            credentialStorage.fcmToken = token
         } catch (e: ConversationsException) {
             Timber.d("Failed to register FCM token")
         }

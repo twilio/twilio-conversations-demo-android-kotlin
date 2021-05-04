@@ -23,6 +23,7 @@ import com.twilio.conversations.app.viewModel.ConversationDetailsViewModel
 import com.twilio.conversations.app.viewModel.ConversationListViewModel
 import com.twilio.conversations.app.viewModel.MessageListViewModel
 import com.twilio.conversations.app.viewModel.ParticipantListViewModel
+import com.twilio.conversations.app.viewModel.SplashViewModel
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
@@ -52,7 +53,7 @@ open class TestInjector : Injector() {
         whenever(it.getConversation(any())) doAnswer { flowOf(RepositoryResult(null, RepositoryRequestStatus.COMPLETE)) }
     }
 
-    private val messageListManagerMock: ConversationListManager = mock {
+    private val conversationListManagerMock: ConversationListManager = mock {
         onBlocking { createConversation(any()) } doReturn  ""
         onBlocking { joinConversation(any()) } doReturn Unit
         onBlocking { removeConversation(any()) } doReturn Unit
@@ -73,10 +74,15 @@ open class TestInjector : Injector() {
 
     private val messageListManager: MessageListManager = mock()
 
-    private val loginManagerMock: LoginManager = mock()
+    private val loginManagerMock: LoginManager = mock {
+        whenever(it.isLoggedIn()) doReturn true
+    }
+
+    override fun createSplashViewModel(application: Application)
+            = SplashViewModel(loginManagerMock, application)
 
     override fun createConversationListViewModel(application: Application)
-            = ConversationListViewModel(repositoryMock, messageListManagerMock, userManagerMock, loginManagerMock)
+            = ConversationListViewModel(repositoryMock, conversationListManagerMock, userManagerMock, loginManagerMock)
 
     override fun createMessageListViewModel(appContext: Context, conversationSid: String)
             = MessageListViewModel(appContext, conversationSid, repositoryMock, messageListManager)
@@ -85,5 +91,5 @@ open class TestInjector : Injector() {
             = ParticipantListViewModel(conversationSid, repositoryMock, participantListManagerMock)
 
     override fun createConversationDetailsViewModel(conversationSid: String)
-            = ConversationDetailsViewModel(conversationSid, repositoryMock, messageListManagerMock, participantListManagerMock)
+            = ConversationDetailsViewModel(conversationSid, repositoryMock, conversationListManagerMock, participantListManagerMock)
 }
