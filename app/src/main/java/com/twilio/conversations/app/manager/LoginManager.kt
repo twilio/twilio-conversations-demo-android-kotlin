@@ -1,11 +1,10 @@
 package com.twilio.conversations.app.manager
 
-import com.twilio.conversations.app.common.FirebaseTokenRetriever
+import com.twilio.conversations.app.common.FirebaseTokenManager
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.ConversationsError.EMPTY_CREDENTIALS
 import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.common.extensions.registerFCMToken
-import com.twilio.conversations.app.common.extensions.unregisterFCMToken
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.CredentialStorage
 import com.twilio.conversations.app.repository.ConversationsRepository
@@ -25,12 +24,12 @@ class LoginManagerImpl(
     private val conversationsClient: ConversationsClientWrapper,
     private val conversationsRepository: ConversationsRepository,
     private val credentialStorage: CredentialStorage,
-    private val firebaseTokenRetriever: FirebaseTokenRetriever
+    private val firebaseTokenManager: FirebaseTokenManager,
 ) : LoginManager {
 
     override suspend fun registerForFcm() {
         try {
-            val token = firebaseTokenRetriever.retrieveToken()
+            val token = firebaseTokenManager.retrieveToken()
             credentialStorage.fcmToken = token
             Timber.d("Registering for FCM: $token")
             conversationsClient.getConversationsClient().registerFCMToken(token)
@@ -40,14 +39,11 @@ class LoginManagerImpl(
     }
 
     override suspend fun unregisterFromFcm() {
-        try {
-            credentialStorage.fcmToken.takeIf { it.isNotEmpty() }?.let { token ->
-                Timber.d("Unregistering from FCM")
-                conversationsClient.getConversationsClient().unregisterFCMToken(token)
-            }
-        } catch (e: ConversationsException) {
-            Timber.d(e, "Failed to unregister FCM")
-        }
+        // We don't call `conversationsClient.getConversationsClient().unregisterFCMToken(token)` here
+        // because it fails with commandTimeout (60s by default) if device is offline or token is expired.
+        // Instead we try to delete token on FCM async. Which leads to the same result if device is online,
+        // but we can shutdown `conversationsClient`immediately without waiting a result.
+        firebaseTokenManager.deleteToken()
     }
 
     override suspend fun signIn(identity: String, password: String) {

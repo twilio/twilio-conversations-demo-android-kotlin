@@ -1,15 +1,23 @@
 package com.twilio.conversations.app.manager
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.twilio.conversations.app.common.FirebaseTokenRetriever
+import com.twilio.conversations.app.common.FirebaseTokenManager
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.CredentialStorage
 import com.twilio.conversations.app.repository.ConversationsRepository
-import com.twilio.conversations.app.testUtil.*
+import com.twilio.conversations.app.testUtil.INVALID_CREDENTIAL
+import com.twilio.conversations.app.testUtil.OUTDATED_CREDENTIAL
+import com.twilio.conversations.app.testUtil.VALID_CREDENTIAL
+import com.twilio.conversations.app.testUtil.credentialStorageEmpty
+import com.twilio.conversations.app.testUtil.credentialStorageNotEmpty
+import com.twilio.conversations.app.testUtil.whenCall
 import io.mockk.MockKAnnotations
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
@@ -46,7 +54,7 @@ class LoginManagerTest {
     private lateinit var loginManager: LoginManager
 
     @MockK
-    private lateinit var firebaseTokenRetriever: FirebaseTokenRetriever
+    private lateinit var firebaseTokenManager: FirebaseTokenManager
     @Mock
     private lateinit var conversationsClientWrapper: ConversationsClientWrapper
     @Mock
@@ -60,7 +68,9 @@ class LoginManagerTest {
         Dispatchers.setMain(mainThreadSurrogate)
 
         loginManager = LoginManagerImpl(conversationsClientWrapper, conversationsRepository,
-            credentialStorage, firebaseTokenRetriever)
+            credentialStorage, firebaseTokenManager)
+
+        coEvery { firebaseTokenManager.deleteToken() } returns CompletableDeferred(true)
     }
 
     @After
@@ -129,6 +139,8 @@ class LoginManagerTest {
     fun `signOut should clear credentials`() = runBlockingTest {
         credentialStorageNotEmpty(credentialStorage, OUTDATED_CREDENTIAL)
         loginManager.signOut()
+
+        coVerify { firebaseTokenManager.deleteToken() }
         verify(credentialStorage, times(1)).clearCredentials()
         verify(conversationsRepository, times(1)).clear()
         verify(conversationsClientWrapper, times(1)).shutdown()
