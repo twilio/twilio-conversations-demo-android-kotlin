@@ -54,7 +54,7 @@ class FCMManagerImpl(
     override suspend fun onNewToken(token: String) {
         Timber.d("FCM Token received: $token")
         try {
-            if (conversationsClient.isClientCreated) {
+            if (token != credentialStorage.fcmToken && conversationsClient.isClientCreated) {
                 conversationsClient.getConversationsClient().registerFCMToken(token)
             }
             credentialStorage.fcmToken = token
