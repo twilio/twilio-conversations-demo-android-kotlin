@@ -295,6 +295,7 @@ class ConversationsRepositoryImpl(
             val messages = conversationsClientWrapper
                 .getConversationsClient()
                 .getConversation(conversationSid)
+                .waitForSynchronization()
                 .fetch()
                 .asMessageDataItems(identity)
             localCache.messagesDao().insert(messages)

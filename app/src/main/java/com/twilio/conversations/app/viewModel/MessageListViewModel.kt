@@ -41,7 +41,7 @@ class MessageListViewModel(
     private val messageListManager: MessageListManager
 ) : ViewModel() {
 
-    val conversationName = SingleLiveEvent<String>()
+    val conversationName = MutableLiveData<String>()
     val messageItems = conversationsRepository.getMessages(conversationSid, MESSAGE_COUNT)
         .onEach { repositoryResult ->
             if (repositoryResult.requestStatus is RepositoryRequestStatus.Error) {

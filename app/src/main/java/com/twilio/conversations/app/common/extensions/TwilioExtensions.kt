@@ -3,6 +3,7 @@ package com.twilio.conversations.app.common.extensions
 import android.content.Context
 import com.twilio.conversations.*
 import com.twilio.conversations.ConversationsClient.Properties
+import com.twilio.conversations.ConversationsClient.SynchronizationStatus.COMPLETED
 import com.twilio.conversations.ErrorInfo.CONVERSATION_NOT_SYNCHRONIZED
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.CrashIn
@@ -36,7 +37,7 @@ private suspend fun ConversationsClient.waitForSynchronization(): Unit = suspend
     addListener(
         onClientSynchronization = { status ->
             synchronized(continuation) {
-                if (continuation.isActive && status >= ConversationsClient.SynchronizationStatus.CONVERSATIONS_COMPLETED) {
+                if (continuation.isActive && status >= COMPLETED) {
                     removeAllListeners()
                     continuation.resume(Unit)
                 }
@@ -91,7 +92,7 @@ suspend fun ConversationsClient.createConversation(friendlyName: String): Conver
     })
 }
 
-suspend fun Conversation.waitForSynchronization() {
+suspend fun Conversation.waitForSynchronization(): Conversation {
     val complete = CompletableDeferred<Unit>()
     val listener = addListener(
         onSynchronizationChanged = { conversation ->
@@ -112,6 +113,8 @@ suspend fun Conversation.waitForSynchronization() {
     } finally {
         removeListener(listener)
     }
+
+    return this
 }
 
 suspend fun Conversation.removeParticipant(participant: Participant): Unit = suspendCancellableCoroutine { continuation ->

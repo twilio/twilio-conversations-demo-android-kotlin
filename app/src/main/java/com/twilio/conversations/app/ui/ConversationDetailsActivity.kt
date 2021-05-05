@@ -19,7 +19,7 @@ import kotlinx.android.synthetic.main.view_add_non_chat_participant_screen.*
 import kotlinx.android.synthetic.main.view_conversation_rename_screen.*
 import timber.log.Timber
 
-class ConversationDetailsActivity : AppCompatActivity() {
+class ConversationDetailsActivity : BaseActivity() {
 
     private val renameConversationSheet by lazy { BottomSheetBehavior.from(rename_conversation_sheet) }
     private val addChatParticipantSheet by lazy { BottomSheetBehavior.from(add_chat_participant_sheet) }

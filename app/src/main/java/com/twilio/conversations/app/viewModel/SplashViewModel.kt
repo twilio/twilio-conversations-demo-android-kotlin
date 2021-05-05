@@ -23,6 +23,7 @@ class SplashViewModel(
 
     val onDisplayError = SingleLiveEvent<ConversationsError>()
     val onShowLoginScreen = SingleLiveEvent<Unit>()
+    val onShowSplashScreen = SingleLiveEvent<Unit>()
     val onCloseSplashScreen = SingleLiveEvent<Unit>()
 
     val statusText = MutableLiveData<String>()
@@ -45,7 +46,6 @@ class SplashViewModel(
         Timber.d("signInOrLaunchSignInActivity")
         if (loginManager.isLoggedIn()) {
             Timber.d("client already created")
-            onCloseSplashScreen.call()
             return
         }
         Timber.d("client not created")
@@ -56,6 +56,7 @@ class SplashViewModel(
         isRetryVisible.value = false
         isSignOutVisible.value = false
         isProgressVisible.value = true
+        onShowSplashScreen.call()
 
         viewModelScope.launch {
             try {

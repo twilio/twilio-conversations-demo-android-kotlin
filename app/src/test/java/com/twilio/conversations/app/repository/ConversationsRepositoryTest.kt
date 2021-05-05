@@ -3,9 +3,16 @@
 package com.twilio.conversations.app.repository
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.twilio.conversations.*
-import com.twilio.conversations.Participant.Type.CHAT
-import com.twilio.conversations.app.*
+import com.twilio.conversations.Conversation
+import com.twilio.conversations.ConversationListener
+import com.twilio.conversations.ConversationsClient
+import com.twilio.conversations.ConversationsClientListener
+import com.twilio.conversations.Message
+import com.twilio.conversations.Participant
+import com.twilio.conversations.User
+import com.twilio.conversations.app.ItemDataSource
+import com.twilio.conversations.app.MESSAGE_COUNT
+import com.twilio.conversations.app.USER_CONVERSATION_COUNT
 import com.twilio.conversations.app.common.asMessageDataItems
 import com.twilio.conversations.app.common.asMessageListViewItems
 import com.twilio.conversations.app.common.asParticipantDataItem
@@ -14,19 +21,34 @@ import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.common.extensions.getAndSubscribeUser
 import com.twilio.conversations.app.common.extensions.getConversation
 import com.twilio.conversations.app.common.extensions.getLastMessages
+import com.twilio.conversations.app.common.extensions.waitForSynchronization
 import com.twilio.conversations.app.common.toMessageDataItem
+import com.twilio.conversations.app.createTestConversationDataItem
+import com.twilio.conversations.app.createTestMessageDataItem
+import com.twilio.conversations.app.createTestParticipantDataItem
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.localCache.LocalCacheProvider
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
-import com.twilio.conversations.app.data.models.RepositoryRequestStatus.*
+import com.twilio.conversations.app.data.models.RepositoryRequestStatus.COMPLETE
+import com.twilio.conversations.app.data.models.RepositoryRequestStatus.FETCHING
+import com.twilio.conversations.app.data.models.RepositoryRequestStatus.SUBSCRIBING
+import com.twilio.conversations.app.getMockedConversations
+import com.twilio.conversations.app.getMockedMessages
 import com.twilio.conversations.app.testUtil.CoroutineTestRule
 import com.twilio.conversations.app.testUtil.toConversationMock
 import com.twilio.conversations.app.testUtil.toMessageMock
 import com.twilio.conversations.app.testUtil.toParticipantMock
-import io.mockk.*
+import io.mockk.MockKAnnotations
+import io.mockk.coEvery
+import io.mockk.confirmVerified
+import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.slot
+import io.mockk.verify
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.take
@@ -90,6 +112,7 @@ class ConversationsRepositoryTest {
         every { conversationsClient.addListener(any()) } answers { clientListener = it.invocation.args[0] as ConversationsClientListener }
         every { conversationsClient.myConversations } returns emptyList()
 
+        coEvery { conversation.waitForSynchronization() } returns conversation
         coEvery { conversationsClient.getConversation(any()) } returns conversation
         coEvery { conversationsClientWrapper.getConversationsClient() } returns conversationsClient
 

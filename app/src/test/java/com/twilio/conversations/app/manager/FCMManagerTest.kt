@@ -66,6 +66,7 @@ class FCMManagerTest {
         whenCall(application.applicationContext).thenReturn(context)
         conversationsClient = PowerMockito.mock(ConversationsClient::class.java)
         coEvery { conversationsClientWrapper.getConversationsClient() } returns conversationsClient
+        coEvery { conversationsClientWrapper.isClientCreated } returns true
 
         fcmManager = FCMManagerImpl(application, conversationsClientWrapper, credentialStorage)
     }

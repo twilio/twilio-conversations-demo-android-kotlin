@@ -18,7 +18,6 @@ import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.localCache.LocalCacheProvider
 import com.twilio.conversations.app.repository.ConversationsRepositoryImpl
 import com.twilio.conversations.app.ui.LoginActivity
-import com.twilio.conversations.app.ui.SplashActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -50,15 +49,6 @@ class ConversationsApplication : Application(), LifecycleObserver {
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
 
         ConversationsClientWrapper.INSTANCE.onUpdateTokenFailure += { signOut() }
-
-        startSplashActivity()
-    }
-
-    private fun startSplashActivity() {
-        val intent = Intent(this, SplashActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        Timber.d("startActivity SplashActivity")
-        startActivity(intent)
     }
 
     private fun signOut() = applicationScope.launch {

@@ -37,8 +37,6 @@ gcloud firebase test android run \
         --device model=flo,version=21,orientation=landscape \
         --device model=hammerhead,version=23,orientation=portrait \
         --device model=hammerhead,version=23,orientation=landscape \
-        --device model=lucye,version=24,orientation=portrait \
-        --device model=lucye,version=24,orientation=landscape \
         --device model=G8142,version=25,orientation=portrait \
         --device model=G8142,version=25,orientation=landscape \
         --device model=walleye,version=27,orientation=portrait \
