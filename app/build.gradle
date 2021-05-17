@@ -150,7 +150,7 @@ dependencies {
 
     androidTestImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinx_coroutines_version"
     androidTestImplementation 'com.google.truth:truth:1.0.1'
-    androidTestImplementation 'org.mockito:mockito-android:3.2.4'
+    androidTestImplementation 'org.mockito:mockito-android:3.10.0'
     androidTestImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0"
 
     testImplementation 'junit:junit:4.13'
