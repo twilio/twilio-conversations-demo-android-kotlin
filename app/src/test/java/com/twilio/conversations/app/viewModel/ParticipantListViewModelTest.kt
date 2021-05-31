@@ -30,6 +30,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
+import java.util.Locale
 
 @RunWith(PowerMockRunner::class)
 @PrepareForTest(
@@ -103,7 +104,7 @@ class ParticipantListViewModelTest {
         val participantListViewModel = ParticipantListViewModel(conversationSid, conversationsRepository, participantListManager)
 
         // When the filter string matches all conversation names but is in uppercase
-        participantListViewModel.participantFilter = namePrefix.toUpperCase()
+        participantListViewModel.participantFilter = namePrefix.uppercase(Locale.getDefault())
 
         // Then verify that all conversations match the filter
         assertEquals(PARTICIPANT_COUNT, participantListViewModel.participantsList.waitValue().size)
