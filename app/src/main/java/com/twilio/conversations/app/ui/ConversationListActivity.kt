@@ -9,7 +9,6 @@ import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -17,7 +16,13 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.twilio.conversations.app.R
 import com.twilio.conversations.app.common.SheetListener
 import com.twilio.conversations.app.common.enums.CrashIn
-import com.twilio.conversations.app.common.extensions.*
+import com.twilio.conversations.app.common.extensions.getErrorMessage
+import com.twilio.conversations.app.common.extensions.hide
+import com.twilio.conversations.app.common.extensions.hideKeyboard
+import com.twilio.conversations.app.common.extensions.isShowing
+import com.twilio.conversations.app.common.extensions.lazyViewModel
+import com.twilio.conversations.app.common.extensions.show
+import com.twilio.conversations.app.common.extensions.showSnackbar
 import com.twilio.conversations.app.common.injector
 import com.twilio.conversations.app.ui.fragments.ConversationFragment
 import kotlinx.android.synthetic.main.activity_conversations_list.*
@@ -96,7 +101,7 @@ class ConversationListActivity : BaseActivity() {
 
     override fun onBackPressed() {
         var handled = false
-        supportFragmentManager.fragments.forEach {
+        supportFragmentManager.fragments.iterator().forEach {
             if (it is ConversationFragment && it.onBackPressed()) {
                 handled = true
             }

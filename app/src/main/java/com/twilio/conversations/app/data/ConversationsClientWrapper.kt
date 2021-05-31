@@ -103,6 +103,7 @@ class ConversationsClientWrapper(private val applicationContext: Context) {
             _instance = ConversationsClientWrapper(applicationContext)
         }
 
+        @DelicateCoroutinesApi
         @RestrictTo(Scope.TESTS)
         fun recreateInstance(applicationContext: Context) {
             _instance?.let { instance ->

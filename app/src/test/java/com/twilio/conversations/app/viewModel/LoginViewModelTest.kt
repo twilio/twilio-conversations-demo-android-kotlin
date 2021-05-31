@@ -4,9 +4,21 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.manager.LoginManager
-import com.twilio.conversations.app.testUtil.*
-import junit.framework.TestCase.*
-import kotlinx.coroutines.*
+import com.twilio.conversations.app.testUtil.INVALID_CREDENTIAL
+import com.twilio.conversations.app.testUtil.VALID_CREDENTIAL
+import com.twilio.conversations.app.testUtil.waitCalled
+import com.twilio.conversations.app.testUtil.waitValue
+import com.twilio.conversations.app.testUtil.whenCall
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertFalse
+import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.test.setMain
@@ -70,6 +82,7 @@ class LoginViewModelTest {
         verify(loginManager, times(0)).signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
     }
 
+    @DelicateCoroutinesApi
     @Test
     fun `Should set isLoading to true while attempting sign in and unchanged when done`() = runBlocking {
             assertEquals(false, loginViewModel.isLoading.waitValue())

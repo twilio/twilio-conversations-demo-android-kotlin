@@ -280,7 +280,7 @@ class ConversationsRepositoryImpl(
         val listener = createClientListener (
             onUserUpdated = { user, _ ->
                 user.takeIf { it.identity == client.myIdentity}
-                    ?.let { offer(it) }
+                    ?.let { trySend(it).isSuccess }
             }
         )
         client.addListener(listener)

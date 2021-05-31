@@ -1,5 +1,6 @@
 package com.twilio.conversations.app.common
 
+import android.annotation.SuppressLint
 import androidx.core.net.toUri
 import com.google.gson.Gson
 import com.twilio.conversations.*
@@ -87,6 +88,7 @@ fun getReactions(attributes: String): Map<String, Set<String>> = try {
     emptyMap()
 }
 
+@SuppressLint("NewApi")
 fun Map<String, Set<String>>.asReactionList(): Map<Reaction, Set<String>> {
     val reactions: MutableMap<Reaction, Set<String>> = mutableMapOf()
     forEach {

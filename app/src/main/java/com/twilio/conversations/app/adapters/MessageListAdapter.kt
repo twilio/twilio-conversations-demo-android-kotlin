@@ -1,5 +1,6 @@
 package com.twilio.conversations.app.adapters
 
+import android.annotation.SuppressLint
 import android.net.Uri
 import android.text.format.Formatter
 import android.view.LayoutInflater
@@ -97,6 +98,7 @@ class MessageListAdapter(
         }
     }
 
+    @SuppressLint("NewApi")
     private fun addReactions(rootView: LinearLayout, message: MessageListViewItem) {
         rootView.removeAllViews()
         Timber.d("Adding reactions: ${message.reactions}")
