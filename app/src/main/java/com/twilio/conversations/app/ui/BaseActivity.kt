@@ -22,12 +22,14 @@ open class BaseActivity : AppCompatActivity() {
 
         splashViewModel.onShowSplashScreen.observe(this) {
             Timber.d("onShowSplashScreen")
-            splashFragment.show(supportFragmentManager, TAG_SPLASH_FRAGMENT)
+            if (!splashFragment.isAdded) {
+                splashFragment.show(supportFragmentManager, TAG_SPLASH_FRAGMENT)
+            }
         }
 
         splashViewModel.onCloseSplashScreen.observe(this) {
             Timber.d("onCloseSplashScreen")
-            splashFragment.dismiss()
+            splashFragment.dismissAllowingStateLoss()
         }
 
         splashViewModel.onShowLoginScreen.observe(this) {
