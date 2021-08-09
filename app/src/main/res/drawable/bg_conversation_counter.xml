@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape android:shape="oval" xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="@color/counter_background" />
-    <size android:width="18dp" android:height="18dp" />
+<shape android:shape="rectangle" xmlns:android="http://schemas.android.com/apk/res/android">
+    <corners android:radius="24dp" />
+    <solid android:color="@color/colorPrimary" />
+    <padding android:left="8dp" android:right="8dp" />
+    <size android:width="23dp" android:height="18dp" />
 </shape>

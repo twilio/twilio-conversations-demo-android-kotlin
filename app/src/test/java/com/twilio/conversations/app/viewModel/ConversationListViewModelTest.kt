@@ -1,5 +1,6 @@
 package com.twilio.conversations.app.viewModel
 
+import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.twilio.conversations.Conversation
 import com.twilio.conversations.User
@@ -11,9 +12,8 @@ import com.twilio.conversations.app.createTestConversationDataItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.data.models.RepositoryResult
 import com.twilio.conversations.app.getMockedConversations
+import com.twilio.conversations.app.manager.ConnectivityMonitor
 import com.twilio.conversations.app.manager.ConversationListManager
-import com.twilio.conversations.app.manager.LoginManager
-import com.twilio.conversations.app.manager.UserManager
 import com.twilio.conversations.app.repository.ConversationsRepository
 import com.twilio.conversations.app.testUtil.CoroutineTestRule
 import com.twilio.conversations.app.testUtil.createUserMock
@@ -25,6 +25,7 @@ import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.RelaxedMockK
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.flow.flowOf
@@ -35,7 +36,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
-import java.util.Locale
+import java.util.*
 
 @RunWith(PowerMockRunner::class)
 @PrepareForTest(
@@ -56,11 +57,11 @@ class ConversationListViewModelTest {
     @MockK
     private lateinit var conversationListManager: ConversationListManager
 
-    @MockK
-    private lateinit var userManager: UserManager
+    @RelaxedMockK
+    private lateinit var connectivityMonitor: ConnectivityMonitor
 
-    @MockK
-    private lateinit var loginManager: LoginManager
+    @RelaxedMockK
+    private lateinit var context: Context
 
     @Before
     fun setUp() {
@@ -77,8 +78,8 @@ class ConversationListViewModelTest {
         coEvery { conversationsRepository.getUserConversations() } returns
                 flowOf(RepositoryResult(expectedConversations, RepositoryRequestStatus.COMPLETE))
 
-        val conversationListViewModel = ConversationListViewModel(conversationsRepository, conversationListManager, userManager, loginManager)
-        assertTrue(conversationListViewModel.userConversationItems.waitValue(expectedConversations.asConversationListViewItems()))
+        val conversationListViewModel = ConversationListViewModel(context, conversationsRepository, conversationListManager, connectivityMonitor)
+        assertTrue(conversationListViewModel.userConversationItems.waitValue(expectedConversations.asConversationListViewItems(context)))
         assertEquals(USER_CONVERSATION_COUNT, conversationListViewModel.userConversationItems.waitValue().size)
     }
 
@@ -90,23 +91,23 @@ class ConversationListViewModelTest {
         val expectedConversations = listOf(conversationAbc, conversationBcd, conversationCde)
         coEvery { conversationsRepository.getUserConversations() } returns
                 flowOf(RepositoryResult(expectedConversations, RepositoryRequestStatus.COMPLETE))
-        val conversationListViewModel = ConversationListViewModel(conversationsRepository, conversationListManager, userManager, loginManager)
+        val conversationListViewModel = ConversationListViewModel(context, conversationsRepository, conversationListManager, connectivityMonitor)
 
         conversationListViewModel.conversationFilter = "c"
         assertEquals(3, conversationListViewModel.userConversationItems.waitValue().size)
-        assertTrue(conversationListViewModel.userConversationItems.waitValue(expectedConversations.asConversationListViewItems()))
+        assertTrue(conversationListViewModel.userConversationItems.waitValue(expectedConversations.asConversationListViewItems(context)))
 
         conversationListViewModel.conversationFilter = "b"
         assertEquals(2, conversationListViewModel.userConversationItems.waitValue().size)
-        assertTrue(conversationListViewModel.userConversationItems.waitValue(listOf(conversationAbc, conversationBcd).asConversationListViewItems()))
+        assertTrue(conversationListViewModel.userConversationItems.waitValue(listOf(conversationAbc, conversationBcd).asConversationListViewItems(context)))
 
         conversationListViewModel.conversationFilter = "a"
         assertEquals(1, conversationListViewModel.userConversationItems.waitValue().size)
-        assertTrue(conversationListViewModel.userConversationItems.waitValue(listOf(conversationAbc).asConversationListViewItems()))
+        assertTrue(conversationListViewModel.userConversationItems.waitValue(listOf(conversationAbc).asConversationListViewItems(context)))
 
         conversationListViewModel.conversationFilter = ""
         assertEquals(3, conversationListViewModel.userConversationItems.waitValue().size)
-        assertTrue(conversationListViewModel.userConversationItems.waitValue(expectedConversations.asConversationListViewItems()))
+        assertTrue(conversationListViewModel.userConversationItems.waitValue(expectedConversations.asConversationListViewItems(context)))
     }
 
     @Test
@@ -115,14 +116,14 @@ class ConversationListViewModelTest {
         val expectedConversations = getMockedConversations(USER_CONVERSATION_COUNT, namePrefix).toList()
         coEvery { conversationsRepository.getUserConversations() } returns
                 flowOf(RepositoryResult(expectedConversations, RepositoryRequestStatus.COMPLETE))
-        val conversationListViewModel = ConversationListViewModel(conversationsRepository, conversationListManager, userManager, loginManager)
+        val conversationListViewModel = ConversationListViewModel(context, conversationsRepository, conversationListManager, connectivityMonitor)
 
         // When the filter string matches all conversation names but is in uppercase
         conversationListViewModel.conversationFilter = namePrefix.uppercase(Locale.getDefault())
 
         // Then verify that all conversations match the filter
         assertEquals(USER_CONVERSATION_COUNT, conversationListViewModel.userConversationItems.waitValue().size)
-        assertTrue(conversationListViewModel.userConversationItems.waitValue(expectedConversations.asConversationListViewItems()))
+        assertTrue(conversationListViewModel.userConversationItems.waitValue(expectedConversations.asConversationListViewItems(context)))
     }
 
     @Test
@@ -130,7 +131,7 @@ class ConversationListViewModelTest {
         coEvery { conversationsRepository.getUserConversations() } returns
                 flowOf(RepositoryResult(listOf(), RepositoryRequestStatus.Error(ConversationsError.GENERIC_ERROR)))
 
-        val conversationListViewModel = ConversationListViewModel(conversationsRepository, conversationListManager, userManager, loginManager)
+        val conversationListViewModel = ConversationListViewModel(context, conversationsRepository, conversationListManager, connectivityMonitor)
         assertEquals(0, conversationListViewModel.userConversationItems.waitValue().size)
     }
 
@@ -145,12 +146,11 @@ class ConversationListViewModelTest {
         coEvery { conversationListManager.createConversation(conversationName)} returns conversationMock.sid
         coEvery { conversationListManager.joinConversation(conversationMock.sid) } returns Unit
 
-        val conversationListViewModel = ConversationListViewModel(conversationsRepository, conversationListManager, userManager, loginManager)
+        val conversationListViewModel = ConversationListViewModel(context, conversationsRepository, conversationListManager, connectivityMonitor)
         conversationListViewModel.createConversation(conversationName)
 
         assertTrue(conversationListViewModel.isDataLoading.waitCalled())
         assertTrue(conversationListViewModel.onConversationCreated.waitCalled())
-        assertTrue(conversationListViewModel.onConversationJoined.waitCalled())
         coVerify { conversationListManager.joinConversation(any()) }
         assertTrue(conversationListViewModel.isDataLoading.waitCalled())
     }
@@ -162,7 +162,7 @@ class ConversationListViewModelTest {
         coEvery { conversationListManager.createConversation(conversationName)} throws ConversationsException(ConversationsError.CONVERSATION_CREATE_FAILED)
         coEvery { conversationListManager.joinConversation(any()) } returns Unit
 
-        val conversationListViewModel = ConversationListViewModel(conversationsRepository, conversationListManager, userManager, loginManager)
+        val conversationListViewModel = ConversationListViewModel(context, conversationsRepository, conversationListManager, connectivityMonitor)
         conversationListViewModel.createConversation(conversationName)
 
         assertTrue(conversationListViewModel.isDataLoading.waitCalled())
@@ -173,36 +173,11 @@ class ConversationListViewModelTest {
     }
 
     @Test
-    fun `conversationListViewModel_joinConversation() should call onConversationJoined on success`() = runBlocking {
-        val conversationSid = "sid"
-        coEvery { conversationListManager.joinConversation(conversationSid) } returns Unit
-
-        val conversationListViewModel = ConversationListViewModel(conversationsRepository, conversationListManager, userManager, loginManager)
-        conversationListViewModel.joinConversation(conversationSid)
-
-        coVerify { conversationListManager.joinConversation(conversationSid) }
-        assertTrue(conversationListViewModel.onConversationJoined.waitCalled())
-    }
-
-    @Test
-    fun `conversationListViewModel_joinConversation() should call onConversationError on failure`() = runBlocking {
-        val conversationSid = "sid"
-        coEvery { conversationListManager.joinConversation(conversationSid) } throws ConversationsException(ConversationsError.CONVERSATION_JOIN_FAILED)
-
-        val conversationListViewModel = ConversationListViewModel(conversationsRepository, conversationListManager, userManager, loginManager)
-        conversationListViewModel.joinConversation(conversationSid)
-
-        coVerify { conversationListManager.joinConversation(conversationSid) }
-        assertTrue(conversationListViewModel.onConversationJoined.waitNotCalled())
-        assertTrue(conversationListViewModel.onConversationError.waitValue(ConversationsError.CONVERSATION_JOIN_FAILED))
-    }
-
-    @Test
     fun `conversationListViewModel_muteConversation() should call onConversationError on failure`() = runBlocking {
         val conversationSid = "sid"
         coEvery { conversationListManager.muteConversation(conversationSid) } throws ConversationsException(ConversationsError.CONVERSATION_MUTE_FAILED)
 
-        val conversationListViewModel = ConversationListViewModel(conversationsRepository, conversationListManager, userManager, loginManager)
+        val conversationListViewModel = ConversationListViewModel(context, conversationsRepository, conversationListManager, connectivityMonitor)
         conversationListViewModel.muteConversation(conversationSid)
 
         coVerify { conversationListManager.muteConversation(conversationSid) }
@@ -215,7 +190,7 @@ class ConversationListViewModelTest {
         val conversationSid = "sid"
         coEvery { conversationListManager.muteConversation(conversationSid) } returns Unit
 
-        val conversationListViewModel = ConversationListViewModel(conversationsRepository, conversationListManager, userManager, loginManager)
+        val conversationListViewModel = ConversationListViewModel(context, conversationsRepository, conversationListManager, connectivityMonitor)
         conversationListViewModel.muteConversation(conversationSid)
 
         coVerify { conversationListManager.muteConversation(conversationSid) }
@@ -227,7 +202,7 @@ class ConversationListViewModelTest {
         val conversationSid = "sid"
         coEvery { conversationListManager.unmuteConversation(conversationSid) } throws ConversationsException(ConversationsError.CONVERSATION_UNMUTE_FAILED)
 
-        val conversationListViewModel = ConversationListViewModel(conversationsRepository, conversationListManager, userManager, loginManager)
+        val conversationListViewModel = ConversationListViewModel(context, conversationsRepository, conversationListManager, connectivityMonitor)
         conversationListViewModel.unmuteConversation(conversationSid)
 
         coVerify { conversationListManager.unmuteConversation(conversationSid) }
@@ -240,7 +215,7 @@ class ConversationListViewModelTest {
         val conversationSid = "sid"
         coEvery { conversationListManager.unmuteConversation(conversationSid) } returns Unit
 
-        val conversationListViewModel = ConversationListViewModel(conversationsRepository, conversationListManager, userManager, loginManager)
+        val conversationListViewModel = ConversationListViewModel(context, conversationsRepository, conversationListManager, connectivityMonitor)
         conversationListViewModel.unmuteConversation(conversationSid)
 
         coVerify { conversationListManager.unmuteConversation(conversationSid) }
@@ -252,7 +227,7 @@ class ConversationListViewModelTest {
         val conversationSid = "sid"
         coEvery { conversationListManager.leaveConversation(conversationSid) } returns Unit
 
-        val conversationListViewModel = ConversationListViewModel(conversationsRepository, conversationListManager, userManager, loginManager)
+        val conversationListViewModel = ConversationListViewModel(context, conversationsRepository, conversationListManager, connectivityMonitor)
         conversationListViewModel.leaveConversation(conversationSid)
 
         coVerify { conversationListManager.leaveConversation(conversationSid) }
@@ -264,59 +239,10 @@ class ConversationListViewModelTest {
         val conversationSid = "sid"
         coEvery { conversationListManager.leaveConversation(conversationSid) } throws ConversationsException(ConversationsError.CONVERSATION_LEAVE_FAILED)
 
-        val conversationListViewModel = ConversationListViewModel(conversationsRepository, conversationListManager, userManager, loginManager)
+        val conversationListViewModel = ConversationListViewModel(context, conversationsRepository, conversationListManager, connectivityMonitor)
         conversationListViewModel.leaveConversation(conversationSid)
 
         coVerify { conversationListManager.leaveConversation(conversationSid) }
-        assertTrue(conversationListViewModel.onConversationLeft.waitNotCalled())
         assertTrue(conversationListViewModel.onConversationError.waitValue(ConversationsError.CONVERSATION_LEAVE_FAILED))
-    }
-
-    @Test
-    fun `conversationListViewModel_removeConversation() should call onConversationRemoved on success`() = runBlocking {
-        val conversationSid = "sid"
-        coEvery { conversationListManager.removeConversation(conversationSid) } returns Unit
-
-        val conversationListViewModel = ConversationListViewModel(conversationsRepository, conversationListManager, userManager, loginManager)
-        conversationListViewModel.removeConversation(conversationSid)
-
-        coVerify { conversationListManager.removeConversation(conversationSid) }
-        assertTrue(conversationListViewModel.onConversationRemoved.waitCalled())
-    }
-
-    @Test
-    fun `conversationListViewModel_removeConversation() should call onConversationError on failure`() = runBlocking {
-        val conversationSid = "sid"
-        coEvery { conversationListManager.removeConversation(conversationSid) } throws ConversationsException(ConversationsError.CONVERSATION_REMOVE_FAILED)
-
-        val conversationListViewModel = ConversationListViewModel(conversationsRepository, conversationListManager, userManager, loginManager)
-        conversationListViewModel.removeConversation(conversationSid)
-
-        coVerify { conversationListManager.removeConversation(conversationSid) }
-        assertTrue(conversationListViewModel.onConversationError.waitValue(ConversationsError.CONVERSATION_REMOVE_FAILED))
-    }
-
-    @Test
-    fun `conversationListViewModel_setFriendlyName() should call onUserUpdated on success`() = runBlocking {
-        val friendlyName = "friendly name"
-        coEvery { userManager.setFriendlyName(friendlyName) } returns Unit
-
-        val conversationListViewModel = ConversationListViewModel(conversationsRepository, conversationListManager, userManager, loginManager)
-        conversationListViewModel.setFriendlyName(friendlyName)
-
-        coVerify { userManager.setFriendlyName(friendlyName) }
-        assertTrue(conversationListViewModel.onUserUpdated.waitCalled())
-    }
-
-    @Test
-    fun `conversationListViewModel_setFriendlyName() should call onConversationError on failure`() = runBlocking {
-        val friendlyName = "friendly name"
-        coEvery { userManager.setFriendlyName(friendlyName) } throws ConversationsException(ConversationsError.USER_UPDATE_FAILED)
-
-        val conversationListViewModel = ConversationListViewModel(conversationsRepository, conversationListManager, userManager, loginManager)
-        conversationListViewModel.setFriendlyName(friendlyName)
-
-        coVerify { userManager.setFriendlyName(friendlyName) }
-        assertTrue(conversationListViewModel.onConversationError.waitValue(ConversationsError.USER_UPDATE_FAILED))
     }
 }

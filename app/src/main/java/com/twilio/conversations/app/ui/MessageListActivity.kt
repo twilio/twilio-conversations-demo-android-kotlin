@@ -1,65 +1,34 @@
 package com.twilio.conversations.app.ui
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
-import android.provider.OpenableColumns
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.FileProvider
+import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.twilio.conversations.app.R
 import com.twilio.conversations.app.adapters.MessageListAdapter
-import com.twilio.conversations.app.common.SheetListener
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.MessageType
-import com.twilio.conversations.app.common.enums.Reaction
 import com.twilio.conversations.app.common.extensions.*
 import com.twilio.conversations.app.common.injector
 import com.twilio.conversations.app.data.models.MessageListViewItem
-import kotlinx.android.synthetic.main.activity_conversation.*
-import kotlinx.android.synthetic.main.view_add_reaction_screen.*
-import kotlinx.android.synthetic.main.view_select_attachment_screen.*
+import com.twilio.conversations.app.databinding.ActivityMessageListBinding
+import com.twilio.conversations.app.ui.dialogs.AttachFileDialog
+import com.twilio.conversations.app.ui.dialogs.MessageActionsDialog
+import com.twilio.conversations.app.ui.dialogs.ReactionDetailsDialog
 import timber.log.Timber
-import java.io.File
-import java.io.IOException
-import java.text.SimpleDateFormat
 import java.util.*
-
-private const val REQUEST_PICK_IMAGE = 1
-private const val REQUEST_IMAGE_CAPTURE = 2
-
-private const val SAVED_STATE_IMAGE_CAPTURE_CONTENT_URI = "SAVED_STATE_IMAGE_CAPTURE_CONTENT_URI"
 
 class MessageListActivity : BaseActivity() {
 
-    private val sheetBehavior by lazy { BottomSheetBehavior.from(addReactionSheet) }
-    private val sheetListener by lazy { SheetListener(sheet_background) { hideKeyboard() } }
-
-    private val attachmentSheetBehavior by lazy { BottomSheetBehavior.from(selectAttachmentSheet) }
-    private val attachmentSheetListener = object : BottomSheetBehavior.BottomSheetCallback() {
-        override fun onSlide(bottomSheet: View, slideOffset: Float) {
-            sheet_background.visibility = View.VISIBLE
-            sheet_background.alpha = slideOffset
-        }
-
-        override fun onStateChanged(bottomSheet: View, newState: Int) {
-            if (newState == BottomSheetBehavior.STATE_HIDDEN) {
-                sheet_background.visibility = View.GONE
-            }
-        }
-    }
-
-    private var imageCaptureContentUri: Uri? = null
+    val binding by lazy { ActivityMessageListBinding.inflate(layoutInflater) }
 
     val messageListViewModel by lazyViewModel {
         injector.createMessageListViewModel(applicationContext, intent.getStringExtra(EXTRA_CONVERSATION_SID)!!)
@@ -68,163 +37,169 @@ class MessageListActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         Timber.d("onCreate")
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_conversation)
+        setContentView(binding.root)
 
-        imageCaptureContentUri = savedInstanceState?.getParcelable(SAVED_STATE_IMAGE_CAPTURE_CONTENT_URI)
         initViews()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         super.onCreateOptionsMenu(menu)
-        menuInflater.inflate(R.menu.menu_conversation_details, menu)
+        menuInflater.inflate(R.menu.menu_message_list, menu)
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.show_conversation_details -> ConversationDetailsActivity.start(this, messageListViewModel.conversationSid)
+            R.id.show_conversation_details -> ConversationDetailsActivity.start(
+                this,
+                messageListViewModel.conversationSid
+            )
         }
         return super.onOptionsItemSelected(item)
     }
 
-    override fun onBackPressed() {
-        when {
-            sheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED -> hideReactionDialog()
-            attachmentSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED -> hideAttachmentSheet()
-            else -> super.onBackPressed()
-        }
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        outState.putParcelable(SAVED_STATE_IMAGE_CAPTURE_CONTENT_URI, imageCaptureContentUri)
-        super.onSaveInstanceState(outState)
-    }
-
     private fun initViews() {
-        setSupportActionBar(conversation_toolbar)
+        setSupportActionBar(binding.conversationToolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        conversation_toolbar.setNavigationOnClickListener { onBackPressed() }
-        sheetBehavior.addBottomSheetCallback(sheetListener)
-        attachmentSheetBehavior.addBottomSheetCallback(attachmentSheetListener)
-        sheet_background.setOnClickListener {
-            hideReactionDialog()
-            hideAttachmentSheet()
-        }
+        binding.conversationToolbar.setNavigationOnClickListener { onBackPressed() }
         val adapter = MessageListAdapter(
-            onResend = { message ->
-                Timber.d("Re-send clicked: ${message.uuid}")
-                resendMessage(message)
+            onDisplaySendError = { message ->
+                Timber.d("Display send error clicked: ${message.uuid}")
+                showSendErrorDialog(message)
             },
             onDownloadMedia = { message ->
                 Timber.d("Download clicked: $message")
                 messageListViewModel.startMessageMediaDownload(message.index, message.mediaFileName)
             },
-            onOpenMedia = { uri ->
+            onOpenMedia = { uri, mimeType ->
                 Timber.d("Open clicked")
-                viewUri(uri)
+                if (mimeType.startsWith("image/")) {
+                    viewUri(uri)
+                } else {
+                    shareUri(uri, mimeType)
+                }
             },
-            onAddReaction = { messageIndex ->
-                Timber.d("Add reaction clicked")
+            onItemLongClick = { messageIndex ->
+                Timber.d("Message long clicked: $messageIndex")
                 messageListViewModel.selectedMessageIndex = messageIndex
-                showReactionDialog()
+                showMessageActionsDialog()
             },
-            onReactionClicked = {reaction, messageIndex ->
-                Timber.d("Reaction clicked:, $reaction")
+            onReactionClicked = { messageIndex ->
+                Timber.d("Reaction clicked:, $messageIndex")
                 messageListViewModel.selectedMessageIndex = messageIndex
-                messageListViewModel.addRemoveReaction(reaction)
+                showReactionDetailsDialog()
             }
         )
-        messageList.adapter = adapter
-        messageList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+        binding.messageList.adapter = adapter
+        binding.messageList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                val index = (recyclerView.layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition()
+                val index = (recyclerView.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+                if (index == RecyclerView.NO_POSITION) return
+
                 val message = adapter.getMessage(index)
-                if (message != null) {
-                    messageListViewModel.handleMessageDisplayed(message.index)
-                }
+                message?.let { messageListViewModel.handleMessageDisplayed(it.index) }
             }
         })
-
-        messageSendButton.setOnClickListener {
-            messageInput.text.toString().takeIf { it.isNotBlank() }?.let { message ->
-                Timber.d("Sending message: $message")
-                messageListViewModel.sendTextMessage(message)
-                messageInput.setText("")
-            }
+        binding.messageInput.onSubmit {
+            sendMessage()
         }
-        messageInput.doAfterTextChanged {
+        binding.messageInputHolder.setEndIconOnClickListener {
+            sendMessage()
+        }
+        binding.messageInput.doAfterTextChanged {
             messageListViewModel.typing()
         }
-        messageListViewModel.conversationName.observe(this, { conversationName ->
+        messageListViewModel.conversationName.observe(this) { conversationName ->
             title = conversationName
-        })
-        messageListViewModel.messageItems.observe(this, { messages ->
-            val lastVisibleMessageIndex = (messageList.layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition()
+        }
+        messageListViewModel.messageItems.observe(this) { messages ->
+            val lastVisibleMessageIndex =
+                (binding.messageList.layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition()
             // Scroll list to bottom when it was at the bottom before submitting new messages
             val commitCallback: Runnable? = if (lastVisibleMessageIndex == adapter.itemCount - 1) {
-                Runnable { messageList.scrollToPosition(adapter.itemCount - 1) }
+                Runnable { binding.messageList.scrollToPosition(adapter.itemCount - 1) }
             } else {
                 null
             }
             adapter.submitList(messages, commitCallback)
-        })
-        messageListViewModel.onMessageError.observe(this, { error ->
+        }
+        messageListViewModel.onMessageCopied.observe(this) {
+            binding.messageListLayout.showSnackbar(R.string.message_copied, R.id.messageInputHolder)
+        }
+        messageListViewModel.onShowRemoveMessageDialog.observe(this) {
+            showRemoveMessageDialog()
+        }
+        messageListViewModel.onMessageRemoved.observe(this) {
+            binding.messageListLayout.showSnackbar(R.string.message_deleted, R.id.messageInputHolder)
+        }
+        messageListViewModel.onMessageError.observe(this) { error ->
             if (error == ConversationsError.CONVERSATION_GET_FAILED) {
                 finish()
             }
-            conversationLayout.showSnackbar(getErrorMessage(error))
-        })
-        messageListViewModel.typingParticipantsList.observe(this, { participants ->
-            typingIndicator.text = if (participants.isNotEmpty()) {
-                val participantsList = participants.joinToString(limit = 3, truncated = getString(R.string.typing_indicator_overflow))
-                resources.getQuantityString(R.plurals.typing_indicator, participants.size, participantsList)
-            } else {
-                ""
+            if (error == ConversationsError.MESSAGE_SEND_FAILED) { // shown in message list inline
+                return@observe
             }
-        })
-        reaction_heart.setOnClickListener {
-            Timber.d("Heart clicked")
-            messageListViewModel.addRemoveReaction(Reaction.HEART)
-            hideReactionDialog()
+            binding.messageListLayout.showSnackbar(getErrorMessage(error), R.id.messageInputHolder)
         }
-        reaction_laugh.setOnClickListener {
-            Timber.d("Laugh clicked")
-            messageListViewModel.addRemoveReaction(Reaction.LAUGH)
-            hideReactionDialog()
+        messageListViewModel.typingParticipantsList.observe(this) { participants ->
+            binding.typingIndicator.visibility = if (participants.isNotEmpty()) View.VISIBLE else View.GONE
+            val text = if (participants.size == 1) participants[0] else participants.size.toString()
+            binding.typingIndicator.text =
+                resources.getQuantityString(R.plurals.typing_indicator, participants.size, text)
         }
-        reaction_sad.setOnClickListener {
-            Timber.d("Sad clicked")
-            messageListViewModel.addRemoveReaction(Reaction.SAD)
-            hideReactionDialog()
+        binding.messageAttachmentButton.setOnClickListener {
+            AttachFileDialog.getInstance(messageListViewModel.conversationSid)
+                .showNow(supportFragmentManager, null)
         }
-        reaction_thumbs_down.setOnClickListener {
-            Timber.d("Thumbs down clicked")
-            messageListViewModel.addRemoveReaction(Reaction.THUMBS_DOWN)
-            hideReactionDialog()
+    }
+
+    private fun showRemoveMessageDialog() {
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.remove_messgage_dialog_title)
+            .setMessage(R.string.remove_messgage_dialog_message)
+            .setPositiveButton(R.string.close, null)
+            .setNegativeButton(R.string.delete) { _, _ -> messageListViewModel.removeMessage() }
+            .create()
+
+        dialog.setOnShowListener {
+            val color = ContextCompat.getColor(this, R.color.colorAccent)
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(color)
+
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).isAllCaps = false
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).isAllCaps = false
         }
-        reaction_thumbs_up.setOnClickListener {
-            Timber.d("Thumbs up clicked")
-            messageListViewModel.addRemoveReaction(Reaction.THUMBS_UP)
-            hideReactionDialog()
+
+        dialog.show()
+    }
+
+    private fun showSendErrorDialog(message: MessageListViewItem) {
+        val title = getString(R.string.send_error_dialog_title, message.errorCode)
+
+        val text = when (message.errorCode) { // See https://www.twilio.com/docs/api/errors
+            50511 -> getString(R.string.send_error_dialog_invalid_media_content_type)
+            else -> getString(R.string.send_error_dialog_message_default)
         }
-        messageAttachmentButton.setOnClickListener {
-            showAttachmentSheet()
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage(text)
+            .setPositiveButton(R.string.close, null)
+            .setNegativeButton(R.string.retry) { _, _ -> resendMessage(message) }
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).isAllCaps = false
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).isAllCaps = false
         }
-        attachment_choose_image.setOnClickListener {
-            val intent = Intent(Intent.ACTION_GET_CONTENT)
-            intent.addCategory(Intent.CATEGORY_OPENABLE)
-            intent.type = "image/*"
-            startActivityForResult(Intent.createChooser(intent, null), REQUEST_PICK_IMAGE)
-            hideAttachmentSheet()
-            hideKeyboard()
-        }
-        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
-            attachment_take_picture.visibility = View.GONE
-        }
-        attachment_take_picture.setOnClickListener {
-            startImageCaptureActivity()
-            hideAttachmentSheet()
-            hideKeyboard()
+
+        dialog.show()
+    }
+
+    private fun sendMessage() {
+        binding.messageInput.text.toString().takeIf { it.isNotBlank() }?.let { message ->
+            Timber.d("Sending message: $message")
+            messageListViewModel.sendTextMessage(message)
+            binding.messageInput.text?.clear()
         }
     }
 
@@ -242,21 +217,6 @@ class MessageListActivity : BaseActivity() {
         }
     }
 
-    private fun startImageCaptureActivity() {
-        val photoFile = try {
-            createImageFile()
-        } catch (e: IOException) {
-            Timber.e(e)
-            showToast(R.string.err_failed_to_capture_image)
-            return
-        }
-        imageCaptureContentUri = FileProvider.getUriForFile(this, "com.twilio.conversations.app.fileprovider", photoFile)
-        Timber.d("Capturing image to $imageCaptureContentUri")
-        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, imageCaptureContentUri)
-        startActivityForResult(Intent.createChooser(intent, null), REQUEST_IMAGE_CAPTURE)
-    }
-
     private fun viewUri(uri: Uri) {
         val intent = Intent(Intent.ACTION_VIEW)
         intent.data = uri
@@ -264,55 +224,22 @@ class MessageListActivity : BaseActivity() {
         startActivity(Intent.createChooser(intent, null))
     }
 
-    private fun hideReactionDialog() {
-        sheetBehavior.hide()
+    private fun shareUri(uri: Uri, mimeType: String) {
+        val intent = Intent(Intent.ACTION_SEND)
+        intent.type = mimeType
+        intent.putExtra(Intent.EXTRA_STREAM, uri)
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        startActivity(Intent.createChooser(intent, null))
     }
 
-    private fun showReactionDialog() {
-        sheetBehavior.show()
+    private fun showMessageActionsDialog() {
+        MessageActionsDialog.getInstance(messageListViewModel.conversationSid)
+            .showNow(supportFragmentManager, null)
     }
 
-    private fun hideAttachmentSheet() {
-        attachmentSheetBehavior.hide()
-    }
-
-    private fun showAttachmentSheet() {
-        attachmentSheetBehavior.show()
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        val uri = when(requestCode) {
-            REQUEST_PICK_IMAGE -> data?.data
-            REQUEST_IMAGE_CAPTURE -> imageCaptureContentUri
-            else -> null
-        }
-        if ((requestCode == REQUEST_PICK_IMAGE || requestCode == REQUEST_IMAGE_CAPTURE) && resultCode == Activity.RESULT_OK && uri != null) {
-            val inputStream = contentResolver.openInputStream(uri)
-            val type = contentResolver.getType(uri)
-            val name = contentResolver.getString(uri, OpenableColumns.DISPLAY_NAME)
-            if (inputStream != null) {
-                messageListViewModel.sendMediaMessage(uri.toString(), inputStream, name, type)
-            } else {
-                Timber.w("Could not get input stream for file reading: $data")
-                showToast(R.string.err_failed_to_send_media)
-            }
-        } else {
-            super.onActivityResult(requestCode, resultCode, data)
-        }
-    }
-
-    @Throws(IOException::class)
-    private fun createImageFile(): File {
-        // Create an image file name
-        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val dir = if (externalMediaDirs.isNotEmpty() && externalMediaDirs[0] != null) {
-            externalMediaDirs[0]
-        } else {
-            throw IOException("No external media dir available")
-        }
-        val storageDir = File(dir, "images")
-        storageDir.mkdir()
-        return File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
+    private fun showReactionDetailsDialog() {
+        ReactionDetailsDialog.getInstance(messageListViewModel.conversationSid)
+            .showNow(supportFragmentManager, null)
     }
 
     companion object {

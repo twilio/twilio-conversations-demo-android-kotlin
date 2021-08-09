@@ -196,11 +196,19 @@ class ConversationsRepositoryTest {
         val conversation = createTestConversationDataItem()
         coEvery { conversationsClient.getConversation(any()) } returns conversation.toConversationMock()
 
+        val lastMessage = createTestMessageDataItem()
+        every { localCacheProvider.messagesDao().getLastMessage(conversation.sid) } returns lastMessage
+
         clientListener.onConversationAdded(conversation.toConversationMock())
 
         verify(timeout = 10_000) { localCacheProvider.conversationsDao().insert(conversation) }
         verify(timeout = 10_000) { localCacheProvider.conversationsDao().update(conversation.sid,
             conversation.participatingStatus, conversation.notificationLevel, conversation.friendlyName) }
+
+        // Also should update the last message of the conversation in local cache
+        verify(timeout = 10_000) { localCacheProvider.messagesDao().getLastMessage(conversation.sid) }
+        verify(timeout = 10_000) { localCacheProvider.conversationsDao().updateLastMessage(conversation.sid, lastMessage.body!!, lastMessage.sendStatus, lastMessage.dateCreated) }
+
         confirmVerified(localCacheProvider)
     }
 
@@ -209,11 +217,19 @@ class ConversationsRepositoryTest {
         val conversation = createTestConversationDataItem()
         coEvery { conversationsClient.getConversation(any()) } returns conversation.toConversationMock()
 
+        val lastMessage = createTestMessageDataItem()
+        every { localCacheProvider.messagesDao().getLastMessage(conversation.sid) } returns lastMessage
+
         clientListener.onConversationUpdated(conversation.toConversationMock(), Conversation.UpdateReason.ATTRIBUTES)
 
         verify(timeout = 10_000) { localCacheProvider.conversationsDao().insert(conversation) }
         verify(timeout = 10_000) { localCacheProvider.conversationsDao().update(conversation.sid,
             conversation.participatingStatus, conversation.notificationLevel, conversation.friendlyName) }
+
+        // Also should update the last message of the conversation in local cache
+        verify(timeout = 10_000) { localCacheProvider.messagesDao().getLastMessage(conversation.sid) }
+        verify(timeout = 10_000) { localCacheProvider.conversationsDao().updateLastMessage(conversation.sid, lastMessage.body!!, lastMessage.sendStatus, lastMessage.dateCreated) }
+
         confirmVerified(localCacheProvider)
     }
 

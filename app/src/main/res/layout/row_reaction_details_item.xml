@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/reaction_username"
+        style="@style/TextViewSubtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:drawablePadding="16dp"
+        android:gravity="center_vertical"
+        android:singleLine="true"
+        app:drawableStartCompat="@drawable/ic_avatar"
+        tools:text="username00" />
+
+    <androidx.emoji.widget.EmojiTextView
+        android:id="@+id/reaction_emoji"
+        style="@style/EmojiTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/reaction_heart"
+        android:textSize="14sp" />
+
+</LinearLayout>

@@ -5,8 +5,9 @@ import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.intent.rule.IntentsTestRule
-import androidx.test.espresso.matcher.ViewMatchers.*
-import androidx.test.espresso.matcher.ViewMatchers.Visibility.VISIBLE
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.twilio.conversations.app.R
@@ -44,7 +45,7 @@ class LoginActivityTest {
         val activity = activityRule.activity
         loginViewModel = activity.loginViewModel
 
-        replaceDynamicUi(activity, R.id.loginProgressBar)
+        replaceDynamicUi(activity, R.id.splashProgressBar)
     }
 
     @Test
@@ -52,13 +53,14 @@ class LoginActivityTest {
         onView(withId(R.id.usernameTv)).check(matches(isDisplayed()))
         onView(withId(R.id.passwordTv)).check(matches(isDisplayed()))
         onView(withId(R.id.signInBtn)).check(matches(isDisplayed()))
-        onView(withId(R.id.loginProgressBar)).check(matches(not(isDisplayed())))
+        onView(withId(R.id.splashProgressBar)).check(matches(not(isDisplayed())))
     }
 
     @Test
     fun clickSignInButtonWithoutCredentials_displaysError() {
         onView(withId(R.id.signInBtn)).perform(closeSoftKeyboard(), click())
-        onView(withText(R.string.sign_in_error)).check(matches(isDisplayed()))
+        onView(withText(R.string.enter_username)).check(matches(isDisplayed()))
+        onView(withText(R.string.enter_password)).check(matches(isDisplayed()))
     }
 
     @Test
@@ -66,12 +68,12 @@ class LoginActivityTest {
         activityRule.runOnUiThread {
             loginViewModel.isLoading.value = true
         }
-        onView(withId(R.id.loginProgressBar)).check(matches(isDisplayed()))
+        onView(withId(R.id.splashProgressBar)).check(matches(isDisplayed()))
 
         activityRule.runOnUiThread {
             loginViewModel.isLoading.value = false
         }
-        onView(withId(R.id.loginProgressBar)).check(matches(not(isDisplayed())))
+        onView(withId(R.id.splashProgressBar)).check(matches(not(isDisplayed())))
     }
 
     @Test
@@ -80,9 +82,7 @@ class LoginActivityTest {
             loginViewModel.onSignInError.value = ConversationsError.GENERIC_ERROR
         }
 
-        // TODO: occasionally fails when view is displayed and visible on the screen
-        // checking the effective visibility seems to find the view more reliably
-        onView(withText(R.string.sign_in_error)).check(matches(withEffectiveVisibility(VISIBLE)))
+        onView(withText(R.string.sign_in_error)).check(matches(isDisplayed()))
     }
 
     @Test

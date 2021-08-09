@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.twilio.conversations.app.R
@@ -105,9 +104,9 @@ class ConversationDetailsActivity : BaseActivity() {
             }
         }
 
-        binding.conversationDeleteButton.setOnClickListener {
-            Timber.d("Conversation delete clicked")
-            conversationDetailsViewModel.removeConversation()
+        binding.conversationLeaveButton.setOnClickListener {
+            Timber.d("Conversation leave clicked")
+            conversationDetailsViewModel.leaveConversation()
         }
 
         sheet_background.setOnClickListener {
@@ -168,16 +167,16 @@ class ConversationDetailsActivity : BaseActivity() {
                 showToast(R.string.err_failed_to_get_conversation)
                 finish()
             }
-            conversationLayout.showSnackbar(getErrorMessage(error))
+            conversationDetailsLayout.showSnackbar(getErrorMessage(error))
         })
 
-        conversationDetailsViewModel.onConversationRemoved.observe(this, {
+        conversationDetailsViewModel.onConversationLeft.observe(this, {
             ConversationListActivity.start(this)
             finish()
         })
 
         conversationDetailsViewModel.onParticipantAdded.observe(this, { identity ->
-            conversationLayout.showSnackbar(getString(R.string.participant_added_message, identity))
+            conversationDetailsLayout.showSnackbar(getString(R.string.participant_added_message, identity))
         })
     }
 

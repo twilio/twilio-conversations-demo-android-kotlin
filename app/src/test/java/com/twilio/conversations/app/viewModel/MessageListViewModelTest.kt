@@ -3,9 +3,11 @@ package com.twilio.conversations.app.viewModel
 import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.twilio.conversations.Conversation
+import com.twilio.conversations.User
 import com.twilio.conversations.app.asPagedList
 import com.twilio.conversations.app.common.asMessageListViewItems
 import com.twilio.conversations.app.common.enums.ConversationsError
+import com.twilio.conversations.app.common.enums.DownloadState
 import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.createTestConversationDataItem
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
@@ -23,6 +25,7 @@ import com.twilio.conversations.app.testUtil.waitValue
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
@@ -60,6 +63,9 @@ class MessageListViewModelTest {
     private val messageBody = "Test Message"
 
     @MockK
+    private lateinit var selfUser: User
+
+    @MockK
     private lateinit var conversationsRepository: ConversationsRepository
 
     @MockK
@@ -81,6 +87,9 @@ class MessageListViewModelTest {
                 flowOf(RepositoryResult(listOf< MessageListViewItem>().asPagedList(), RepositoryRequestStatus.COMPLETE))
         coEvery { messageListManager.updateMessageStatus(any(), any()) } returns Unit
         coEvery { conversationsRepository.getTypingParticipants(conversationSid) } returns flowOf(listOf())
+
+        every { selfUser.identity } returns "selfuser"
+        coEvery { conversationsRepository.getSelfUser() } returns flowOf(selfUser)
     }
 
     @After
@@ -157,16 +166,16 @@ class MessageListViewModelTest {
 
     @Test
     fun `typingParticipantsList is updated`() = runBlocking {
-        val userIdentity = "user1"
+        val userFriendlyName = "userFriendlyName"
         coEvery { conversationsRepository.getTypingParticipants(conversationSid) } returns flowOf(listOf(
             ParticipantDataItem(
-                identity = userIdentity, conversationSid = conversationSid, lastReadTimestamp = null,
-                lastReadMessageIndex = null, sid = "321", friendlyName = "user", isOnline = true
+                identity = "identity", conversationSid = conversationSid, lastReadTimestamp = null,
+                lastReadMessageIndex = null, sid = "321", friendlyName = userFriendlyName, isOnline = true
             )
         ))
 
         messageListViewModel = MessageListViewModel(context, conversationSid, conversationsRepository, messageListManager)
-        assertEquals(listOf(userIdentity), messageListViewModel.typingParticipantsList.waitValue())
+        assertEquals(listOf(userFriendlyName), messageListViewModel.typingParticipantsList.waitValue())
     }
 
     @Test
@@ -210,35 +219,15 @@ class MessageListViewModelTest {
     }
 
     @Test
-    fun `getMediaMessageFileSource should return getMediaContentTemporaryUrl`() = runBlocking {
-        val resultUrl = "asd"
-        val messageIndex = 0L
-        coEvery { messageListManager.getMediaContentTemporaryUrl(any()) } returns resultUrl
-        messageListViewModel = MessageListViewModel(context, conversationSid, conversationsRepository, messageListManager)
-
-        assertEquals(resultUrl, messageListViewModel.getMediaMessageFileSource( messageIndex))
-        coVerify { messageListManager.getMediaContentTemporaryUrl(messageIndex) }
-    }
-
-    @Test
-    fun `getMediaMessageFileSource should call onMessageError on failure`() = runBlocking {
-        coEvery { messageListManager.getMediaContentTemporaryUrl(any()) } throws ConversationsException(ConversationsError.MESSAGE_MEDIA_DOWNLOAD_FAILED)
-        messageListViewModel = MessageListViewModel(context, conversationSid, conversationsRepository, messageListManager)
-
-        assertEquals(null, messageListViewModel.getMediaMessageFileSource(0))
-        assertTrue(messageListViewModel.onMessageError.waitValue(ConversationsError.MESSAGE_MEDIA_DOWNLOAD_FAILED))
-    }
-
-    @Test
     fun `updateMessageMediaDownloadStatus should call MessageListManager#updateMessageMediaDownloadStatus`() = runBlocking {
         val messageIndex = 1L
-        val downloading = false
+        val downloadState = DownloadState.NOT_STARTED
         val downloadedBytes = 2L
         val downloadLocation = "asd"
-        coEvery { messageListManager.updateMessageMediaDownloadStatus(any(), any(), any(), any()) } returns Unit
+        coEvery { messageListManager.updateMessageMediaDownloadState(any(), any(), any(), any()) } returns Unit
         messageListViewModel = MessageListViewModel(context, conversationSid, conversationsRepository, messageListManager)
 
-        messageListViewModel.updateMessageMediaDownloadStatus(messageIndex, downloading, downloadedBytes, downloadLocation)
-        coVerify { messageListManager.updateMessageMediaDownloadStatus(messageIndex, downloading, downloadedBytes, downloadLocation) }
+        messageListViewModel.updateMessageMediaDownloadStatus(messageIndex, downloadState, downloadedBytes, downloadLocation)
+        coVerify { messageListManager.updateMessageMediaDownloadState(messageIndex, downloadState, downloadedBytes, downloadLocation) }
     }
 }

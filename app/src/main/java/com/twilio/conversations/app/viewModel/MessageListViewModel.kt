@@ -1,6 +1,8 @@
 package com.twilio.conversations.app.viewModel
 
 import android.app.DownloadManager
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.database.ContentObserver
 import android.net.Uri
@@ -8,6 +10,7 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.net.toFile
 import androidx.core.net.toUri
@@ -16,9 +19,12 @@ import androidx.lifecycle.Observer
 import androidx.paging.PagedList
 import com.twilio.conversations.app.common.SingleLiveEvent
 import com.twilio.conversations.app.common.enums.ConversationsError
+import com.twilio.conversations.app.common.enums.DownloadState
 import com.twilio.conversations.app.common.enums.Reaction
+import com.twilio.conversations.app.common.enums.Reactions
 import com.twilio.conversations.app.common.enums.SendStatus
 import com.twilio.conversations.app.common.extensions.*
+import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.manager.MessageListManager
@@ -42,6 +48,9 @@ class MessageListViewModel(
 ) : ViewModel() {
 
     val conversationName = MutableLiveData<String>()
+
+    val selfUser = conversationsRepository.getSelfUser().asLiveData(viewModelScope.coroutineContext)
+
     val messageItems = conversationsRepository.getMessages(conversationSid, MESSAGE_COUNT)
         .onEach { repositoryResult ->
             if (repositoryResult.requestStatus is RepositoryRequestStatus.Error) {
@@ -50,18 +59,30 @@ class MessageListViewModel(
         }
         .asLiveData(viewModelScope.coroutineContext)
         .map { it.data }
+
     val onMessageError = SingleLiveEvent<ConversationsError>()
+
     val onMessageSent = SingleLiveEvent<Unit>()
+
+    val onShowRemoveMessageDialog = SingleLiveEvent<Unit>()
+
+    val onMessageRemoved = SingleLiveEvent<Unit>()
+
+    val onMessageCopied = SingleLiveEvent<Unit>()
+
     var selectedMessageIndex: Long = -1
+
+    val selectedMessage: MessageListViewItem? get() = messageItems.value?.firstOrNull { it.index == selectedMessageIndex }
+
     val typingParticipantsList = conversationsRepository.getTypingParticipants(conversationSid)
-        .map { participants -> participants.map { participant -> participant.identity } }
+        .map { participants -> participants.map { it.typingIndicatorName } }
         .distinctUntilChanged()
         .asLiveData(viewModelScope.coroutineContext)
 
-    private val messagesObserver : Observer<PagedList<MessageListViewItem>>  =
+    private val messagesObserver: Observer<PagedList<MessageListViewItem>> =
         Observer { list ->
             list.iterator().forEach { message ->
-                if (message.mediaDownloading && message.mediaDownloadId != null) {
+                if (message.mediaDownloadState == DownloadState.DOWNLOADING && message.mediaDownloadId != null) {
                     if (updateMessageMediaDownloadState(message.index, message.mediaDownloadId)) {
                         observeMessageMediaDownload(message.index, message.mediaDownloadId)
                     }
@@ -87,18 +108,20 @@ class MessageListViewModel(
                 onMessageError.value = ConversationsError.CONVERSATION_GET_FAILED
                 return@collect
             }
-            conversationName.value = result.data?.friendlyName
+            conversationName.value = result.data?.friendlyName?.takeIf { it.isNotEmpty() } ?: result.data?.sid
         }
     }
 
     fun sendTextMessage(message: String) = viewModelScope.launch {
         val messageUuid = UUID.randomUUID().toString()
+        Timber.d("messageUuid: $messageUuid")
         try {
             messageListManager.sendTextMessage(message, messageUuid)
             onMessageSent.call()
             Timber.d("Message sent: $messageUuid")
         } catch (e: ConversationsException) {
-            messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR)
+            Timber.d("Text message send error: ${e.errorInfo?.status}:${e.errorInfo?.code} ${e.errorInfo?.message}")
+            messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo?.code ?: 0)
             onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
         }
     }
@@ -109,22 +132,24 @@ class MessageListViewModel(
             onMessageSent.call()
             Timber.d("Message re-sent: $messageUuid")
         } catch (e: ConversationsException) {
-            messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR)
+            messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo?.code ?: 0)
             onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
         }
     }
 
-    fun sendMediaMessage(uri: String, inputStream: InputStream, fileName: String?, mimeType: String?) = viewModelScope.launch {
-        val messageUuid = UUID.randomUUID().toString()
-        try {
-            messageListManager.sendMediaMessage(uri, inputStream, fileName, mimeType, messageUuid)
-            onMessageSent.call()
-            Timber.d("Media message sent: $messageUuid")
-        } catch (e: ConversationsException) {
-            messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR)
-            onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
+    fun sendMediaMessage(uri: String, inputStream: InputStream, fileName: String?, mimeType: String?) =
+        viewModelScope.launch {
+            val messageUuid = UUID.randomUUID().toString()
+            try {
+                messageListManager.sendMediaMessage(uri, inputStream, fileName, mimeType, messageUuid)
+                onMessageSent.call()
+                Timber.d("Media message sent: $messageUuid")
+            } catch (e: ConversationsException) {
+                Timber.d("Media message send error: ${e.errorInfo?.status}:${e.errorInfo?.code} ${e.errorInfo?.message}")
+                messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo?.code ?: 0)
+                onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
+            }
         }
-    }
 
     fun resendMediaMessage(inputStream: InputStream, messageUuid: String) = viewModelScope.launch {
         try {
@@ -132,7 +157,7 @@ class MessageListViewModel(
             onMessageSent.call()
             Timber.d("Media re-sent: $messageUuid")
         } catch (e: ConversationsException) {
-            messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR)
+            messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo?.code ?: 0)
             onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
         }
     }
@@ -150,37 +175,62 @@ class MessageListViewModel(
         messageListManager.typing()
     }
 
-    fun addRemoveReaction(reaction: Reaction) = viewModelScope.launch {
+    fun setReactions(reactions: Reactions) = viewModelScope.launch {
         try {
-            messageListManager.addRemoveReaction(selectedMessageIndex, reaction)
+            messageListManager.setReactions(selectedMessageIndex, reactions)
         } catch (e: ConversationsException) {
             onMessageError.value = ConversationsError.REACTION_UPDATE_FAILED
         }
     }
 
-    suspend fun getMediaMessageFileSource(messageIndex: Long): String? {
+    fun copyMessageToClipboard() {
         try {
-            return messageListManager.getMediaContentTemporaryUrl(messageIndex)
-        } catch (conversationsException: ConversationsException) {
-            onMessageError.value = conversationsException.error
+            val message = selectedMessage ?: error("No message selected")
+            val clip = ClipData.newPlainText("Message text", message.body)
+            val clipboard = ContextCompat.getSystemService(appContext, ClipboardManager::class.java)
+            clipboard!!.setPrimaryClip(clip)
+            onMessageCopied.call()
+        } catch (e: Exception) {
+            Timber.d("Failed to copy message")
+            onMessageError.value = ConversationsError.MESSAGE_COPY_FAILED
         }
-        return null
+    }
+
+    fun removeMessage() = viewModelScope.launch {
+        try {
+            messageListManager.removeMessage(selectedMessageIndex)
+            onMessageRemoved.call()
+        } catch (e: ConversationsException) {
+            Timber.d("Failed to remove message")
+            onMessageError.value = ConversationsError.MESSAGE_REMOVE_FAILED
+        }
     }
 
     fun updateMessageMediaDownloadStatus(
         messageIndex: Long,
-        downloading: Boolean,
-        downloadedBytes: Long,
+        downloadState: DownloadState,
+        downloadedBytes: Long = 0,
         downloadedLocation: String? = null
     ) = viewModelScope.launch {
-        messageListManager.updateMessageMediaDownloadStatus(messageIndex, downloading, downloadedBytes, downloadedLocation)
+        messageListManager.updateMessageMediaDownloadState(
+            messageIndex,
+            downloadState,
+            downloadedBytes,
+            downloadedLocation
+        )
     }
 
     fun startMessageMediaDownload(messageIndex: Long, fileName: String?) = viewModelScope.launch {
         Timber.d("Start file download for message index $messageIndex")
+        updateMessageMediaDownloadStatus(messageIndex, DownloadState.DOWNLOADING)
 
-        val sourceUri =
-            Uri.parse(getMediaMessageFileSource(messageIndex) ?: return@launch)
+        val sourceUriResult = runCatching { Uri.parse(messageListManager.getMediaContentTemporaryUrl(messageIndex)) }
+        val sourceUri = sourceUriResult.getOrElse { e ->
+            Timber.w(e, "Message media download failed: cannot get sourceUri")
+            updateMessageMediaDownloadStatus(messageIndex, DownloadState.ERROR)
+            return@launch
+        }
+
         val downloadManager =
             appContext.getSystemService(AppCompatActivity.DOWNLOAD_SERVICE) as DownloadManager
         val downloadRequest = DownloadManager.Request(sourceUri).apply {
@@ -217,7 +267,7 @@ class MessageListViewModel(
      * Notifies the view model of the current download state
      * @return true if the download is still in progress
      */
-    private fun updateMessageMediaDownloadState(messageIndex: Long, downloadId: Long) : Boolean {
+    private fun updateMessageMediaDownloadState(messageIndex: Long, downloadId: Long): Boolean {
         val downloadManager = appContext.getSystemService(AppCompatActivity.DOWNLOAD_SERVICE) as DownloadManager
         val cursor = downloadManager.queryById(downloadId)
 
@@ -231,21 +281,34 @@ class MessageListViewModel(
         val downloadedBytes = cursor.getLong(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
         Timber.d("Download status changed. Status: $status, downloaded bytes: $downloadedBytes")
 
-        updateMessageMediaDownloadStatus(messageIndex, downloadInProgress, downloadedBytes)
+        updateMessageMediaDownloadStatus(messageIndex, DownloadState.DOWNLOADING, downloadedBytes)
 
         when (status) {
             DownloadManager.STATUS_SUCCESSFUL -> {
                 val downloadedFile = cursor.getString(DownloadManager.COLUMN_LOCAL_URI).toUri().toFile()
-                val downloadedLocation = FileProvider.getUriForFile(appContext, "com.twilio.conversations.app.fileprovider", downloadedFile).toString()
-                updateMessageMediaDownloadStatus(messageIndex, false, downloadedBytes, downloadedLocation)
+                val downloadedLocation =
+                    FileProvider.getUriForFile(appContext, "com.twilio.conversations.app.fileprovider", downloadedFile)
+                        .toString()
+                updateMessageMediaDownloadStatus(
+                    messageIndex,
+                    DownloadState.COMPLETED,
+                    downloadedBytes,
+                    downloadedLocation
+                )
             }
             DownloadManager.STATUS_FAILED -> {
                 onMessageError.value = ConversationsError.MESSAGE_MEDIA_DOWNLOAD_FAILED
-                Timber.w("Message media download failed. Failure reason: %s", cursor.getString(DownloadManager.COLUMN_REASON))
+                updateMessageMediaDownloadStatus(messageIndex, DownloadState.ERROR, downloadedBytes)
+                Timber.w(
+                    "Message media download failed. Failure reason: %s",
+                    cursor.getString(DownloadManager.COLUMN_REASON)
+                )
             }
         }
 
         cursor.close()
         return downloadInProgress
     }
+
+    private val ParticipantDataItem.typingIndicatorName get() = if (friendlyName.isNotEmpty()) friendlyName else identity
 }

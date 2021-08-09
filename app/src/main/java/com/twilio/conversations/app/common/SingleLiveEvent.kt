@@ -45,7 +45,7 @@ class SingleLiveEvent<T> : MutableLiveData<T>() {
      * Used for cases where T is Void, to make calls cleaner.
      */
     @MainThread
-    fun call() {
-        value = null
+    fun call(t: T? = null) {
+        value = t
     }
 }

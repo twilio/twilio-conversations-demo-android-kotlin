@@ -3,9 +3,8 @@ package com.twilio.conversations.app.data.localCache.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "message_table")
+@Entity(tableName = "message_table", primaryKeys = ["sid", "uuid"])
 data class MessageDataItem(
-    @PrimaryKey
     val sid: String,
     val conversationSid: String,
     val participantSid: String,
@@ -25,8 +24,9 @@ data class MessageDataItem(
     val mediaUri: String? = null,
     val mediaDownloadId: Long? = null,
     val mediaDownloadedBytes: Long? = null,
-    val mediaDownloading: Boolean = false,
+    val mediaDownloadState: Int = 0,
     val mediaUploading: Boolean = false,
     val mediaUploadedBytes: Long? = null,
-    val mediaUploadUri: String? = null
+    val mediaUploadUri: String? = null,
+    val errorCode: Int = 0
 )

@@ -5,6 +5,7 @@ import com.twilio.conversations.*
 import com.twilio.conversations.Participant.Type.CHAT
 import com.twilio.conversations.app.common.*
 import com.twilio.conversations.app.common.enums.CrashIn
+import com.twilio.conversations.app.common.enums.DownloadState
 import com.twilio.conversations.app.common.extensions.*
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.localCache.LocalCacheProvider
@@ -32,14 +33,14 @@ interface ConversationsRepository {
     fun getMessages(conversationSid: String, pageSize: Int): Flow<RepositoryResult<PagedList<MessageListViewItem>>>
     fun insertMessage(message: MessageDataItem)
     fun updateMessageByUuid(message: MessageDataItem)
-    fun updateMessageStatus(messageUuid: String, sendStatus: Int)
+    fun updateMessageStatus(messageUuid: String, sendStatus: Int, errorCode: Int)
     fun getTypingParticipants(conversationSid: String): Flow<List<ParticipantDataItem>>
     fun getConversationParticipants(conversationSid: String): Flow<RepositoryResult<List<ParticipantDataItem>>>
     fun updateMessageMediaDownloadStatus(
         messageSid: String,
         downloadId: Long? = null,
         downloadLocation: String? = null,
-        downloading: Boolean? = null,
+        downloadState: Int? = null,
         downloadedBytes: Long? = null
     )
     fun updateMessageMediaUploadStatus(
@@ -200,18 +201,23 @@ class ConversationsRepositoryImpl(
     override fun insertMessage(message: MessageDataItem) {
         launch {
             localCache.messagesDao().insertOrReplace(message)
+            updateConversationLastMessage(message.conversationSid)
         }
     }
 
     override fun updateMessageByUuid(message: MessageDataItem) {
         launch {
             localCache.messagesDao().updateByUuidOrInsert(message)
+            updateConversationLastMessage(message.conversationSid)
         }
     }
 
-    override fun updateMessageStatus(messageUuid: String, sendStatus: Int) {
+    override fun updateMessageStatus(messageUuid: String, sendStatus: Int, errorCode: Int) {
         launch {
-            localCache.messagesDao().updateMessageStatus(messageUuid, sendStatus)
+            localCache.messagesDao().updateMessageStatus(messageUuid, sendStatus, errorCode)
+
+            val message = localCache.messagesDao().getMessageByUuid(messageUuid) ?: return@launch
+            updateConversationLastMessage(message.conversationSid)
         }
     }
 
@@ -229,7 +235,7 @@ class ConversationsRepositoryImpl(
         messageSid: String,
         downloadId: Long?,
         downloadLocation: String?,
-        downloading: Boolean?,
+        downloadState: Int?,
         downloadedBytes: Long?
     ) {
         launch {
@@ -239,8 +245,8 @@ class ConversationsRepositoryImpl(
             if (downloadLocation != null) {
                 localCache.messagesDao().updateMediaDownloadLocation(messageSid, downloadLocation)
             }
-            if (downloading != null) {
-                localCache.messagesDao().updateMediaDownloadStatus(messageSid, downloading)
+            if (downloadState != null) {
+                localCache.messagesDao().updateMediaDownloadState(messageSid, downloadState)
             }
             if (downloadedBytes != null) {
                 localCache.messagesDao().updateMediaDownloadedBytes(messageSid, downloadedBytes)
@@ -299,6 +305,9 @@ class ConversationsRepositoryImpl(
                 .fetch()
                 .asMessageDataItems(identity)
             localCache.messagesDao().insert(messages)
+            if (messages.isNotEmpty()) {
+                updateConversationLastMessage(conversationSid)
+            }
             emit(COMPLETE)
         } catch (e: ConversationsException) {
             Timber.d("fetchMessages error: ${e.error.message}")
@@ -400,6 +409,19 @@ class ConversationsRepositoryImpl(
         launch {
             localCache.conversationsDao().updateUnreadMessagesCount(conversationSid, conversation.getUnreadMessageCount() ?: return@launch)
         }
+        launch {
+            updateConversationLastMessage(conversationSid)
+        }
+    }
+
+    private suspend fun updateConversationLastMessage(conversationSid: String) {
+        val lastMessage = localCache.messagesDao().getLastMessage(conversationSid)
+        if (lastMessage != null) {
+            localCache.conversationsDao().updateLastMessage(
+                conversationSid, lastMessage.body ?: "", lastMessage.sendStatus, lastMessage.dateCreated)
+        } else {
+            fetchMessages(conversationSid) { getLastMessages(10) }.collect()
+        }
     }
 
     private fun deleteMessage(message: Message) {
@@ -407,14 +429,16 @@ class ConversationsRepositoryImpl(
             val identity = conversationsClientWrapper.getConversationsClient().myIdentity
             Timber.d("Message deleted: ${message.toMessageDataItem(identity)}")
             localCache.messagesDao().delete(message.toMessageDataItem(identity))
+            updateConversationLastMessage(message.conversationSid)
         }
     }
 
-    private fun updateMessage(message: Message, updateReason: Message.UpdateReason) {
+    private fun updateMessage(message: Message, updateReason: Message.UpdateReason? = null) {
         launch {
             val identity = conversationsClientWrapper.getConversationsClient().myIdentity
             Timber.d("Message updated: ${message.toMessageDataItem(identity)}, reason: $updateReason")
             localCache.messagesDao().insertOrReplace(message.toMessageDataItem(identity))
+            updateConversationLastMessage(message.conversationSid)
         }
     }
 
@@ -423,6 +447,7 @@ class ConversationsRepositoryImpl(
             val identity = conversationsClientWrapper.getConversationsClient().myIdentity
             Timber.d("Message added: ${message.toMessageDataItem(identity)}")
             localCache.messagesDao().updateByUuidOrInsert(message.toMessageDataItem(identity, message.attributes.string ?: ""))
+            updateConversationLastMessage(message.conversationSid)
         }
     }
 

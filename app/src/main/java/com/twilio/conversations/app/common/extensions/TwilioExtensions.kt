@@ -4,7 +4,7 @@ import android.content.Context
 import com.twilio.conversations.*
 import com.twilio.conversations.ConversationsClient.Properties
 import com.twilio.conversations.ConversationsClient.SynchronizationStatus.COMPLETED
-import com.twilio.conversations.ErrorInfo.CONVERSATION_NOT_SYNCHRONIZED
+import com.twilio.conversations.ErrorInfo.Companion.CONVERSATION_NOT_SYNCHRONIZED
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.CrashIn
 import kotlinx.coroutines.CompletableDeferred
@@ -14,8 +14,8 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-class ConversationsException(val error: ConversationsError) : Exception("$error") {
-    constructor(errorInfo: ErrorInfo) : this(ConversationsError.fromErrorInfo(errorInfo))
+class ConversationsException(val error: ConversationsError, val errorInfo: ErrorInfo? = null) : Exception("$error") {
+    constructor(errorInfo: ErrorInfo) : this(ConversationsError.fromErrorInfo(errorInfo), errorInfo)
 }
 
 suspend fun createAndSyncClient(context: Context, token: String, properties: Properties = Properties.newBuilder().createProperties()): ConversationsClient {
@@ -229,6 +229,15 @@ suspend fun Conversation.getMessageByIndex(index: Long): Message = suspendCorout
     getMessageByIndex(index, object : CallbackListener<Message> {
 
         override fun onSuccess(message: Message) = continuation.resume(message)
+
+        override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
+    })
+}
+
+suspend fun Conversation.removeMessage(message: Message): Unit = suspendCoroutine { continuation ->
+    removeMessage(message, object : StatusListener {
+
+        override fun onSuccess() = continuation.resume(Unit)
 
         override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
     })
