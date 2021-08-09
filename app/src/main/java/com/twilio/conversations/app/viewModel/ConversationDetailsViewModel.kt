@@ -27,7 +27,7 @@ class ConversationDetailsViewModel(
     val isShowProgress = MutableLiveData<Boolean>()
     val onDetailsError = SingleLiveEvent<ConversationsError>()
     val onConversationMuted = SingleLiveEvent<Boolean>()
-    val onConversationRemoved = SingleLiveEvent<Unit>()
+    val onConversationLeft = SingleLiveEvent<Unit>()
     val onConversationRenamed = SingleLiveEvent<Unit>()
     val onParticipantAdded = SingleLiveEvent<String>()
 
@@ -105,15 +105,15 @@ class ConversationDetailsViewModel(
         }
     }
 
-    fun removeConversation() = viewModelScope.launch {
+    fun leaveConversation() = viewModelScope.launch {
         if (isShowProgress.value == true) {
             return@launch
         }
-        Timber.d("Removing conversation: $conversationSid")
+        Timber.d("Leaving conversation: $conversationSid")
         try {
             setShowProgress(true)
-            conversationListManager.removeConversation(conversationSid)
-            onConversationRemoved.call()
+            conversationListManager.leaveConversation(conversationSid)
+            onConversationLeft.call()
         } catch (e: ConversationsException) {
             Timber.d("Failed to remove conversation")
             onDetailsError.value = ConversationsError.CONVERSATION_REMOVE_FAILED

@@ -5,13 +5,13 @@ import com.twilio.conversations.ErrorInfo
 enum class ConversationsError(val code: Int, val message: String) {
     UNKNOWN(-1, "Unknown error"),
     NO_ERROR(55, "No error"),
-    INVALID_USERNAME(56, "Username not valid"),
-    INVALID_PASSWORD(57, "Password not valid"),
-    INVALID_USERNAME_AND_PASSWORD(58, "Username and password not valid"),
+    EMPTY_USERNAME(56, "Username is empty"),
+    EMPTY_PASSWORD(57, "Password is empty"),
+    EMPTY_USERNAME_AND_PASSWORD(58, "Username and password are empty"),
     TOKEN_ERROR(59, "Could not get token"),
     GENERIC_ERROR(60, "Could not create client"),
     TOKEN_ACCESS_DENIED(61, "Access denied"),
-    EMPTY_CREDENTIALS(62, "No credentials in storage"),
+    NO_STORED_CREDENTIALS(62, "No credentials in storage"),
     CONVERSATION_JOIN_FAILED(63, "Failed to join conversation"),
     CONVERSATION_CREATE_FAILED(64, "Failed to create conversation"),
     CONVERSATION_REMOVE_FAILED(65, "Failed to destroy conversation"),
@@ -28,7 +28,11 @@ enum class ConversationsError(val code: Int, val message: String) {
     PARTICIPANT_ADD_FAILED(77, "Failed to add participant"),
     PARTICIPANT_REMOVE_FAILED(78, "Failed to remove participant"),
     USER_UPDATE_FAILED(79, "Failed to update user"),
-    MESSAGE_MEDIA_DOWNLOAD_FAILED(80, "Failed to download media");
+    MESSAGE_MEDIA_DOWNLOAD_FAILED(80, "Failed to download media"),
+    SIGN_OUT_SUCCEEDED(81, "Successfully signed out"),
+    MESSAGE_REMOVE_FAILED(82, "Failed to remove message"),
+    MESSAGE_COPY_FAILED(82, "Failed to copy message"),
+    NO_INTERNET_CONNECTION(83, "No internet connection");
 
     override fun toString() = "Error $code : $message"
 

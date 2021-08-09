@@ -11,7 +11,7 @@
     </data>
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
-        android:id="@+id/conversationLayout"
+        android:id="@+id/conversationDetailsLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".ui.ConversationDetailsActivity">
@@ -19,18 +19,15 @@
         <com.google.android.material.appbar.AppBarLayout
             android:id="@+id/conversation_details_app_bar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            android:layout_height="wrap_content">
 
-            <androidx.appcompat.widget.Toolbar
+            <com.google.android.material.appbar.MaterialToolbar
                 android:id="@+id/conversation_details_toolbar"
+                style="@style/Widget.MaterialComponents.Toolbar.Primary"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                android:background="?attr/colorPrimary"
-                app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+                android:background="@color/colorPrimaryDark"
+                android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar" />
 
         </com.google.android.material.appbar.AppBarLayout>
 
@@ -117,7 +114,7 @@
                             android:id="@+id/add_chat_participant_button"
                             android:layout_width="match_parent"
                             android:layout_height="48dp"
-                            android:background="@drawable/bg_list_item"
+                            android:background="?attr/selectableItemBackground"
                             android:gravity="center_vertical"
                             android:drawableStart="@drawable/ic_chat_participant_add"
                             android:drawablePadding="16dp"
@@ -129,7 +126,7 @@
                             android:id="@+id/add_non_chat_participant_button"
                             android:layout_width="match_parent"
                             android:layout_height="48dp"
-                            android:background="@drawable/bg_list_item"
+                            android:background="?attr/selectableItemBackground"
                             android:gravity="center_vertical"
                             android:drawableStart="@drawable/ic_non_chat_participant_add"
                             android:drawablePadding="16dp"
@@ -141,7 +138,7 @@
                             android:id="@+id/participants_list_button"
                             android:layout_width="match_parent"
                             android:layout_height="48dp"
-                            android:background="@drawable/bg_list_item"
+                            android:background="?attr/selectableItemBackground"
                             android:gravity="center_vertical"
                             android:drawableStart="@drawable/ic_participants"
                             android:drawablePadding="16dp"
@@ -153,7 +150,7 @@
                             android:id="@+id/conversation_rename_button"
                             android:layout_width="match_parent"
                             android:layout_height="48dp"
-                            android:background="@drawable/bg_list_item"
+                            android:background="?attr/selectableItemBackground"
                             android:gravity="center_vertical"
                             android:drawableStart="@drawable/ic_edit"
                             android:drawablePadding="16dp"
@@ -165,7 +162,7 @@
                             android:id="@+id/conversation_mute_button"
                             android:layout_width="match_parent"
                             android:layout_height="48dp"
-                            android:background="@drawable/bg_list_item"
+                            android:background="?attr/selectableItemBackground"
                             android:gravity="center_vertical"
                             android:drawablePadding="16dp"
                             android:drawableStart="@{details.isMuted ? @drawable/ic_notifications_off : @drawable/ic_notifications_on}"
@@ -174,14 +171,14 @@
                             android:textSize="14sp" />
 
                         <TextView
-                            android:id="@+id/conversation_delete_button"
+                            android:id="@+id/conversation_leave_button"
                             android:layout_width="match_parent"
                             android:layout_height="48dp"
-                            android:background="@drawable/bg_list_item"
+                            android:background="?attr/selectableItemBackground"
                             android:gravity="center_vertical"
-                            android:drawableStart="@drawable/ic_delete"
+                            android:drawableStart="@drawable/ic_leave"
                             android:drawablePadding="16dp"
-                            android:text="@string/details_delete_conversation"
+                            android:text="@string/details_leave_conversation"
                             android:textColor="@color/text_title"
                             android:textSize="14sp" />
 

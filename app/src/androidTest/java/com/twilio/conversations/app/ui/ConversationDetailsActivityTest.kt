@@ -150,9 +150,9 @@ class ConversationDetailsActivityTest {
     }
 
     @Test
-    fun deleteConversationSuccess() {
+    fun leaveConversationSuccess() {
         UiThreadStatement.runOnUiThread {
-            conversationDetailsViewModel.onConversationRemoved.value = Unit
+            conversationDetailsViewModel.onConversationLeft.value = Unit
         }
         assert(activityRule.activity.isFinishing)
     }

@@ -1,130 +1,124 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
-        <import type="android.view.View"/>
+
+        <import type="android.view.View" />
+
         <variable
             name="conversation"
             type="com.twilio.conversations.app.data.models.ConversationListViewItem" />
+
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/conversationItem"
-        android:background="@drawable/bg_list_item"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:clickable="true"
-        android:focusable="true">
-
-        <LinearLayout
-            android:id="@+id/conversationInfoHolder"
-            android:orientation="vertical"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
-            android:layout_marginStart="16dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/conversationUpdateTime"
-            app:layout_constraintBottom_toBottomOf="parent">
-
-            <TextView
-                android:id="@+id/conversationName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                android:text="@{conversation.name}"
-                style="@style/TextViewTitle"
-                tools:text="Conversation Name"/>
-
-            <TextView
-                android:id="@+id/conversationInfo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@{@string/conversation_info(conversation.participantCount, conversation.dateCreated)}"
-                style="@style/TextViewSubtitle"
-                tools:text="14 Participants | Created 19-03-2019"/>
-
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/conversationUpdateTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@{conversation.dateUpdated}"
-            style="@style/TextViewTime"
-            tools:text="3:45PM"
-            android:layout_marginBottom="8dp"
-            app:layout_constraintVertical_chainStyle="packed"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/conversationMute"
-            app:layout_constraintBottom_toTopOf="@id/conversationUnreadCount"
-            app:layout_constraintStart_toEndOf="@id/conversationInfoHolder"/>
-
-        <TextView
-            android:id="@+id/conversationUnreadCount"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:background="@drawable/bg_conversation_counter"
-            android:gravity="center"
-            android:text="@{conversation.messageCount}"
-            style="@style/TextViewCounter"
-            tools:text="99+"
-            app:layout_constraintTop_toBottomOf="@id/conversationUpdateTime"
-            app:layout_constraintEnd_toEndOf="@id/conversationUpdateTime"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+        android:background="?attr/selectableItemBackground"
+        android:focusableInTouchMode="false"
+        android:padding="16dp">
 
         <ImageView
-            android:id="@+id/conversationMute"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:padding="8dp"
-            android:layout_marginStart="8dp"
-            android:src="@{conversation.isMuted ? @drawable/ic_volume_off : @drawable/ic_volume_on}"
-            android:visibility="visible"
-            app:layout_constraintEnd_toStartOf="@id/conversationIndicatorHolder"
-            app:layout_constraintTop_toTopOf="@id/conversationInfoHolder"
-            app:layout_constraintStart_toEndOf="@id/conversationUpdateTime"
-            app:layout_constraintBottom_toBottomOf="@id/conversationInfoHolder"
-            app:tint="@color/icon_tint" />
-
-        <FrameLayout
-            android:id="@+id/conversationIndicatorHolder"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:padding="8dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/conversationInfoHolder"
-            app:layout_constraintStart_toEndOf="@id/conversationMute"
-            app:layout_constraintBottom_toBottomOf="@id/conversationInfoHolder">
-
-            <ImageView
-                android:id="@+id/conversationArrow"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:src="@drawable/ic_arrow_right"
-                android:visibility="@{conversation.loading ? View.GONE : View.VISIBLE}"
-                app:tint="@color/icon_tint" />
-
-            <ProgressBar
-                android:id="@+id/conversationJoiningSpinner"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:visibility="@{conversation.loading ? View.VISIBLE : View.GONE}"/>
-
-        </FrameLayout>
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:background="@color/divider_conversations"
+            android:id="@+id/conversationStateIcon"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_marginEnd="8dp"
+            android:src="@drawable/ic_muted_conversation"
+            android:visibility="@{conversation.isMuted ? View.VISIBLE : View.GONE}"
+            app:layout_constraintBottom_toBottomOf="@+id/conversationName"
+            app:layout_constraintEnd_toStartOf="@+id/conversationName"
+            app:layout_constraintHorizontal_chainStyle="packed"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/conversationName" />
+
+        <TextView
+            android:id="@+id/conversationName"
+            style="@style/TextViewTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:ellipsize="middle"
+            android:text="@{conversation.name}"
+            android:textColor="@{conversation.isMuted ? @color/text_title_weak : @color/text_title}"
+            app:layout_constraintEnd_toStartOf="@+id/participantsCount"
+            app:layout_constraintStart_toEndOf="@+id/conversationStateIcon"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Conversation friendly name bla bla bla bla" />
+
+        <TextView
+            android:id="@+id/participantsCount"
+            style="@style/TextViewSubtitle"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:gravity="end"
+            android:text="@{@plurals/participants_count(conversation.participantCount, conversation.participantCount)}"
+            app:layout_constraintBottom_toBottomOf="@+id/conversationName"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            app:layout_constraintStart_toEndOf="@+id/conversationName"
+            app:layout_constraintTop_toTopOf="@+id/conversationName"
+            tools:text="1000 participants" />
+
+        <ImageView
+            android:id="@+id/messageStateIcon"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_marginEnd="8dp"
+            android:src="@{conversation.lastMessageStateIcon}"
+            android:visibility="@{conversation.lastMessageStateIcon != 0 ? View.VISIBLE : View.GONE}"
+            app:layout_constraintBottom_toBottomOf="@+id/messageText"
+            app:layout_constraintEnd_toStartOf="@+id/messageText"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/messageText"
+            tools:src="@drawable/ic_waiting_message" />
+
+        <TextView
+            android:id="@+id/messageText"
+            style="@style/TextViewSubtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:text="@{conversation.lastMessageText}"
+            android:textColor="@{conversation.lastMessageColor}"
+            app:layout_constraintEnd_toEndOf="@+id/conversationName"
+            app:layout_constraintStart_toEndOf="@+id/messageStateIcon"
+            app:layout_constraintTop_toBottomOf="@+id/conversationName"
+            tools:text="This is a waiting message bla bla bla bla bla" />
+
+        <TextView
+            android:id="@+id/messageDate"
+            style="@style/TextViewSubtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:gravity="end"
+            android:text="@{conversation.lastMessageDate}"
+            app:layout_constraintEnd_toStartOf="@+id/unreadCount"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintStart_toStartOf="@+id/participantsCount"
+            app:layout_constraintTop_toTopOf="@+id/messageText"
+            app:layout_goneMarginEnd="0dp"
+            tools:text="Yesterday" />
+
+        <TextView
+            android:id="@+id/unreadCount"
+            style="@style/TextViewCounter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_conversation_counter"
+            android:gravity="center"
+            android:text="@{conversation.unreadMessageCount}"
+            android:visibility="@{conversation.showUnreadMessageCount ? View.VISIBLE : View.GONE}"
+            app:layout_constraintBottom_toBottomOf="@+id/messageText"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/messageText"
+            tools:text="99+" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
 </layout>

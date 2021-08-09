@@ -3,6 +3,8 @@ package com.twilio.conversations.app
 import com.twilio.conversations.Conversation
 import com.twilio.conversations.Message
 import com.twilio.conversations.app.common.enums.Direction
+import com.twilio.conversations.app.common.enums.DownloadState
+import com.twilio.conversations.app.common.enums.DownloadState.NOT_STARTED
 import com.twilio.conversations.app.common.enums.SendStatus
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
@@ -18,15 +20,18 @@ fun createTestConversationDataItem(sid: String = UUID.randomUUID().toString(),
                               uniqueName: String = "",
                               dateUpdated: Long = 0,
                               dateCreated: Long = 0,
+                              lastMessageDate: Long = 0,
+                              lastMessageText: String = "",
+                              lastMessageSendStatus: Int = 0,
                               createdBy: String = "",
                               participantsCount: Long = 0,
                               messagesCount: Long = 0,
                               unreadMessagesCount: Long = 0,
                               participatingStatus: Int = 1,
-                              type: Int = 0,
                               notificationLevel: Int = 0
-) = ConversationDataItem(sid, friendlyName, attributes, uniqueName, dateUpdated, dateCreated, createdBy,
-    participantsCount, messagesCount, unreadMessagesCount, participatingStatus, notificationLevel)
+) = ConversationDataItem(sid, friendlyName, attributes, uniqueName, dateUpdated, dateCreated, lastMessageDate,
+    lastMessageText, lastMessageSendStatus, createdBy, participantsCount, messagesCount, unreadMessagesCount,
+    participatingStatus, notificationLevel)
 
 fun createTestMessageDataItem(sid: String = UUID.randomUUID().toString(),
                               conversationSid: String = UUID.randomUUID().toString(),
@@ -47,13 +52,13 @@ fun createTestMessageDataItem(sid: String = UUID.randomUUID().toString(),
                               mediaUri: String? = null,
                               mediaDownloadId: Long? = null,
                               mediaDownloadedBytes: Long? = null,
-                              mediaDownloading: Boolean = false,
+                              mediaDownloadState: Int = NOT_STARTED.value,
                               mediaUploading: Boolean = false,
                               mediaUploadedBytes: Long? = null,
                               mediaUploadUri: String? = null
 ) = MessageDataItem(sid, conversationSid, participantSid, type, author, dateCreated, body,
     index, attributes, direction, sendStatus, uuid, mediaSid, mediaFileName, mediaType,
-    mediaSize, mediaUri, mediaDownloadId, mediaDownloadedBytes, mediaDownloading, mediaUploading,
+    mediaSize, mediaUri, mediaDownloadId, mediaDownloadedBytes, mediaDownloadState, mediaUploading,
     mediaUploadedBytes, mediaUploadUri)
 
 fun createTestParticipantDataItem(
@@ -106,13 +111,13 @@ fun getMockedConversations(count: Int, name: String,
 
 fun getMockedMessages(count: Int, body: String, conversationSid: String, direction: Int = Direction.OUTGOING.value,
                       author: String = "", attributes: String = "", type: Message.Type = Message.Type.TEXT,
-                      mediaFileName: String = "", mediaSize: Long = 0, mediaDownloading: Boolean = false,
+                      mediaFileName: String = "", mediaSize: Long = 0, mediaDownloadState: DownloadState = NOT_STARTED,
                       mediaUri: String? = null, mediaDownloadedBytes: Long? = null,
                       sendStatus: SendStatus = SendStatus.UNDEFINED): List<MessageDataItem> {
     val messages = Array(count) { index ->
         createTestMessageDataItem(conversationSid = conversationSid, index = index.toLong(),
             body = "${body}_$index", direction = direction, author = author, attributes = attributes,
-        type = type.value, mediaFileName = mediaFileName, mediaSize = mediaSize, mediaDownloading = mediaDownloading,
+        type = type.value, mediaFileName = mediaFileName, mediaSize = mediaSize, mediaDownloadState = mediaDownloadState.value,
         mediaUri = mediaUri, mediaDownloadedBytes = mediaDownloadedBytes, sendStatus = sendStatus.value)
     }
     return messages.toList()

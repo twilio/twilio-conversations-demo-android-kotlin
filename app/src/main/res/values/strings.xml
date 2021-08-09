@@ -1,8 +1,13 @@
 <resources>
     <string name="app_name">Conversations Demo</string>
-    <string name="activity_title_conversations_list">Conversations</string>
-    <string name="drawer_close">Close navigation drawer</string>
-    <string name="drawer_open">Open navigation drawer</string>
+
+    <string name="close">Close</string>
+
+    <string name="title_conversations_list">Conversations</string>
+    <string name="title_profile">Profile</string>
+    <string name="title_debug">Debug</string>
+
+    <string name="no_internet_connection">No internet connection</string>
 
     <!-- Credentials -->
     <string name="username">Username</string>
@@ -10,21 +15,64 @@
 
     <string name="sign_in">Sign in</string>
     <string name="sign_out">Sign out</string>
-    <string name="retry_sign_in">Retry</string>
 
     <!-- Login Errors -->
+    <string name="enter_username">Enter a username to sign in</string>
+    <string name="enter_password">Enter a password to sign in</string>
+    <string name="token_access_denied">The username and password combination do not match our records, please re-enter
+        your username or password and sign in again.</string>
     <string name="sign_in_error">Sign in failed. Try again</string>
-    <string name="token_error">Could not get token. Error occurred</string>
+    <string name="no_internet_dialog_title">No internet connection</string>
+    <string name="no_internet_dialog_message">Please check you are connected to wifi or have cellular signal</string>
+    <string name="sign_out_succeeded">Successfully signed out</string>
 
-    <!-- Splash status text -->
-    <string name="splash_connecting">Connecting</string>
-    <string name="splash_connection_error">Connection error</string>
-
-    <!-- Splash error text -->
-    <string name="splash_invalid_credentials">Invalid credentials. Please check login and password and try again</string>
+    <!-- Splash fragment -->
+    <string name="splash_signing_in">Signing in</string>
 
     <!-- Conversations list -->
+
+    <string name="page_conversation_list">Conversations</string>
+    <string name="page_profile">Profile</string>
+    <string name="page_debug">Debug</string>
+
+    <string name="leave_dialog_title">Leave Conversation?</string>
+    <string name="leave_dialog_message">By leaving the Conversation you will no longer
+        have access to participants orConversation history</string>
+    <string name="leave">Leave</string>
+
+    <string name="new_conversation">New conversation</string>
     <string name="conversation_info">%1$s Participants | Created %2$s</string>
+
+    <plurals name="participants_count">
+        <item quantity="one">%d participant</item>
+        <item quantity="other">%d participants</item>
+    </plurals>
+
+    <string name="yesterday">Yesterday</string>
+    <string name="days_ago">%d days ago</string>
+    <plurals name="weeks_ago">
+        <item quantity="one">%d week ago</item>
+        <item quantity="other">%d weeks ago</item>
+    </plurals>
+    <plurals name="years_ago">
+        <item quantity="one">%d year ago</item>
+        <item quantity="other">%d years ago</item>
+    </plurals>
+
+    <string name="name_your_conversation">Name your Conversation</string>
+    <string name="create_conversation">Create Conversation</string>
+    <string name="conversation_created">Conversation created</string>
+    <string name="conversation_left">You have left the Conversation</string>
+    <string name="conversation_muted">Notifications off</string>
+    <string name="conversation_unmuted">Notifications on</string>
+
+    <string name="no_results_found">No results found</string>
+    <string name="try_different_search">Try a different search term</string>
+
+    <string name="no_conversations">No Conversations </string>
+    <string name="no_conversations_description">Conversations you create or are involved in will appear here</string>
+
+    <string name="err_conversation_generic_error">Request failed, please try again later</string>
     <string name="err_failed_to_create_conversation">Failed to create conversation</string>
     <string name="err_failed_to_join_conversation">Failed to join conversation</string>
     <string name="err_failed_to_remove_conversation">Failed to remove conversation</string>
@@ -38,13 +86,37 @@
     <string name="err_failed_to_fetch_participants">Failed to fetch participants</string>
     <string name="err_failed_to_add_participant">Failed to add participant</string>
     <string name="err_failed_to_remove_participant">Failed to remove participant</string>
-    <string name="err_failed_to_update_user">Failed to update user</string>
-    <string name="err_conversation_generic_error">Request failed, please try again later</string>
-    <string name="filter_conversations">Filter Conversations</string>
+    <string name="err_failed_to_update_user">Can\'t update profile</string>
+    <string name="err_failed_to_remove_message">Failed to remove message</string>
+    <string name="err_failed_to_copy_message">Failed to copy message</string>
+
+    <string name="search_conversations">Search Conversations</string>
+
+    <!-- Profile fragment -->
+    <string name="edit_profile">Edit profile</string>
+    <string name="edit_friendly_name">Edit your friendly name</string>
+    <string name="sign_out_account">Sign out your account</string>
+    <string name="sign_out_dialog_title">Are you sure you want to sign out?</string>
+    <string name="sign_out_dialog_message">Once signed out you will need to sign in again to access your Conversations.</string>
+    <string name="friendly_name">Friendly name</string>
+    <string name="profile_friendly_name_helper_text">This will be visible to other Conversations participants</string>
+    <string name="profile_friendly_name_error_text">This can’t be left empty</string>
+    <string name="save_changes">Save changes</string>
+    <string name="profile_updated">Profile updated</string>
+    <string name="retry">Retry</string>
+
+    <!-- Debug fragment -->
+    <string name="crash_in_conversation_list_fragment">ConversationListFragment.kt</string>
+    <string name="crash_in_conversation_list_fragment_description">Appears in crashlytics as crash in ConversationListFragment.kt</string>
+    <string name="crash_in_chat_client_cpp">ChatClient.cpp</string>
+    <string name="crash_in_chat_client_cpp_description">Appears in crashlytics as native crash in ChatClient.cpp</string>
+    <string name="crash_in_tm_client_cpp">TMClient.cpp</string>
+    <string name="crash_in_tm_client_cpp_description">Appears in crashlytics as native crash in TMClient.cpp</string>
+    <string name="simulate_crash">Simulate a crash:</string>
+
 
     <!-- Conversation add dialog -->
     <string name="hint_conversation_name">Conversation name</string>
-    <string name="add_conversation">Add Conversation</string>
     <string name="remove_conversation">Remove Conversation</string>
     <string name="leave_conversation">Leave Conversation</string>
     <string name="cancel">Cancel</string>
@@ -52,14 +124,29 @@
     <string name="conversation_filter_hint">Filter Conversations</string>
 
     <!-- Message list -->
-    <string name="enter_message">Enter message…</string>
+    <string name="new_message">New message</string>
+    <string name="message_send_error">An error has occurred. Tap for more info.</string>
 
     <plurals name="typing_indicator">
-        <item quantity="zero">%s</item>
         <item quantity="one">%s is typing…</item>
-        <item quantity="other">%s are typing…</item>
+        <item quantity="other">%s participants are typing…</item>
     </plurals>
     <string name="typing_indicator_overflow">and others</string>
+
+    <string name="message_action_copy">Copy</string>
+    <string name="message_action_share">Share</string>
+    <string name="message_action_delete">Delete</string>
+
+    <string name="remove_messgage_dialog_title">Delete message?</string>
+    <string name="remove_messgage_dialog_message">This cannot be undone</string>
+    <string name="delete">Delete</string>
+
+    <string name="message_deleted">Message deleted</string>
+    <string name="message_copied">Message copied</string>
+
+    <string name="send_error_dialog_title">Error code [%d]</string>
+    <string name="send_error_dialog_message_default">Error occurred while sending the message. Check your internet connection and try again.</string>
+    <string name="send_error_dialog_invalid_media_content_type">Invalid message media content type</string>
 
     <!-- Conversation details -->
     <string name="details_title">Conversation Details</string>
@@ -72,7 +159,7 @@
     <string name="details_rename_conversation">Rename Conversation</string>
     <string name="details_mute_conversation">Mute Conversation</string>
     <string name="details_unmute_conversation">Unmute Conversation</string>
-    <string name="details_delete_conversation">Delete Conversation</string>
+    <string name="details_leave_conversation">Leave Conversation</string>
 
     <!-- Add participant dialog -->
     <string name="hint_add_chat_participant">Participant identity</string>
@@ -84,21 +171,23 @@
     <!-- Reactions -->
     <string name="reaction_heart">&#x2764;</string>
     <string name="reaction_laugh">&#x1F602;</string>
-    <string name="reaction_sad">&#x1F622;</string>
+    <string name="reaction_sad">&#x1F61E;</string>
+    <string name="reaction_pouting">&#x1F621;</string>
     <string name="reaction_thumbs_up">&#x1F44D;</string>
     <string name="reaction_thumbs_down">&#x1F44E;</string>
 
     <!-- Media messages -->
-    <string name="attachment_icon_description">Attachment icon</string>
-    <string name="button_download_attachment">Download</string>
-    <string name="button_open_attachment">Open</string>
+    <string name="attachment_uploading">Uploading… %s</string>
+    <string name="attachment_downloading">Downloading… %s</string>
+    <string name="attachment_tap_to_open">Tap to open</string>
     <string name="attachment_file_name_unknown">Unknown</string>
-    <string name="attachment_choose_image">Choose Image</string>
-    <string name="attachment_take_picture">Take Picture</string>
+    <string name="attachment_file_manager">File manager</string>
+    <string name="attachment_take_photo">Take photo</string>
     <string name="err_failed_to_capture_image">Failed to capture image</string>
     <string name="err_failed_to_send_media">Failed to send media</string>
     <string name="err_failed_to_resend_media">Failed to re-send media</string>
-    <string name="err_failed_to_download_media">Failed to download media</string>
+    <string name="err_failed_to_upload_media">Failed to upload</string>
+    <string name="err_failed_to_download_media">Failed to download</string>
 
     <!-- Participant list -->
     <string name="participant_filter_hint">Filter Participants</string>
@@ -116,9 +205,7 @@
     <string name="notification_added_to_conversation">Twilio: Added to Conversation</string>
     <string name="notification_removed_from_conversation">Twilio: Removed from Conversation</string>
     <string name="notification_generic">Twilio Notification</string>
-    <string name="crash_in_tm_client">TMClient.cpp</string>
-    <string name="crash_in_chat_client">ChatClient.cpp</string>
-    <string name="crash_in_conversation_list_activity">ConversationListActivity.kt</string>
-    <string name="simulate_crash_in">Simulate crash in:</string>
+    <string name="twilio_conversations">Twilio Conversations</string>
+    <string name="demo_experience">Demo experience</string>
 
 </resources>

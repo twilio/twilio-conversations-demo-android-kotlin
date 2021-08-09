@@ -4,17 +4,18 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_margin="4dp"
-    android:background="@drawable/bg_emoji"
-    android:orientation="horizontal">
+    android:layout_marginVertical="4dp"
+    android:layout_marginHorizontal="8dp"
+    android:orientation="horizontal"
+    tools:background="@color/white">
 
     <androidx.emoji.widget.EmojiTextView
         android:id="@+id/emoji_icon"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="wrap_content"
+        android:layout_height="24dp"
         android:gravity="center"
         android:textColor="#000"
-        android:textSize="18sp"
+        android:textSize="14sp"
         tools:text="&#x2764;" />
 
     <TextView
@@ -22,11 +23,9 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:gravity="center_vertical"
-        android:layout_marginEnd="4dp"
-        android:visibility="gone"
-        android:textSize="14sp"
-        android:textColor="@color/emoji_counter_text"
-        tools:text="10"
-        tools:visibility="visible"/>
+        android:layout_marginHorizontal="4dp"
+        android:textSize="12sp"
+        android:textColor="@color/colorPrimary"
+        tools:text="10" />
 
 </LinearLayout>

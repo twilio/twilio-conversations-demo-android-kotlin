@@ -10,12 +10,8 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ConversationsDao {
 
-    // Get all Conversations
-    @Query("SELECT * FROM conversation_table")
-    fun getAll(): List<ConversationDataItem>
-
     // Get User Conversations
-    @Query("SELECT * FROM conversation_table WHERE participatingStatus = 1")
+    @Query("SELECT * FROM conversation_table WHERE participatingStatus = 1 ORDER BY lastMessageDate DESC")
     fun getUserConversations(): Flow<List<ConversationDataItem>>
 
     // Get Conversation by sid
@@ -42,6 +38,9 @@ interface ConversationsDao {
 
     @Query("UPDATE conversation_table SET unreadMessagesCount = :unreadMessagesCount WHERE sid = :sid")
     fun updateUnreadMessagesCount(sid: String, unreadMessagesCount: Long)
+
+    @Query("UPDATE conversation_table SET lastMessageText = :lastMessageText, lastMessageSendStatus = :lastMessageSendStatus, lastMessageDate = :lastMessageDate WHERE sid = :sid")
+    fun updateLastMessage(sid: String, lastMessageText: String, lastMessageSendStatus: Int, lastMessageDate: Long)
 
     // Delete Conversation
     @Query("DELETE FROM conversation_table WHERE sid = :sid")

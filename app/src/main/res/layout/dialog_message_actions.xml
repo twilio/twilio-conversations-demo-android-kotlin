@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingVertical="12dp">
+
+    <include
+        android:id="@+id/edit_reactions"
+        layout="@layout/view_edit_reactions" />
+
+    <TextView
+        android:id="@+id/copy"
+        style="@style/TextViewMenuItem"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="@string/message_action_copy"
+        app:drawableStartCompat="@drawable/ic_copy" />
+
+    <TextView
+        android:id="@+id/share"
+        style="@style/TextViewMenuItem"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="@string/message_action_share"
+        app:drawableStartCompat="@drawable/ic_share" />
+
+    <TextView
+        android:id="@+id/delete"
+        style="@style/TextViewMenuItem"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="@string/message_action_delete"
+        android:textColor="@color/colorAccent"
+        app:drawableStartCompat="@drawable/ic_trash" />
+
+</LinearLayout>

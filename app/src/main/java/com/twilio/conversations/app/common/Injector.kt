@@ -6,6 +6,7 @@ import androidx.annotation.RestrictTo
 import androidx.annotation.RestrictTo.Scope
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.CredentialStorage
+import com.twilio.conversations.app.manager.ConnectivityMonitor
 import com.twilio.conversations.app.manager.ConversationListManagerImpl
 import com.twilio.conversations.app.manager.FCMManager
 import com.twilio.conversations.app.manager.FCMManagerImpl
@@ -17,9 +18,11 @@ import com.twilio.conversations.app.manager.UserManagerImpl
 import com.twilio.conversations.app.repository.ConversationsRepositoryImpl
 import com.twilio.conversations.app.viewModel.ConversationDetailsViewModel
 import com.twilio.conversations.app.viewModel.ConversationListViewModel
+import com.twilio.conversations.app.viewModel.DebugViewModel
 import com.twilio.conversations.app.viewModel.LoginViewModel
 import com.twilio.conversations.app.viewModel.MessageListViewModel
 import com.twilio.conversations.app.viewModel.ParticipantListViewModel
+import com.twilio.conversations.app.viewModel.ProfileViewModel
 import com.twilio.conversations.app.viewModel.SplashViewModel
 
 var injector = Injector()
@@ -45,36 +48,63 @@ open class Injector {
 
     open fun createLoginViewModel(application: Application): LoginViewModel {
         val loginManager = createLoginManager(application)
+        val connectivityMonitor = ConnectivityMonitor(application)
 
-        return LoginViewModel(loginManager)
+        return LoginViewModel(loginManager, connectivityMonitor)
     }
 
     open fun createSplashViewModel(application: Application): SplashViewModel {
         val loginManager = createLoginManager(application)
 
-        val viewModel = SplashViewModel(loginManager, application)
+        val viewModel = SplashViewModel(loginManager)
         viewModel.initialize()
 
         return viewModel
     }
 
-    open fun createConversationListViewModel(application: Application): ConversationListViewModel {
+    open fun createConversationListViewModel(applicationContext: Context): ConversationListViewModel {
         val conversationListManager = ConversationListManagerImpl(ConversationsClientWrapper.INSTANCE)
-        val userManager = UserManagerImpl(ConversationsClientWrapper.INSTANCE)
-        val loginManager = createLoginManager(application)
+        val connectivityMonitor = ConnectivityMonitor(applicationContext)
 
-        return ConversationListViewModel(ConversationsRepositoryImpl.INSTANCE, conversationListManager, userManager, loginManager)
+        return ConversationListViewModel(
+            applicationContext,
+            ConversationsRepositoryImpl.INSTANCE,
+            conversationListManager,
+            connectivityMonitor,
+        )
     }
 
+    open fun createDebugViewModel() = DebugViewModel(ConversationsRepositoryImpl.INSTANCE)
+
+    open fun createProfileViewModel(applicationContext: Context) = ProfileViewModel(
+        ConversationsRepositoryImpl.INSTANCE,
+        UserManagerImpl(ConversationsClientWrapper.INSTANCE),
+        createLoginManager(applicationContext)
+    )
+
     open fun createMessageListViewModel(appContext: Context, conversationSid: String): MessageListViewModel {
-        val messageListManager = MessageListManagerImpl(conversationSid, ConversationsClientWrapper.INSTANCE, ConversationsRepositoryImpl.INSTANCE)
-        return MessageListViewModel(appContext, conversationSid, ConversationsRepositoryImpl.INSTANCE, messageListManager)
+        val messageListManager = MessageListManagerImpl(
+            conversationSid,
+            ConversationsClientWrapper.INSTANCE,
+            ConversationsRepositoryImpl.INSTANCE
+        )
+        return MessageListViewModel(
+            appContext,
+            conversationSid,
+            ConversationsRepositoryImpl.INSTANCE,
+            messageListManager
+        )
     }
 
     open fun createConversationDetailsViewModel(conversationSid: String): ConversationDetailsViewModel {
         val conversationListManager = ConversationListManagerImpl(ConversationsClientWrapper.INSTANCE)
         val participantListManager = ParticipantListManagerImpl(conversationSid, ConversationsClientWrapper.INSTANCE)
-        return ConversationDetailsViewModel(conversationSid, ConversationsRepositoryImpl.INSTANCE, conversationListManager, participantListManager)
+        return ConversationDetailsViewModel(
+            conversationSid,
+            ConversationsRepositoryImpl.INSTANCE,
+            conversationListManager,
+            participantListManager
+        )
     }
 
     open fun createParticipantListViewModel(conversationSid: String): ParticipantListViewModel {

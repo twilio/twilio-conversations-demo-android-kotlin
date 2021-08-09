@@ -2,7 +2,7 @@ package com.twilio.conversations.app.manager
 
 import com.twilio.conversations.app.common.FirebaseTokenManager
 import com.twilio.conversations.app.common.enums.ConversationsError
-import com.twilio.conversations.app.common.enums.ConversationsError.EMPTY_CREDENTIALS
+import com.twilio.conversations.app.common.enums.ConversationsError.NO_STORED_CREDENTIALS
 import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.common.extensions.registerFCMToken
 import com.twilio.conversations.app.data.ConversationsClientWrapper
@@ -56,7 +56,7 @@ class LoginManagerImpl(
 
     override suspend fun signInUsingStoredCredentials() {
         Timber.d("signInUsingStoredCredentials")
-        if (credentialStorage.isEmpty()) throw ConversationsException(EMPTY_CREDENTIALS)
+        if (credentialStorage.isEmpty()) throw ConversationsException(NO_STORED_CREDENTIALS)
 
         val identity = credentialStorage.identity
         val password = credentialStorage.password

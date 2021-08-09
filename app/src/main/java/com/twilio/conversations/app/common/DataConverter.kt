@@ -1,24 +1,33 @@
 package com.twilio.conversations.app.common
 
 import android.annotation.SuppressLint
+import android.content.Context
 import androidx.core.net.toUri
 import com.google.gson.Gson
-import com.twilio.conversations.*
+import com.twilio.conversations.Conversation
 import com.twilio.conversations.Conversation.NotificationLevel
+import com.twilio.conversations.Message
+import com.twilio.conversations.Participant
+import com.twilio.conversations.User
 import com.twilio.conversations.app.common.enums.Direction
+import com.twilio.conversations.app.common.enums.DownloadState
 import com.twilio.conversations.app.common.enums.MessageType
 import com.twilio.conversations.app.common.enums.Reaction
+import com.twilio.conversations.app.common.enums.Reactions
 import com.twilio.conversations.app.common.enums.SendStatus
 import com.twilio.conversations.app.common.extensions.asDateString
+import com.twilio.conversations.app.common.extensions.asLastMesageStatusIcon
+import com.twilio.conversations.app.common.extensions.asLastMessageDateString
+import com.twilio.conversations.app.common.extensions.asLastMessageTextColor
 import com.twilio.conversations.app.common.extensions.asMessageCount
-import com.twilio.conversations.app.common.extensions.asTimeString
+import com.twilio.conversations.app.common.extensions.asMessageDateString
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.*
 import com.twilio.conversations.app.manager.friendlyName
 
-fun Conversation.toConversationDataItem() : ConversationDataItem {
+fun Conversation.toConversationDataItem(): ConversationDataItem {
     return ConversationDataItem(
         this.sid,
         this.friendlyName,
@@ -26,6 +35,9 @@ fun Conversation.toConversationDataItem() : ConversationDataItem {
         this.uniqueName,
         this.dateUpdatedAsDate?.time ?: 0,
         this.dateCreatedAsDate?.time ?: 0,
+        0,
+        "",
+        SendStatus.UNDEFINED.value,
         this.createdBy,
         0,
         0,
@@ -35,7 +47,7 @@ fun Conversation.toConversationDataItem() : ConversationDataItem {
     )
 }
 
-fun Message.toMessageDataItem(currentUserIdentity: String = participant.identity, uuid: String = "") : MessageDataItem {
+fun Message.toMessageDataItem(currentUserIdentity: String = participant.identity, uuid: String = ""): MessageDataItem {
     return MessageDataItem(
         this.sid,
         this.conversationSid,
@@ -56,16 +68,18 @@ fun Message.toMessageDataItem(currentUserIdentity: String = participant.identity
     )
 }
 
-fun MessageDataItem.toMessageListViewItem() : MessageListViewItem {
+fun MessageDataItem.toMessageListViewItem(authorChanged: Boolean): MessageListViewItem {
     return MessageListViewItem(
         this.sid,
         this.uuid,
         this.index,
         Direction.fromInt(this.direction),
         this.author,
+        authorChanged,
         this.body ?: "",
-        this.dateCreated.asDateString(),
+        this.dateCreated.asMessageDateString(),
         SendStatus.fromInt(sendStatus),
+        sendStatusIcon = SendStatus.fromInt(this.sendStatus).asLastMesageStatusIcon(),
         getReactions(attributes).asReactionList(),
         MessageType.fromInt(this.type),
         this.mediaSid,
@@ -75,10 +89,11 @@ fun MessageDataItem.toMessageListViewItem() : MessageListViewItem {
         this.mediaUri?.toUri(),
         this.mediaDownloadId,
         this.mediaDownloadedBytes,
-        this.mediaDownloading,
+        DownloadState.fromInt(this.mediaDownloadState),
         this.mediaUploading,
         this.mediaUploadedBytes,
-        this.mediaUploadUri?.toUri()
+        this.mediaUploadUri?.toUri(),
+        this.errorCode
     )
 }
 
@@ -89,17 +104,18 @@ fun getReactions(attributes: String): Map<String, Set<String>> = try {
 }
 
 @SuppressLint("NewApi")
-fun Map<String, Set<String>>.asReactionList(): Map<Reaction, Set<String>> {
+fun Map<String, Set<String>>.asReactionList(): Reactions {
     val reactions: MutableMap<Reaction, Set<String>> = mutableMapOf()
     forEach {
         try {
             reactions[Reaction.fromString(it.key)] = it.value
-        } catch (e: Exception) {}
+        } catch (e: Exception) {
+        }
     }
     return reactions
 }
 
-fun Participant.asParticipantDataItem(typing : Boolean = false, user: User? = null) = ParticipantDataItem(
+fun Participant.asParticipantDataItem(typing: Boolean = false, user: User? = null) = ParticipantDataItem(
     sid = this.sid,
     conversationSid = this.conversation.sid,
     identity = this.identity,
@@ -115,15 +131,20 @@ fun User.asUserViewItem() = UserViewItem(
     identity = this.identity
 )
 
-fun ConversationDataItem.asConversationListViewItem() = ConversationListViewItem(
+fun ConversationDataItem.asConversationListViewItem(
+    context: Context,
+) = ConversationListViewItem(
     this.sid,
-    this.friendlyName,
-    this.dateCreated.asDateString(),
-    this.dateUpdated.asTimeString(),
-    this.participantsCount,
-    this.messagesCount.asMessageCount(),
+    if (this.friendlyName.isNotEmpty()) this.friendlyName else this.sid,
+    this.participantsCount.toInt(),
+    this.unreadMessagesCount.asMessageCount(),
+    showUnreadMessageCount = this.unreadMessagesCount > 0,
     this.participatingStatus,
-    this.notificationLevel == NotificationLevel.MUTED.value
+    lastMessageStateIcon = SendStatus.fromInt(this.lastMessageSendStatus).asLastMesageStatusIcon(),
+    this.lastMessageText,
+    lastMessageColor = SendStatus.fromInt(this.lastMessageSendStatus).asLastMessageTextColor(context),
+    this.lastMessageDate.asLastMessageDateString(context),
+    isMuted = this.notificationLevel == NotificationLevel.MUTED.value
 )
 
 fun ConversationDataItem.asConversationDetailsViewItem() = ConversationDetailsViewItem(
@@ -142,11 +163,18 @@ fun ParticipantDataItem.toParticipantListViewItem() = ParticipantListViewItem(
     isOnline = this.isOnline
 )
 
-fun List<ConversationDataItem>.asConversationListViewItems() = map { it.asConversationListViewItem() }
+fun List<ConversationDataItem>.asConversationListViewItems(context: Context) =
+    map { it.asConversationListViewItem(context) }
 
 fun List<Message>.asMessageDataItems(identity: String) = map { it.toMessageDataItem(identity) }
 
-fun List<MessageDataItem>.asMessageListViewItems() = map { it.toMessageListViewItem() }
+fun List<MessageDataItem>.asMessageListViewItems() =
+    mapIndexed { index, item -> item.toMessageListViewItem(isAuthorChanged(index)) }
+
+private fun List<MessageDataItem>.isAuthorChanged(index: Int): Boolean {
+    if (index == 0) return true
+    return this[index].author != this[index - 1].author
+}
 
 fun List<ParticipantDataItem>.asParticipantListViewItems() = map { it.toParticipantListViewItem() }
 

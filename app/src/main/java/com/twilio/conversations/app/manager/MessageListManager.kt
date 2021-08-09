@@ -5,7 +5,9 @@ import com.twilio.conversations.Attributes
 import com.twilio.conversations.Message
 import com.twilio.conversations.app.common.*
 import com.twilio.conversations.app.common.enums.Direction
+import com.twilio.conversations.app.common.enums.DownloadState
 import com.twilio.conversations.app.common.enums.Reaction
+import com.twilio.conversations.app.common.enums.Reactions
 import com.twilio.conversations.app.common.enums.SendStatus
 import com.twilio.conversations.app.common.extensions.*
 import com.twilio.conversations.app.data.ConversationsClientWrapper
@@ -29,18 +31,19 @@ interface MessageListManager {
         messageUuid: String
     )
     suspend fun retrySendMediaMessage(inputStream: InputStream, messageUuid: String)
-    suspend fun updateMessageStatus(messageUuid: String, sendStatus: SendStatus)
-    suspend fun updateMessageMediaDownloadStatus(
+    suspend fun updateMessageStatus(messageUuid: String, sendStatus: SendStatus, errorCode: Int = 0)
+    suspend fun updateMessageMediaDownloadState(
         index: Long,
-        downloading: Boolean,
+        downloadState: DownloadState,
         downloadedBytes: Long,
         downloadedLocation: String?
     )
-    suspend fun addRemoveReaction(index: Long, reaction: Reaction)
+    suspend fun setReactions(index: Long, reactions: Reactions)
     suspend fun notifyMessageRead(index: Long)
     suspend fun typing()
     suspend fun getMediaContentTemporaryUrl(index: Long): String
     suspend fun setMessageMediaDownloadId(messageIndex: Long, id: Long)
+    suspend fun removeMessage(messageIndex: Long)
 }
 
 class MessageListManagerImpl(
@@ -181,13 +184,13 @@ class MessageListManagerImpl(
         return options
     }
 
-    override suspend fun updateMessageStatus(messageUuid: String, sendStatus: SendStatus) {
-        conversationsRepository.updateMessageStatus(messageUuid, sendStatus.value)
+    override suspend fun updateMessageStatus(messageUuid: String, sendStatus: SendStatus, errorCode: Int) {
+        conversationsRepository.updateMessageStatus(messageUuid, sendStatus.value, errorCode)
     }
 
-    override suspend fun updateMessageMediaDownloadStatus(
+    override suspend fun updateMessageMediaDownloadState(
         index: Long,
-        downloading: Boolean,
+        downloadState: DownloadState,
         downloadedBytes: Long,
         downloadedLocation: String?
     ) {
@@ -196,28 +199,19 @@ class MessageListManagerImpl(
             messageSid = message.sid,
             downloadedBytes = downloadedBytes,
             downloadLocation = downloadedLocation,
-            downloading = downloading
+            downloadState = downloadState.value
         )
     }
 
-    override suspend fun addRemoveReaction(index: Long, reaction: Reaction) {
-        val identity = conversationsClient.getConversationsClient().myIdentity
+    override suspend fun setReactions(index: Long, reactions: Reactions) {
         val message = conversationsClient
             .getConversationsClient()
             .getConversation(conversationSid)
             .getMessageByIndex(index)
-        val attributes = message.attributes
-        val reactions = getReactions("$attributes").toMutableMap()
-        val participantSids = reactions.getOrPut(reaction.value, ::emptySet).toMutableSet()
 
-        if (identity in participantSids) {
-            participantSids -= identity
-        } else {
-            participantSids += identity
-        }
+        val reactionsMap: Map<String, Set<String>> = reactions.map { it.key.value to it.value }.toMap()
+        val reactionAttributes = ReactionAttributes(reactionsMap)
 
-        reactions[reaction.value] = participantSids
-        val reactionAttributes = ReactionAttributes(reactions)
         Timber.d("Updating reactions: $reactions")
         message.setAttributes(Attributes(JSONObject(Gson().toJson(reactionAttributes))))
     }
@@ -241,5 +235,10 @@ class MessageListManagerImpl(
     override suspend fun setMessageMediaDownloadId(messageIndex: Long, id: Long) {
         val message = conversationsClient.getConversationsClient().getConversation(conversationSid).getMessageByIndex(messageIndex)
         conversationsRepository.updateMessageMediaDownloadStatus(messageSid = message.sid, downloadId = id)
+    }
+
+    override suspend fun removeMessage(messageIndex: Long) {
+        val message = conversationsClient.getConversationsClient().getConversation(conversationSid).getMessageByIndex(messageIndex)
+        conversationsClient.getConversationsClient().getConversation(conversationSid).removeMessage(message)
     }
 }

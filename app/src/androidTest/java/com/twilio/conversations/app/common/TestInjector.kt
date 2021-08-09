@@ -13,6 +13,7 @@ import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.data.models.RepositoryResult
+import com.twilio.conversations.app.manager.ConnectivityMonitor
 import com.twilio.conversations.app.manager.ConversationListManager
 import com.twilio.conversations.app.manager.LoginManager
 import com.twilio.conversations.app.manager.MessageListManager
@@ -78,11 +79,13 @@ open class TestInjector : Injector() {
         whenever(it.isLoggedIn()) doReturn true
     }
 
-    override fun createSplashViewModel(application: Application)
-            = SplashViewModel(loginManagerMock, application)
+    private val connectivityMonitorMock: ConnectivityMonitor = mock()
 
-    override fun createConversationListViewModel(application: Application)
-            = ConversationListViewModel(repositoryMock, conversationListManagerMock, userManagerMock, loginManagerMock)
+    override fun createSplashViewModel(application: Application)
+            = SplashViewModel(loginManagerMock)
+
+    override fun createConversationListViewModel(applicationContext: Context)
+            = ConversationListViewModel(applicationContext, repositoryMock, conversationListManagerMock, connectivityMonitorMock)
 
     override fun createMessageListViewModel(appContext: Context, conversationSid: String)
             = MessageListViewModel(appContext, conversationSid, repositoryMock, messageListManager)

@@ -25,7 +25,7 @@ import java.util.concurrent.TimeoutException
 
 fun replaceDynamicUi(activity: Activity, viewId: Int) {
     val notAnimatedDrawable =
-        ContextCompat.getDrawable(activity, R.drawable.ic_launcher_background)
+        ContextCompat.getDrawable(activity, R.drawable.ic_launcher)
     (activity.findViewById(viewId) as ProgressBar).indeterminateDrawable = notAnimatedDrawable
 }
 

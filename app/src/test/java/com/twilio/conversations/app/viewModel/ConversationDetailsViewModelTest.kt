@@ -147,27 +147,27 @@ class ConversationDetailsViewModelTest {
     }
 
     @Test
-    fun `conversationDetailViewModel_removeConversation() should call onConversationRemoved on success`() = runBlocking {
+    fun `conversationDetailViewModel_leaveConversation() should call onConversationLeft on success`() = runBlocking {
         val conversationSid = "sid"
-        coEvery { conversationListManager.removeConversation(conversationSid) } returns Unit
+        coEvery { conversationListManager.leaveConversation(conversationSid) } returns Unit
 
         conversationDetailsViewModel = ConversationDetailsViewModel(conversationSid, conversationsRepository, conversationListManager, participantListManager)
-        conversationDetailsViewModel.removeConversation()
+        conversationDetailsViewModel.leaveConversation()
 
-        coVerify { conversationListManager.removeConversation(conversationSid) }
-        assertTrue(conversationDetailsViewModel.onConversationRemoved.waitCalled())
+        coVerify { conversationListManager.leaveConversation(conversationSid) }
+        assertTrue(conversationDetailsViewModel.onConversationLeft.waitCalled())
     }
 
     @Test
-    fun `conversationDetailViewModel_removeConversation() should call onDetailsError on failure`() = runBlocking {
+    fun `conversationDetailViewModel_leaveConversation() should call onDetailsError on failure`() = runBlocking {
         val conversationSid = "sid"
-        coEvery { conversationListManager.removeConversation(conversationSid) } throws ConversationsException(ConversationsError.CONVERSATION_REMOVE_FAILED)
+        coEvery { conversationListManager.leaveConversation(conversationSid) } throws ConversationsException(ConversationsError.CONVERSATION_REMOVE_FAILED)
 
         conversationDetailsViewModel = ConversationDetailsViewModel(conversationSid, conversationsRepository, conversationListManager, participantListManager)
-        conversationDetailsViewModel.removeConversation()
+        conversationDetailsViewModel.leaveConversation()
 
-        coVerify { conversationListManager.removeConversation(conversationSid) }
-        assertTrue(conversationDetailsViewModel.onConversationRemoved.waitNotCalled())
+        coVerify { conversationListManager.leaveConversation(conversationSid) }
+        assertTrue(conversationDetailsViewModel.onConversationLeft.waitNotCalled())
         assertTrue(conversationDetailsViewModel.onDetailsError.waitValue(ConversationsError.CONVERSATION_REMOVE_FAILED))
     }
 

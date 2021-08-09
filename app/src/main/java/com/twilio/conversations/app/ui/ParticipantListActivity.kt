@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.twilio.conversations.app.R
@@ -107,7 +106,7 @@ class ParticipantListActivity : BaseActivity() {
             participantRefresh.isRefreshing = false
         })
         participantListViewModel.onParticipantError.observe(this, { error ->
-            conversationLayout.showSnackbar(getErrorMessage(error))
+            participantListLayout.showSnackbar(getErrorMessage(error))
         })
     }
 

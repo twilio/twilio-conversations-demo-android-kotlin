@@ -26,14 +26,9 @@ class ConversationListAdapter(private val callback: OnConversationEvent) : Recyc
         holder.binding.conversationItem.setOnClickListener {
             holder.binding.conversation?.sid?.let { callback.onConversationClicked(it) }
         }
-        holder.binding.conversationItem.setOnLongClickListener {
-            holder.binding.conversation?.sid?.let { callback.onConversationLongClicked(it) }
-            true
-        }
-        holder.binding.conversationMute.setOnClickListener {
-            holder.binding.conversation?.sid?.let { callback.onConversationMuteClicked(it) }
-        }
     }
+
+    fun isMuted(position: Int) = conversations[position].isMuted
 
     class ViewHolder(val binding: RowConversationItemBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -58,8 +53,4 @@ class ConversationListAdapter(private val callback: OnConversationEvent) : Recyc
 interface OnConversationEvent {
 
     fun onConversationClicked(conversationSid: String)
-
-    fun onConversationLongClicked(conversationSid: String)
-
-    fun onConversationMuteClicked(conversationSid: String)
 }

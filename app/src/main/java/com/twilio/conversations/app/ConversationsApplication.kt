@@ -1,7 +1,6 @@
 package com.twilio.conversations.app
 
 import android.app.Application
-import android.content.Intent
 import androidx.emoji.bundled.BundledEmojiCompatConfig
 import androidx.emoji.text.EmojiCompat
 import androidx.lifecycle.Lifecycle

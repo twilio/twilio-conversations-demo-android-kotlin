@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<com.twilio.conversations.app.ui.views.EditReactionsView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:paddingHorizontal="6dp"
+    android:paddingVertical="8dp">
+
+    <androidx.emoji.widget.EmojiTextView
+        style="@style/EmojiTextView"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:text="@string/reaction_heart" />
+
+    <androidx.emoji.widget.EmojiTextView
+        style="@style/EmojiTextView"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:text="@string/reaction_thumbs_up" />
+
+    <androidx.emoji.widget.EmojiTextView
+        style="@style/EmojiTextView"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:text="@string/reaction_laugh" />
+
+    <androidx.emoji.widget.EmojiTextView
+        style="@style/EmojiTextView"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:text="@string/reaction_sad" />
+
+    <androidx.emoji.widget.EmojiTextView
+        style="@style/EmojiTextView"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:text="@string/reaction_pouting" />
+
+    <androidx.emoji.widget.EmojiTextView
+        style="@style/EmojiTextView"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:text="@string/reaction_thumbs_down" />
+
+</com.twilio.conversations.app.ui.views.EditReactionsView>

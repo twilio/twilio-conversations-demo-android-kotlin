@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/page_conversation_list"
+        android:enabled="true"
+        android:icon="@drawable/ic_page_conversation_list"
+        android:title="@string/page_conversation_list" />
+
+    <item
+        android:id="@+id/page_profile"
+        android:enabled="true"
+        android:icon="@drawable/ic_profile"
+        android:title="@string/page_profile" />
+
+    <item
+        android:id="@+id/page_debug"
+        android:enabled="true"
+        android:icon="@drawable/ic_page_debug"
+        android:title="@string/page_debug" />
+
+</menu>

@@ -3,12 +3,16 @@ package com.twilio.conversations.app.viewModel
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.extensions.ConversationsException
+import com.twilio.conversations.app.manager.ConnectivityMonitor
 import com.twilio.conversations.app.manager.LoginManager
 import com.twilio.conversations.app.testUtil.INVALID_CREDENTIAL
 import com.twilio.conversations.app.testUtil.VALID_CREDENTIAL
 import com.twilio.conversations.app.testUtil.waitCalled
 import com.twilio.conversations.app.testUtil.waitValue
 import com.twilio.conversations.app.testUtil.whenCall
+import io.mockk.MockKAnnotations
+import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.RelaxedMockK
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
@@ -50,11 +54,15 @@ class LoginViewModelTest {
     @Mock
     private lateinit var loginManager: LoginManager
 
+    @RelaxedMockK
+    private lateinit var connectivityMonitor: ConnectivityMonitor
+
     @Before
     fun setUp() {
+        MockKAnnotations.init(this)
         Dispatchers.setMain(Dispatchers.Unconfined)
 
-        loginViewModel = LoginViewModel(loginManager)
+        loginViewModel = LoginViewModel(loginManager, connectivityMonitor)
     }
 
     @After

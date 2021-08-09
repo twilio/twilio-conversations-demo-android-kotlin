@@ -2,48 +2,63 @@ package com.twilio.conversations.app.ui
 
 import android.app.Activity.RESULT_OK
 import android.app.Instrumentation.ActivityResult
-import android.content.Intent.*
+import android.content.Intent.ACTION_OPEN_DOCUMENT
 import android.provider.MediaStore.ACTION_IMAGE_CAPTURE
 import android.provider.MediaStore.EXTRA_OUTPUT
 import android.text.format.Formatter
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.IdlingRegistry
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.contrib.RecyclerViewActions
 import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.Intents.intending
-import androidx.test.espresso.intent.matcher.IntentMatchers.*
+import androidx.test.espresso.intent.matcher.IntentMatchers.anyIntent
+import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
+import androidx.test.espresso.intent.matcher.IntentMatchers.hasExtraWithKey
+import androidx.test.espresso.intent.matcher.IntentMatchers.hasType
+import androidx.test.espresso.intent.matcher.IntentMatchers.isInternal
 import androidx.test.espresso.intent.rule.IntentsTestRule
-import androidx.test.espresso.matcher.ViewMatchers.*
+import androidx.test.espresso.matcher.ViewMatchers.Visibility
+import androidx.test.espresso.matcher.ViewMatchers.hasDescendant
+import androidx.test.espresso.matcher.ViewMatchers.hasSibling
+import androidx.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.gson.Gson
 import com.twilio.conversations.Message
-import com.twilio.conversations.app.*
+import com.twilio.conversations.app.MESSAGE_COUNT
+import com.twilio.conversations.app.R
 import com.twilio.conversations.app.adapters.MessageListAdapter
+import com.twilio.conversations.app.asPagedList
 import com.twilio.conversations.app.common.asMessageListViewItems
 import com.twilio.conversations.app.common.enums.Direction
+import com.twilio.conversations.app.common.enums.DownloadState
+import com.twilio.conversations.app.common.enums.DownloadState.COMPLETED
+import com.twilio.conversations.app.common.enums.DownloadState.DOWNLOADING
 import com.twilio.conversations.app.common.enums.MessageType
 import com.twilio.conversations.app.common.enums.Reaction
 import com.twilio.conversations.app.common.enums.SendStatus
 import com.twilio.conversations.app.common.setupTestInjector
 import com.twilio.conversations.app.common.testInjector
+import com.twilio.conversations.app.createTestMessageDataItem
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.data.models.RepositoryResult
-import com.twilio.conversations.app.testUtil.BottomSheetBehaviorIdlingResource
+import com.twilio.conversations.app.getExpectedReactions
+import com.twilio.conversations.app.getMockedMessages
 import com.twilio.conversations.app.testUtil.WaitForViewMatcher
 import com.twilio.conversations.app.testUtil.atPosition
 import com.twilio.conversations.app.testUtil.removeProgressBarIndeterminateDrawables
 import com.twilio.conversations.app.viewModel.MessageListViewModel
-import kotlinx.coroutines.channels.sendBlocking
+import kotlinx.coroutines.channels.trySendBlocking
 import org.hamcrest.CoreMatchers.allOf
 import org.hamcrest.CoreMatchers.not
-import org.hamcrest.Matchers.`is`
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Rule
@@ -60,7 +75,8 @@ class MessageListActivityTest {
     )
 
     @get:Rule
-    var activityRule: IntentsTestRule<MessageListActivity> = IntentsTestRule(MessageListActivity::class.java, false, false)
+    var activityRule: IntentsTestRule<MessageListActivity> =
+        IntentsTestRule(MessageListActivity::class.java, false, false)
 
     private val conversationSid = "conversationSid"
     private val messageBody = "Test Message"
@@ -70,7 +86,12 @@ class MessageListActivityTest {
 
     @Before
     fun setUp() {
-        activityRule.launchActivity(MessageListActivity.getStartIntent(InstrumentationRegistry.getInstrumentation().targetContext, conversationSid))
+        activityRule.launchActivity(
+            MessageListActivity.getStartIntent(
+                InstrumentationRegistry.getInstrumentation().targetContext,
+                conversationSid
+            )
+        )
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         ConversationsClientWrapper.recreateInstance(context)
         messageListViewModel = activityRule.activity.messageListViewModel
@@ -79,35 +100,58 @@ class MessageListActivityTest {
 
     @Test
     fun incomingMessagesDisplayed() {
-        val messages = getMockedMessages(MESSAGE_COUNT, messageBody,
-            conversationSid, Direction.INCOMING.value, messageAuthor).asMessageListViewItems()
-        testInjector.messageResultConversation.sendBlocking(RepositoryResult(messages.asPagedList(), RepositoryRequestStatus.COMPLETE))
+        val messages = getMockedMessages(
+            MESSAGE_COUNT, messageBody,
+            conversationSid, Direction.INCOMING.value, messageAuthor
+        ).asMessageListViewItems()
+        testInjector.messageResultConversation.trySendBlocking(
+            RepositoryResult(
+                messages.asPagedList(),
+                RepositoryRequestStatus.COMPLETE
+            )
+        )
 
         validateMessageItems(messages)
     }
 
     @Test
     fun outgoingMessagesDisplayed() {
-        val messages = getMockedMessages(MESSAGE_COUNT, messageBody,
-            conversationSid, Direction.OUTGOING.value, messageAuthor, sendStatus = SendStatus.SENT).asMessageListViewItems()
-        testInjector.messageResultConversation.sendBlocking(RepositoryResult(messages.asPagedList(), RepositoryRequestStatus.COMPLETE))
+        val messages = getMockedMessages(
+            MESSAGE_COUNT, messageBody,
+            conversationSid, Direction.OUTGOING.value, messageAuthor, sendStatus = SendStatus.SENT
+        ).asMessageListViewItems()
+        testInjector.messageResultConversation.trySendBlocking(
+            RepositoryResult(
+                messages.asPagedList(),
+                RepositoryRequestStatus.COMPLETE
+            )
+        )
 
         validateMessageItems(messages)
     }
 
     @Test
-    fun outgoingMessageRetryDisplayed() {
-        val messages = listOf(createTestMessageDataItem(body = messageBody,
-            direction = Direction.OUTGOING.value, sendStatus = SendStatus.ERROR.value, author = messageAuthor))
+    fun outgoingMessageErrorDisplayed() {
+        val messages = listOf(
+            createTestMessageDataItem(
+                body = messageBody,
+                direction = Direction.OUTGOING.value, sendStatus = SendStatus.ERROR.value, author = messageAuthor
+            )
+        )
             .asMessageListViewItems()
-        testInjector.messageResultConversation.sendBlocking(RepositoryResult(messages.asPagedList(), RepositoryRequestStatus.COMPLETE))
+        testInjector.messageResultConversation.trySendBlocking(
+            RepositoryResult(
+                messages.asPagedList(),
+                RepositoryRequestStatus.COMPLETE
+            )
+        )
 
         validateMessageItems(messages)
     }
 
     @Test
     fun typingIndicatorDisplayed() {
-        testInjector.typingParticipantsListConversation.offer(listOf(plainParticipant.copy(identity = "user1")))
+        testInjector.typingParticipantsListConversation.offer(listOf(plainParticipant.copy(friendlyName = "user1")))
         onView(withId(R.id.typingIndicator)).check(matches(withText("user1 is typing…")))
     }
 
@@ -115,22 +159,29 @@ class MessageListActivityTest {
     fun typingIndicatorMaxLength() {
         testInjector.typingParticipantsListConversation.offer(
             listOf(
-                plainParticipant.copy(identity = "user1"),
-                plainParticipant.copy(identity = "user2"),
-                plainParticipant.copy(identity = "user3"),
-                plainParticipant.copy(identity = "user4")
+                plainParticipant.copy(friendlyName = "user1"),
+                plainParticipant.copy(friendlyName = "user2"),
+                plainParticipant.copy(friendlyName = "user3"),
+                plainParticipant.copy(friendlyName = "user4")
             )
         )
-        onView(withId(R.id.typingIndicator)).check(matches(withText("user1, user2, user3, and others are typing…")))
+        onView(withId(R.id.typingIndicator)).check(matches(withText("4 participants are typing…")))
     }
 
     @Test
     fun incomingMessagesReactionsDisplayed() {
         val reactionAttributes = Reaction.values().asList().getExpectedReactions(listOf("1"))
         val attributes = Gson().toJson(reactionAttributes)
-        val messages = getMockedMessages(MESSAGE_COUNT, messageBody,
-            conversationSid, Direction.INCOMING.value, messageAuthor, attributes).asMessageListViewItems()
-        testInjector.messageResultConversation.sendBlocking(RepositoryResult(messages.asPagedList(), RepositoryRequestStatus.COMPLETE))
+        val messages = getMockedMessages(
+            MESSAGE_COUNT, messageBody,
+            conversationSid, Direction.INCOMING.value, messageAuthor, attributes
+        ).asMessageListViewItems()
+        testInjector.messageResultConversation.trySendBlocking(
+            RepositoryResult(
+                messages.asPagedList(),
+                RepositoryRequestStatus.COMPLETE
+            )
+        )
 
         validateMessageItems(messages)
     }
@@ -140,25 +191,46 @@ class MessageListActivityTest {
         val participantSid = "participant2"
         var reactionAttributes = listOf(Reaction.HEART).getExpectedReactions(listOf(participantSid))
         var attributes = Gson().toJson(reactionAttributes)
-        var message = getMockedMessages(1, messageBody,
-            conversationSid, Direction.INCOMING.value, messageAuthor, attributes).asMessageListViewItems()
-        testInjector.messageResultConversation.sendBlocking(RepositoryResult(message.asPagedList(), RepositoryRequestStatus.COMPLETE))
+        var message = getMockedMessages(
+            1, messageBody,
+            conversationSid, Direction.INCOMING.value, messageAuthor, attributes
+        ).asMessageListViewItems()
+        testInjector.messageResultConversation.trySendBlocking(
+            RepositoryResult(
+                message.asPagedList(),
+                RepositoryRequestStatus.COMPLETE
+            )
+        )
 
         validateMessageItems(message)
 
         reactionAttributes = listOf(Reaction.HEART).getExpectedReactions(listOf(participantSid, messageAuthor))
         attributes = Gson().toJson(reactionAttributes)
-        message = getMockedMessages(1, messageBody,
-            conversationSid, Direction.INCOMING.value, messageAuthor, attributes).asMessageListViewItems()
-        testInjector.messageResultConversation.sendBlocking(RepositoryResult(message.asPagedList(), RepositoryRequestStatus.COMPLETE))
+        message = getMockedMessages(
+            1, messageBody,
+            conversationSid, Direction.INCOMING.value, messageAuthor, attributes
+        ).asMessageListViewItems()
+        testInjector.messageResultConversation.trySendBlocking(
+            RepositoryResult(
+                message.asPagedList(),
+                RepositoryRequestStatus.COMPLETE
+            )
+        )
 
         validateMessageItems(message)
 
         reactionAttributes = listOf(Reaction.HEART).getExpectedReactions(listOf(participantSid))
         attributes = Gson().toJson(reactionAttributes)
-        message = getMockedMessages(1, messageBody,
-            conversationSid, Direction.INCOMING.value, messageAuthor, attributes).asMessageListViewItems()
-        testInjector.messageResultConversation.sendBlocking(RepositoryResult(message.asPagedList(), RepositoryRequestStatus.COMPLETE))
+        message = getMockedMessages(
+            1, messageBody,
+            conversationSid, Direction.INCOMING.value, messageAuthor, attributes
+        ).asMessageListViewItems()
+        testInjector.messageResultConversation.trySendBlocking(
+            RepositoryResult(
+                message.asPagedList(),
+                RepositoryRequestStatus.COMPLETE
+            )
+        )
 
         validateMessageItems(message)
     }
@@ -167,9 +239,16 @@ class MessageListActivityTest {
     fun outgoingMessagesReactionsDisplayed() {
         val reactionAttributes = Reaction.values().asList().getExpectedReactions(listOf("1"))
         val attributes = Gson().toJson(reactionAttributes)
-        val messages = getMockedMessages(MESSAGE_COUNT, messageBody,
-            conversationSid, Direction.OUTGOING.value, messageAuthor, attributes, sendStatus = SendStatus.SENT).asMessageListViewItems()
-        testInjector.messageResultConversation.sendBlocking(RepositoryResult(messages.asPagedList(), RepositoryRequestStatus.COMPLETE))
+        val messages = getMockedMessages(
+            MESSAGE_COUNT, messageBody,
+            conversationSid, Direction.OUTGOING.value, messageAuthor, attributes, sendStatus = SendStatus.SENT
+        ).asMessageListViewItems()
+        testInjector.messageResultConversation.trySendBlocking(
+            RepositoryResult(
+                messages.asPagedList(),
+                RepositoryRequestStatus.COMPLETE
+            )
+        )
 
         validateMessageItems(messages)
     }
@@ -179,137 +258,189 @@ class MessageListActivityTest {
         val participantSid = "participant2"
         var reactionAttributes = listOf(Reaction.HEART).getExpectedReactions(listOf(participantSid))
         var attributes = Gson().toJson(reactionAttributes)
-        var message = getMockedMessages(1, messageBody,
-            conversationSid, Direction.OUTGOING.value, messageAuthor, attributes).asMessageListViewItems()
-        testInjector.messageResultConversation.sendBlocking(RepositoryResult(message.asPagedList(), RepositoryRequestStatus.COMPLETE))
+        var message = getMockedMessages(
+            1, messageBody,
+            conversationSid, Direction.OUTGOING.value, messageAuthor, attributes
+        ).asMessageListViewItems()
+        testInjector.messageResultConversation.trySendBlocking(
+            RepositoryResult(
+                message.asPagedList(),
+                RepositoryRequestStatus.COMPLETE
+            )
+        )
 
         validateMessageItems(message)
 
         reactionAttributes = listOf(Reaction.HEART).getExpectedReactions(listOf(participantSid, messageAuthor))
         attributes = Gson().toJson(reactionAttributes)
-        message = getMockedMessages(1, messageBody,
-            conversationSid, Direction.OUTGOING.value, messageAuthor, attributes).asMessageListViewItems()
-        testInjector.messageResultConversation.sendBlocking(RepositoryResult(message.asPagedList(), RepositoryRequestStatus.COMPLETE))
+        message = getMockedMessages(
+            1, messageBody,
+            conversationSid, Direction.OUTGOING.value, messageAuthor, attributes
+        ).asMessageListViewItems()
+        testInjector.messageResultConversation.trySendBlocking(
+            RepositoryResult(
+                message.asPagedList(),
+                RepositoryRequestStatus.COMPLETE
+            )
+        )
 
         validateMessageItems(message)
 
         reactionAttributes = listOf(Reaction.HEART).getExpectedReactions(listOf(participantSid))
         attributes = Gson().toJson(reactionAttributes)
-        message = getMockedMessages(1, messageBody,
-            conversationSid, Direction.OUTGOING.value, messageAuthor, attributes).asMessageListViewItems()
-        testInjector.messageResultConversation.sendBlocking(RepositoryResult(message.asPagedList(), RepositoryRequestStatus.COMPLETE))
+        message = getMockedMessages(
+            1, messageBody,
+            conversationSid, Direction.OUTGOING.value, messageAuthor, attributes
+        ).asMessageListViewItems()
+        testInjector.messageResultConversation.trySendBlocking(
+            RepositoryResult(
+                message.asPagedList(),
+                RepositoryRequestStatus.COMPLETE
+            )
+        )
 
         validateMessageItems(message)
     }
 
     @Test
     fun incomingMediaMessageDisplayed() {
-        val messages = getMockedMessages(1, messageBody,
+        val messages = getMockedMessages(
+            1, messageBody,
             conversationSid, Direction.INCOMING.value, messageAuthor, type = Message.Type.MEDIA,
-            mediaFileName = "test.txt", mediaSize = 100).asMessageListViewItems()
-        testInjector.messageResultConversation.sendBlocking(RepositoryResult(messages.asPagedList(), RepositoryRequestStatus.COMPLETE))
+            mediaFileName = "test.txt", mediaSize = 100
+        ).asMessageListViewItems()
+        testInjector.messageResultConversation.trySendBlocking(
+            RepositoryResult(
+                messages.asPagedList(),
+                RepositoryRequestStatus.COMPLETE
+            )
+        )
 
         validateMessageItems(messages)
     }
 
     @Test
     fun incomingMediaMessageProgressDisplayed() {
-        val messages = getMockedMessages(1, messageBody,
+        val messages = getMockedMessages(
+            1, messageBody,
             conversationSid, Direction.INCOMING.value, messageAuthor, type = Message.Type.MEDIA,
-            mediaFileName = "test.txt", mediaSize = 100, mediaDownloading = true,
-            mediaDownloadedBytes = 10).asMessageListViewItems()
-        testInjector.messageResultConversation.sendBlocking(RepositoryResult(messages.asPagedList(), RepositoryRequestStatus.COMPLETE))
+            mediaFileName = "test.txt", mediaSize = 100, mediaDownloadState = DOWNLOADING,
+            mediaDownloadedBytes = 10
+        ).asMessageListViewItems()
+        testInjector.messageResultConversation.trySendBlocking(
+            RepositoryResult(
+                messages.asPagedList(),
+                RepositoryRequestStatus.COMPLETE
+            )
+        )
 
         validateMessageItems(messages)
     }
 
     @Test
     fun incomingMediaMessageCompletedDisplayed() {
-        val messages = getMockedMessages(1, messageBody,
+        val messages = getMockedMessages(
+            1, messageBody,
             conversationSid, Direction.INCOMING.value, messageAuthor, type = Message.Type.MEDIA,
-            mediaFileName = "test.txt", mediaSize = 100, mediaDownloading = false,
-            mediaDownloadedBytes = 100, mediaUri = "file://").asMessageListViewItems()
-        testInjector.messageResultConversation.sendBlocking(RepositoryResult(messages.asPagedList(), RepositoryRequestStatus.COMPLETE))
+            mediaFileName = "test.txt", mediaSize = 100, mediaDownloadState = DOWNLOADING,
+            mediaDownloadedBytes = 100, mediaUri = "file://"
+        ).asMessageListViewItems()
+        testInjector.messageResultConversation.trySendBlocking(
+            RepositoryResult(
+                messages.asPagedList(),
+                RepositoryRequestStatus.COMPLETE
+            )
+        )
 
         validateMessageItems(messages)
     }
 
     @Test
     fun outgoingMediaMessageDisplayed() {
-        val messages = getMockedMessages(1, messageBody,
+        val messages = getMockedMessages(
+            1, messageBody,
             conversationSid, Direction.OUTGOING.value, messageAuthor, type = Message.Type.MEDIA,
-            mediaFileName = "test.txt", mediaSize = 100).asMessageListViewItems()
-        testInjector.messageResultConversation.sendBlocking(RepositoryResult(messages.asPagedList(), RepositoryRequestStatus.COMPLETE))
+            mediaFileName = "test.txt", mediaSize = 100
+        ).asMessageListViewItems()
+        testInjector.messageResultConversation.trySendBlocking(
+            RepositoryResult(
+                messages.asPagedList(),
+                RepositoryRequestStatus.COMPLETE
+            )
+        )
 
         validateMessageItems(messages)
     }
 
     @Test
     fun outgoingMediaMessageProgressDisplayed() {
-        val messages = getMockedMessages(1, messageBody,
+        val messages = getMockedMessages(
+            1, messageBody,
             conversationSid, Direction.OUTGOING.value, messageAuthor, type = Message.Type.MEDIA,
-            mediaFileName = "test.txt", mediaSize = 100, mediaDownloading = true,
-            mediaDownloadedBytes = 10).asMessageListViewItems()
-        testInjector.messageResultConversation.sendBlocking(RepositoryResult(messages.asPagedList(), RepositoryRequestStatus.COMPLETE))
+            mediaFileName = "test.txt", mediaSize = 100, mediaDownloadState = DOWNLOADING,
+            mediaDownloadedBytes = 10
+        ).asMessageListViewItems()
+        testInjector.messageResultConversation.trySendBlocking(
+            RepositoryResult(
+                messages.asPagedList(),
+                RepositoryRequestStatus.COMPLETE
+            )
+        )
 
         validateMessageItems(messages)
     }
 
     @Test
     fun outgoingMediaMessageCompletedDisplayed() {
-        val messages = getMockedMessages(1, messageBody,
+        val messages = getMockedMessages(
+            1, messageBody,
             conversationSid, Direction.OUTGOING.value, messageAuthor, type = Message.Type.MEDIA,
-            mediaFileName = "test.txt", mediaSize = 100, mediaDownloading = false,
-            mediaDownloadedBytes = 100, mediaUri = "file://").asMessageListViewItems()
-        testInjector.messageResultConversation.sendBlocking(RepositoryResult(messages.asPagedList(), RepositoryRequestStatus.COMPLETE))
+            mediaFileName = "test.txt", mediaSize = 100, mediaDownloadState = DownloadState.NOT_STARTED,
+            mediaDownloadedBytes = 100, mediaUri = "file://"
+        ).asMessageListViewItems()
+        testInjector.messageResultConversation.trySendBlocking(
+            RepositoryResult(
+                messages.asPagedList(),
+                RepositoryRequestStatus.COMPLETE
+            )
+        )
 
         validateMessageItems(messages)
     }
 
     @Test
-    fun galleryUploadStarted() {
+    fun documentOpenStarted() {
         intending(not(isInternal())).respondWith(ActivityResult(RESULT_OK, null))
-        val idlingResource = BottomSheetBehaviorIdlingResource(getBottomSheerBehavior())
-        IdlingRegistry.getInstance().register(idlingResource)
 
         onView(withId(R.id.messageAttachmentButton)).perform(click())
-        onView(withId(R.id.attachment_choose_image)).perform(click())
+        onView(withId(R.id.file_manager)).perform(click())
 
-        intended(allOf(
-            hasAction(ACTION_CHOOSER),
-            hasExtra(`is`(EXTRA_INTENT), allOf(
-                hasAction(ACTION_GET_CONTENT),
-                hasCategories(setOf(CATEGORY_OPENABLE)),
-                hasType("image/*")
-            ))
-        ))
-
-        IdlingRegistry.getInstance().unregister(idlingResource)
+        intended(
+            allOf(
+                hasAction(ACTION_OPEN_DOCUMENT),
+                hasType("*/*")
+            )
+        )
     }
 
     @Test
     fun imageCaptureStarted() {
         intending(anyIntent()).respondWith(ActivityResult(RESULT_OK, null))
-        val idlingResource = BottomSheetBehaviorIdlingResource(getBottomSheerBehavior())
-        IdlingRegistry.getInstance().register(idlingResource)
 
         onView(withId(R.id.messageAttachmentButton)).perform(click())
-        onView(withId(R.id.attachment_take_picture)).perform(click())
+        onView(withId(R.id.take_photo)).perform(click())
 
-        intended(allOf(
-            hasAction(ACTION_CHOOSER),
-            hasExtra(`is`(EXTRA_INTENT), allOf(
+        intended(
+            allOf(
                 hasAction(ACTION_IMAGE_CAPTURE),
                 hasExtraWithKey(EXTRA_OUTPUT)
-            ))
-        ))
-
-        IdlingRegistry.getInstance().unregister(idlingResource)
+            )
+        )
     }
 
     private fun validateMessageItems(messages: List<MessageListViewItem>) =
-        messages.forEachIndexed { index, conversation ->
-            validateMessageItem(index, conversation)
+        messages.forEachIndexed { index, message ->
+            validateMessageItem(index, message)
         }
 
     private fun validateMessageItem(index: Int, message: MessageListViewItem) {
@@ -321,6 +452,31 @@ class MessageListActivityTest {
         )
 
         Timber.d("Validating message item: $index $message")
+        val bodyMatcher = if (message.direction == Direction.INCOMING) {
+            allOf(
+                allOf(
+                    withId(R.id.message_author),
+                    withText(message.author),
+                    withEffectiveVisibility(
+                        if (message.authorChanged)
+                            Visibility.VISIBLE else Visibility.GONE
+                    )
+                ),
+                // Check for correct message author text
+                hasSibling(
+                    allOf(
+                        withId(R.id.message_body),
+                        withText(message.body)
+                    )
+                )
+            )
+        } else {
+            allOf(
+                withId(R.id.message_body),
+                withText(message.body)
+            )
+        }
+
         // Validate message item
         WaitForViewMatcher.assertOnView(
             allOf(
@@ -328,19 +484,7 @@ class MessageListActivityTest {
                 withId(R.id.message_item),
                 // Check for correct message body
                 hasDescendant(
-                    allOf(
-                        allOf(
-                            withId(R.id.message_author),
-                            withText(message.author)
-                        ),
-                        // Check for correct message author text
-                        hasSibling(
-                            allOf(
-                                withId(R.id.message_body),
-                                withText(message.body)
-                            )
-                        )
-                    )
+                    bodyMatcher
                 )
             ), matches(isCompletelyDisplayed())
         )
@@ -366,9 +510,16 @@ class MessageListActivityTest {
         // Validate media messages
         if (message.type == MessageType.MEDIA) {
             val mediaMatcher = when {
-                message.mediaDownloading -> hasDescendant(withId(R.id.attachment_progress))
-                message.isDownloaded() -> hasDescendant(withText(R.string.button_open_attachment))
-                else -> hasDescendant(withText(R.string.button_download_attachment))
+                message.mediaDownloadState == DOWNLOADING -> hasDescendant(withId(R.id.attachment_progress))
+                message.mediaDownloadState == COMPLETED -> hasDescendant(withText(R.string.attachment_tap_to_open))
+                else -> hasDescendant(
+                    withText(
+                        Formatter.formatShortFileSize(
+                            InstrumentationRegistry.getInstrumentation().targetContext,
+                            message.mediaSize ?: 0
+                        )
+                    )
+                )
             }
             WaitForViewMatcher.assertOnView(
                 atPosition(
@@ -383,17 +534,6 @@ class MessageListActivityTest {
                                             withId(R.id.attachment_file_name),
                                             withText(message.mediaFileName)
                                         )
-                                    ),
-                                    hasSibling(
-                                        allOf(
-                                            withId(R.id.attachment_size),
-                                            withText(
-                                                Formatter.formatShortFileSize(
-                                                    InstrumentationRegistry.getInstrumentation().targetContext,
-                                                    message.mediaSize ?: 0
-                                                )
-                                            )
-                                        )
                                     )
                                 )
                             ),
@@ -401,7 +541,7 @@ class MessageListActivityTest {
                                 allOf(
                                     withId(R.id.attachment_progress),
                                     withEffectiveVisibility(
-                                        if (message.mediaDownloading)
+                                        if (message.mediaDownloadState == DOWNLOADING)
                                             Visibility.VISIBLE else Visibility.GONE
                                     )
                                 )
@@ -412,51 +552,28 @@ class MessageListActivityTest {
                 ), matches(isCompletelyDisplayed())
             )
         }
+
         // Validate message send state
         if (message.direction == Direction.OUTGOING) {
             WaitForViewMatcher.assertOnView(
                 atPosition(
                     index, allOf(
                         withId(R.id.message_item),
-                        allOf(
-                            hasDescendant(
-                                allOf(
-                                    withId(R.id.message_resend),
-                                    withEffectiveVisibility(
-                                        if (message.sendStatus != SendStatus.SENT)
-                                            Visibility.VISIBLE else Visibility.GONE
-                                    )
-                                )
-                            ),
-                            hasDescendant(
-                                allOf(
-                                    withId(R.id.message_resend_icon),
-                                    withEffectiveVisibility(
-                                        if (message.sendStatus == SendStatus.ERROR)
-                                            Visibility.VISIBLE else Visibility.GONE
-                                    )
-                                )
-                            ),
-                            hasDescendant(
-                                allOf(
-                                    withId(R.id.message_resend_spinner),
-                                    withEffectiveVisibility(
-                                        if (message.sendStatus == SendStatus.SENDING)
-                                            Visibility.VISIBLE else Visibility.GONE
-                                    )
+                        hasDescendant(
+                            allOf(
+                                withId(R.id.message_send_error),
+                                withEffectiveVisibility(
+                                    if (message.sendStatus == SendStatus.ERROR)
+                                        Visibility.VISIBLE else Visibility.GONE
                                 )
                             )
-
                         )
                     )
                 ), matches(isCompletelyDisplayed())
             )
         }
-        Timber.d("Validated message: $index $message")
-    }
 
-    private fun getBottomSheerBehavior(): BottomSheetBehavior<*> {
-        return BottomSheetBehavior.from(activityRule.activity.findViewById(R.id.selectAttachmentSheet))
+        Timber.d("Validated message: $index $message")
     }
 
     companion object {
