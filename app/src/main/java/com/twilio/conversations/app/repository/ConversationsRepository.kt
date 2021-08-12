@@ -5,7 +5,6 @@ import com.twilio.conversations.*
 import com.twilio.conversations.Participant.Type.CHAT
 import com.twilio.conversations.app.common.*
 import com.twilio.conversations.app.common.enums.CrashIn
-import com.twilio.conversations.app.common.enums.DownloadState
 import com.twilio.conversations.app.common.extensions.*
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.localCache.LocalCacheProvider
@@ -436,8 +435,9 @@ class ConversationsRepositoryImpl(
     private fun updateMessage(message: Message, updateReason: Message.UpdateReason? = null) {
         launch {
             val identity = conversationsClientWrapper.getConversationsClient().myIdentity
+            val uuid = localCache.messagesDao().getMessageBySid(message.sid)?.uuid ?: ""
             Timber.d("Message updated: ${message.toMessageDataItem(identity)}, reason: $updateReason")
-            localCache.messagesDao().insertOrReplace(message.toMessageDataItem(identity))
+            localCache.messagesDao().insertOrReplace(message.toMessageDataItem(identity, uuid))
             updateConversationLastMessage(message.conversationSid)
         }
     }

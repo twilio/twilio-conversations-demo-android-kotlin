@@ -20,7 +20,11 @@ interface MessagesDao {
     @Query("SELECT * FROM message_table WHERE conversationSid = :conversationSid ORDER BY CASE WHEN `index` < 0 THEN dateCreated ELSE `index` END DESC LIMIT 1")
     fun getLastMessage(conversationSid: String): MessageDataItem?
 
-    // Get single Message
+    // Get single Message by SID
+    @Query("SELECT * FROM message_table WHERE sid = :sid")
+    fun getMessageBySid(sid: String): MessageDataItem?
+
+    // Get single Message by UUID
     @Query("SELECT * FROM message_table WHERE uuid = :uuid")
     fun getMessageByUuid(uuid: String): MessageDataItem?
 
