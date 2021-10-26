@@ -56,7 +56,7 @@ class ConversationListSwipeCallback(val context: Context, val adapter: Conversat
         actionState: Int,
         isCurrentlyActive: Boolean
     ) {
-        recyclerView.setOnTouchListener { v, event ->
+        recyclerView.setOnTouchListener { _, event ->
             swipeBack = event.action == MotionEvent.ACTION_CANCEL || event.action == MotionEvent.ACTION_UP
             false
         }
