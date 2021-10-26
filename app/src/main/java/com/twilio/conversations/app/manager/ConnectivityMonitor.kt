@@ -19,6 +19,7 @@ class ConnectivityMonitor(context: Context) {
         connectivityManager.registerNetworkCallback(NetworkRequest.Builder().build(), ConnectionStatusCallback())
     }
 
+    @Suppress("DEPRECATION")
     private fun getInitialConnectionStatus(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val network = connectivityManager.activeNetwork
