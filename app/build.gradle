@@ -7,6 +7,9 @@ apply plugin: 'com.google.firebase.crashlytics'
 
 android {
     compileSdkVersion 31
+    if (findProperty("androidNdkVersion")) {
+        ndkVersion androidNdkVersion // Correct NDK setup is necessary for stripping native symbols in release build
+    }
     testBuildType System.getProperty('testBuildType', 'debug').toLowerCase()
     defaultConfig {
         applicationId "com.twilio.conversations.app"
