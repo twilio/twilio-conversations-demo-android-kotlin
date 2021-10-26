@@ -127,17 +127,27 @@ fun ContentResolver.getString(uri: Uri, columnName: String): String? {
     val cursor = query(uri, arrayOf(columnName), null, null, null)
     return cursor?.let {
         it.moveToFirst()
-        val name = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+        val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        val name = cursor.getString(index)
         it.close()
         return@let name
     }
 }
 
-fun Cursor.getInt(columnName: String): Int = getInt(getColumnIndex(columnName))
+fun Cursor.getInt(columnName: String): Int {
+    val index = getColumnIndex(columnName)
+    return getInt(index)
+}
 
-fun Cursor.getLong(columnName: String): Long = getLong(getColumnIndex(columnName))
+fun Cursor.getLong(columnName: String): Long {
+    val index = getColumnIndex(columnName)
+    return getLong(index)
+}
 
-fun Cursor.getString(columnName: String): String = getString(getColumnIndex(columnName))
+fun Cursor.getString(columnName: String): String {
+    val index = getColumnIndex(columnName)
+    return getString(index)
+}
 
 fun DownloadManager.queryById(id: Long): Cursor =
     query(DownloadManager.Query().apply {
