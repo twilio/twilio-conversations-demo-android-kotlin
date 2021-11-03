@@ -25,19 +25,15 @@ gcloud firebase test android run \
         --timeout=30m \
         --app "$APK_RUNNER_APP" \
         --test "$APK_RUNNER_ANDROID_TEST" \
-        --device model=Pixel2,version=26,orientation=portrait \
-        --device model=Pixel2,version=26,orientation=landscape \
-        --device model=Pixel2,version=27,orientation=portrait \
-        --device model=Pixel2,version=27,orientation=landscape \
-        --device model=Pixel2,version=28,orientation=portrait \
-        --device model=Pixel2,version=28,orientation=landscape \
-        --device model=Pixel2,version=29,orientation=portrait \
-        --device model=Pixel2,version=29,orientation=landscape \
-        --device model=flo,version=21,orientation=portrait \
+        --device model=Nexus5,version=21,orientation=portrait \
+        --device model=Nexus5,version=21,orientation=landscape \
         --device model=walleye,version=27,orientation=portrait \
         --device model=walleye,version=27,orientation=landscape \
-        --device model=walleye,version=28,orientation=portrait \
-        --device model=walleye,version=28,orientation=landscape 2>&1 | tee $LOG_FILE
+        --device model=judypn,version=28,orientation=portrait \
+        --device model=judypn,version=28,orientation=landscape \
+        --device model=flame,version=29,orientation=portrait \
+        --device model=flame,version=29,orientation=landscape \
+        2>&1 | tee $LOG_FILE
 
 EXIT_CODE=${PIPESTATUS[0]}
 echo "gcloud finished with code $EXIT_CODE"
