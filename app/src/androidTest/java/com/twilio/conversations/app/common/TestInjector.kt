@@ -27,6 +27,7 @@ import com.twilio.conversations.app.viewModel.ParticipantListViewModel
 import com.twilio.conversations.app.viewModel.SplashViewModel
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
@@ -79,7 +80,9 @@ open class TestInjector : Injector() {
         whenever(it.isLoggedIn()) doReturn true
     }
 
-    private val connectivityMonitorMock: ConnectivityMonitor = mock()
+    private val connectivityMonitorMock: ConnectivityMonitor = mock() {
+        whenever(it.isNetworkAvailable) doReturn MutableStateFlow(true)
+    }
 
     override fun createSplashViewModel(application: Application)
             = SplashViewModel(loginManagerMock)

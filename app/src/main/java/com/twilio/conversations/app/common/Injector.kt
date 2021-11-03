@@ -7,6 +7,7 @@ import androidx.annotation.RestrictTo.Scope
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.CredentialStorage
 import com.twilio.conversations.app.manager.ConnectivityMonitor
+import com.twilio.conversations.app.manager.ConnectivityMonitorImpl
 import com.twilio.conversations.app.manager.ConversationListManagerImpl
 import com.twilio.conversations.app.manager.FCMManager
 import com.twilio.conversations.app.manager.FCMManagerImpl
@@ -48,7 +49,7 @@ open class Injector {
 
     open fun createLoginViewModel(application: Application): LoginViewModel {
         val loginManager = createLoginManager(application)
-        val connectivityMonitor = ConnectivityMonitor(application)
+        val connectivityMonitor = ConnectivityMonitorImpl(application)
 
         return LoginViewModel(loginManager, connectivityMonitor)
     }
@@ -64,7 +65,7 @@ open class Injector {
 
     open fun createConversationListViewModel(applicationContext: Context): ConversationListViewModel {
         val conversationListManager = ConversationListManagerImpl(ConversationsClientWrapper.INSTANCE)
-        val connectivityMonitor = ConnectivityMonitor(applicationContext)
+        val connectivityMonitor = ConnectivityMonitorImpl(applicationContext)
 
         return ConversationListViewModel(
             applicationContext,
