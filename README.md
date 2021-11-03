@@ -4,6 +4,8 @@ This demo app SDK version: ![](https://img.shields.io/badge/SDK%20version-2.0.0-
 
 Latest available SDK version: [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.twilio/conversations-android/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.twilio/conversations-android)
 
+[![CircleCI](https://circleci.com/gh/twilio/twilio-conversations-demo-kotlin.svg?style=shield)](https://app.circleci.com/pipelines/github/twilio/twilio-conversations-demo-kotlin)
+
 ## Getting Started
 
 Welcome to the Conversations Demo application.  This application demonstrates a basic conversations client application with the ability to create and join conversations, add other participants into the conversations and exchange messages.
