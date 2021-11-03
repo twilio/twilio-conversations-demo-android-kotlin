@@ -8,12 +8,17 @@ import android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET
 import android.net.NetworkRequest
 import android.os.Build
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
-class ConnectivityMonitor(context: Context) {
+interface ConnectivityMonitor {
+    val isNetworkAvailable: StateFlow<Boolean>
+}
+
+class ConnectivityMonitorImpl(context: Context) : ConnectivityMonitor {
 
     private val connectivityManager = context.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
 
-    val isNetworkAvailable = MutableStateFlow(getInitialConnectionStatus())
+    override val isNetworkAvailable = MutableStateFlow(getInitialConnectionStatus())
 
     init {
         connectivityManager.registerNetworkCallback(NetworkRequest.Builder().build(), ConnectionStatusCallback())
