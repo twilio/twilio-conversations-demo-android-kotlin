@@ -33,7 +33,6 @@ private const val NOTIFICATION_ID = 1234
 interface FCMManager : LifecycleObserver {
     suspend fun onNewToken(token: String)
     suspend fun onMessageReceived(payload: NotificationPayload)
-    fun getTargetIntent(type: NotificationPayload.Type, conversationSid: String): Intent
     fun showNotification(payload: NotificationPayload)
 }
 
@@ -76,7 +75,7 @@ class FCMManagerImpl(
         }
     }
 
-    override fun getTargetIntent(type: NotificationPayload.Type, conversationSid: String): Intent {
+    fun getTargetIntent(type: NotificationPayload.Type, conversationSid: String): Intent {
         return when (type) {
             NotificationPayload.Type.NEW_MESSAGE -> MessageListActivity.getStartIntent(context, conversationSid)
             NotificationPayload.Type.ADDED_TO_CONVERSATION -> MessageListActivity.getStartIntent(context, conversationSid)
