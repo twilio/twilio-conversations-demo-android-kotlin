@@ -84,9 +84,7 @@ class FCMManagerImpl(
         }
     }
 
-    override fun showNotification(payload: NotificationPayload) {
-        Timber.d("showNotification: ${payload.conversationSid}")
-
+    fun buildNotification(payload: NotificationPayload): Notification {
         val intent = getTargetIntent(payload.type, payload.conversationSid)
         val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_ONE_SHOT)
 
@@ -116,7 +114,12 @@ class FCMManagerImpl(
             notificationBuilder.setDefaults(Notification.DEFAULT_SOUND)
             Timber.d("Playing default sound")
         }
-        val notification = notificationBuilder.build()
+
+        return notificationBuilder.build()
+    }
+
+    override fun showNotification(payload: NotificationPayload) {
+        Timber.d("showNotification: ${payload.conversationSid}")
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationChannel = NotificationChannel(
@@ -127,6 +130,7 @@ class FCMManagerImpl(
             notificationManager.createNotificationChannel(notificationChannel)
         }
 
+        val notification = buildNotification(payload)
         notificationManager.notify(NOTIFICATION_ID, notification)
     }
 
