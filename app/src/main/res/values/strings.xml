@@ -208,4 +208,7 @@
     <string name="twilio_conversations">Twilio Conversations</string>
     <string name="demo_experience">Demo experience</string>
 
+    <string name="notification_media_message">Media message with %d attachments</string>
+    <string name="notification_media">Media</string>
+
 </resources>
