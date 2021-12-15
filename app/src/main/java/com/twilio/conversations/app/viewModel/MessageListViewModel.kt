@@ -80,7 +80,7 @@ class MessageListViewModel(
 
     private val messagesObserver: Observer<PagedList<MessageListViewItem>> =
         Observer { list ->
-            list.iterator().forEach { message ->
+            list.forEach { message ->
                 if (message?.mediaDownloadState == DownloadState.DOWNLOADING && message.mediaDownloadId != null) {
                     if (updateMessageMediaDownloadState(message.index, message.mediaDownloadId)) {
                         observeMessageMediaDownload(message.index, message.mediaDownloadId)
