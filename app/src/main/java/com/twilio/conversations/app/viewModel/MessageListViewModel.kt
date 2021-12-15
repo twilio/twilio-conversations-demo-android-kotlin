@@ -20,7 +20,6 @@ import androidx.paging.PagedList
 import com.twilio.conversations.app.common.SingleLiveEvent
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.DownloadState
-import com.twilio.conversations.app.common.enums.Reaction
 import com.twilio.conversations.app.common.enums.Reactions
 import com.twilio.conversations.app.common.enums.SendStatus
 import com.twilio.conversations.app.common.extensions.*
@@ -82,7 +81,7 @@ class MessageListViewModel(
     private val messagesObserver: Observer<PagedList<MessageListViewItem>> =
         Observer { list ->
             list.iterator().forEach { message ->
-                if (message.mediaDownloadState == DownloadState.DOWNLOADING && message.mediaDownloadId != null) {
+                if (message?.mediaDownloadState == DownloadState.DOWNLOADING && message.mediaDownloadId != null) {
                     if (updateMessageMediaDownloadState(message.index, message.mediaDownloadId)) {
                         observeMessageMediaDownload(message.index, message.mediaDownloadId)
                     }
