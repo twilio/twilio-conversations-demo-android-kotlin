@@ -1,5 +1,6 @@
 package com.twilio.conversations.app.common.enums
 
+// @todo: remove once multiple media is supported
 enum class MessageType(val value: Int) {
     TEXT(0),
     MEDIA(1);
