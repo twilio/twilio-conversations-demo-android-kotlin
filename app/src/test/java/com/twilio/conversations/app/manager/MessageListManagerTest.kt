@@ -14,6 +14,7 @@ import com.twilio.conversations.ConversationsClient
 import com.twilio.conversations.Message
 import com.twilio.conversations.Participant
 import com.twilio.conversations.app.common.enums.ConversationsError
+import com.twilio.conversations.app.common.enums.MessageType
 import com.twilio.conversations.app.common.enums.Reaction
 import com.twilio.conversations.app.common.enums.SendStatus
 import com.twilio.conversations.app.common.extensions.ConversationsException
@@ -227,7 +228,7 @@ class MessageListManagerTest {
         messageListManager.sendMediaMessage(mediaUri, mockk(), fileName, mimeType, messageUuid)
 
         verify(conversationsRepository).insertMessage(argThat {
-            type == Message.Type.MEDIA.value
+            type == MessageType.MEDIA.value
                     && body == null
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENDING.value
@@ -253,7 +254,7 @@ class MessageListManagerTest {
         }
 
         verify(conversationsRepository).insertMessage(argThat {
-            type == Message.Type.MEDIA.value
+            type == MessageType.MEDIA.value
                     && body == null
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENDING.value
@@ -263,7 +264,7 @@ class MessageListManagerTest {
         })
 
         verify(conversationsRepository, never()).updateMessageByUuid(argThat {
-            type == Message.Type.MEDIA.value
+            type == MessageType.MEDIA.value
                     && body == null
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENT.value
@@ -289,7 +290,7 @@ class MessageListManagerTest {
         }
 
         verify(conversationsRepository, never()).insertMessage(argThat {
-            type == Message.Type.MEDIA.value
+            type == MessageType.MEDIA.value
                     && body == null
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENDING.value
@@ -299,7 +300,7 @@ class MessageListManagerTest {
         })
 
         verify(conversationsRepository, never()).updateMessageByUuid(argThat {
-            type == Message.Type.MEDIA.value
+            type == MessageType.MEDIA.value
                     && body == null
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENT.value
@@ -317,14 +318,14 @@ class MessageListManagerTest {
         val mimeType = "mimeType"
         val message = createTestMessageDataItem(uuid = messageUuid, author = participantIdentity,
             sendStatus = SendStatus.ERROR.value, mediaUploadUri = mediaUri, mediaFileName = fileName,
-            mediaType = mimeType, type = Message.Type.MEDIA.value, mediaSid = "sid")
+            mediaType = mimeType, type = MessageType.MEDIA.value, mediaSid = "sid")
         every { participant.sid } returns message.participantSid
         coEvery { conversation.sendMessage(any()) } returns message.toMessageMock(participant)
         whenCall(conversationsRepository.getMessageByUuid(message.uuid)).thenReturn(message)
         messageListManager.retrySendMediaMessage(mockk(), message.uuid)
 
         inOrder(conversationsRepository).verify(conversationsRepository).updateMessageByUuid(argThat {
-            type == Message.Type.MEDIA.value
+            type == MessageType.MEDIA.value
                     && body == ""
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENDING.value
@@ -332,7 +333,7 @@ class MessageListManagerTest {
                     && mediaType == mimeType
         })
         inOrder(conversationsRepository).verify(conversationsRepository).updateMessageByUuid(argThat {
-            type == Message.Type.MEDIA.value
+            type == MessageType.MEDIA.value
                     && body == ""
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENT.value
@@ -349,14 +350,14 @@ class MessageListManagerTest {
         val mimeType = "mimeType"
         val message = createTestMessageDataItem(uuid = messageUuid, author = participantIdentity,
             sendStatus = SendStatus.SENDING.value, mediaUploadUri = mediaUri, mediaFileName = fileName,
-            mediaType = mimeType, type = Message.Type.MEDIA.value, mediaSid = "sid")
+            mediaType = mimeType, type = MessageType.MEDIA.value, mediaSid = "sid")
         coEvery { participant.sid } returns message.participantSid
         coEvery { conversation.sendMessage(any()) } returns message.toMessageMock(participant)
         whenCall(conversationsRepository.getMessageByUuid(message.uuid)).thenReturn(message)
         messageListManager.retrySendMediaMessage(mockk(), message.uuid)
 
         verify(conversationsRepository, times(0)).updateMessageByUuid(argThat {
-            type == Message.Type.MEDIA.value
+            type == MessageType.MEDIA.value
                     && body == ""
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENT.value
@@ -373,7 +374,7 @@ class MessageListManagerTest {
         val mimeType = "mimeType"
         val message = createTestMessageDataItem(uuid = messageUuid, author = participantIdentity,
             sendStatus = SendStatus.ERROR.value, mediaUploadUri = mediaUri, mediaFileName = fileName,
-            mediaType = mimeType, type = Message.Type.MEDIA.value, mediaSid = "sid")
+            mediaType = mimeType, type = MessageType.MEDIA.value, mediaSid = "sid")
         coEvery { participant.sid } returns message.participantSid
         coEvery { conversation.sendMessage(any()) } returns message.toMessageMock(participant)
         coEvery { conversationsClient.getConversation(any()) } throws ConversationsException(ConversationsError.MESSAGE_SEND_FAILED)
@@ -385,7 +386,7 @@ class MessageListManagerTest {
         }
 
         verify(conversationsRepository).updateMessageByUuid(argThat {
-            type == Message.Type.MEDIA.value
+            type == MessageType.MEDIA.value
                     && body == ""
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENDING.value

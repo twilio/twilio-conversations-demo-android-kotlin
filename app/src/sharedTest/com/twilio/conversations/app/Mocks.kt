@@ -5,6 +5,7 @@ import com.twilio.conversations.Message
 import com.twilio.conversations.app.common.enums.Direction
 import com.twilio.conversations.app.common.enums.DownloadState
 import com.twilio.conversations.app.common.enums.DownloadState.NOT_STARTED
+import com.twilio.conversations.app.common.enums.MessageType
 import com.twilio.conversations.app.common.enums.SendStatus
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
@@ -110,7 +111,7 @@ fun getMockedConversations(count: Int, name: String,
 }
 
 fun getMockedMessages(count: Int, body: String, conversationSid: String, direction: Int = Direction.OUTGOING.value,
-                      author: String = "", attributes: String = "", type: Message.Type = Message.Type.TEXT,
+                      author: String = "", attributes: String = "", type: MessageType = MessageType.TEXT,
                       mediaFileName: String = "", mediaSize: Long = 0, mediaDownloadState: DownloadState = NOT_STARTED,
                       mediaUri: String? = null, mediaDownloadedBytes: Long? = null,
                       sendStatus: SendStatus = SendStatus.UNDEFINED): List<MessageDataItem> {

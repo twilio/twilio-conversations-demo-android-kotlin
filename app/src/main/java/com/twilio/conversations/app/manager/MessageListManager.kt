@@ -4,11 +4,7 @@ import com.google.gson.Gson
 import com.twilio.conversations.Attributes
 import com.twilio.conversations.Message
 import com.twilio.conversations.app.common.*
-import com.twilio.conversations.app.common.enums.Direction
-import com.twilio.conversations.app.common.enums.DownloadState
-import com.twilio.conversations.app.common.enums.Reaction
-import com.twilio.conversations.app.common.enums.Reactions
-import com.twilio.conversations.app.common.enums.SendStatus
+import com.twilio.conversations.app.common.enums.*
 import com.twilio.conversations.app.common.extensions.*
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
@@ -63,7 +59,7 @@ class MessageListManagerImpl(
             "",
             conversationSid,
             participantSid,
-            Message.Type.TEXT.value,
+            MessageType.TEXT.value,
             identity,
             Date().time,
             text,
@@ -110,7 +106,7 @@ class MessageListManagerImpl(
             "",
             conversationSid,
             participantSid,
-            Message.Type.MEDIA.value,
+            MessageType.MEDIA.value,
             identity,
             Date().time,
             null,
