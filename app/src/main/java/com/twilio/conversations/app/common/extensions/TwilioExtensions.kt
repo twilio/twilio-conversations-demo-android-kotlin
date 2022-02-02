@@ -308,6 +308,9 @@ suspend fun User.setFriendlyName(friendlyName: String): Unit = suspendCoroutine 
     })
 }
 
+// @todo: remove once multiple media is supported
+val Message.firstMedia: Media? get() = attachedMedia.firstOrNull()
+
 suspend fun Message.getMediaContentTemporaryUrl(): String = suspendCoroutine { continuation ->
     getMediaContentTemporaryUrl(object : CallbackListener<String> {
         override fun onSuccess(contentTemporaryUrl: String) = continuation.resume(contentTemporaryUrl)
