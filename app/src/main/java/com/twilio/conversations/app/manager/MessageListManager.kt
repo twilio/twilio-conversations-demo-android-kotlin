@@ -10,6 +10,7 @@ import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 import com.twilio.conversations.app.data.models.ReactionAttributes
 import com.twilio.conversations.app.repository.ConversationsRepository
+import com.twilio.conversations.extensions.getTemporaryContentUrl
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import timber.log.Timber
@@ -248,7 +249,7 @@ class MessageListManagerImpl(
 
     override suspend fun getMediaContentTemporaryUrl(index: Long): String {
         val message = conversationsClient.getConversationsClient().getConversation(conversationSid).getMessageByIndex(index)
-        return message.firstMedia?.getTemporaryContentUrl()!!
+        return message.firstMedia?.getTemporaryContentUrl()!!  // @todo: support multiple media
     }
 
     override suspend fun setMessageMediaDownloadId(messageIndex: Long, id: Long) {

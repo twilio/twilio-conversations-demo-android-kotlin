@@ -311,16 +311,6 @@ suspend fun User.setFriendlyName(friendlyName: String): Unit = suspendCoroutine 
 // @todo: remove once multiple media is supported
 val Message.firstMedia: Media? get() = attachedMedia.firstOrNull()
 
-suspend fun Media.getTemporaryContentUrl() = suspendCancellableCoroutine<String> { continuation ->
-    val cancellation = getTemporaryContentUrl(object : CallbackListener<String> {
-        override fun onSuccess(url: String) = continuation.resume(url)
-
-        override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
-    })
-
-    continuation.invokeOnCancellation { cancellation.cancel() }
-}
-
 inline fun ConversationsClient.addListener(
     crossinline onConversationAdded: (conversation: Conversation) -> Unit = {},
     crossinline onConversationUpdated: (conversation: Conversation, reason: Conversation.UpdateReason) -> Unit = { _, _ -> Unit },
