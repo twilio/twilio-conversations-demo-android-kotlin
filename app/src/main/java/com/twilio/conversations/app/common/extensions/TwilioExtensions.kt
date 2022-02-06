@@ -207,8 +207,8 @@ suspend fun Conversation.getMessagesBefore(index: Long, count: Int): List<Messag
     })
 }
 
-suspend fun Conversation.sendMessage(message: Message.Options): Message = suspendCoroutine { continuation ->
-    sendMessage(message, object : CallbackListener<Message> {
+suspend fun Conversation.sendMessage(unsentMessage: Conversation.UnsentMessage): Message = suspendCoroutine { continuation ->
+    unsentMessage.send(object : CallbackListener<Message> {
 
         override fun onSuccess(message: Message) = continuation.resume(message)
 
@@ -310,14 +310,6 @@ suspend fun User.setFriendlyName(friendlyName: String): Unit = suspendCoroutine 
 
 // @todo: remove once support multiple media
 val Message.firstMedia: Media? get() = attachedMedia.firstOrNull()
-
-suspend fun Message.getMediaContentTemporaryUrl(): String = suspendCoroutine { continuation ->
-    getMediaContentTemporaryUrl(object : CallbackListener<String> {
-        override fun onSuccess(contentTemporaryUrl: String) = continuation.resume(contentTemporaryUrl)
-
-        override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
-    })
-}
 
 inline fun ConversationsClient.addListener(
     crossinline onConversationAdded: (conversation: Conversation) -> Unit = {},

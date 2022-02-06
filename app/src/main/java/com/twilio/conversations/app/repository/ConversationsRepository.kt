@@ -6,6 +6,7 @@ import com.twilio.conversations.Participant.Type.CHAT
 import com.twilio.conversations.app.common.*
 import com.twilio.conversations.app.common.enums.CrashIn
 import com.twilio.conversations.app.common.extensions.*
+import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.localCache.LocalCacheProvider
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
