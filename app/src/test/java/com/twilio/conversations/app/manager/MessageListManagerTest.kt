@@ -8,9 +8,9 @@ import com.nhaarman.mockitokotlin2.inOrder
 import com.nhaarman.mockitokotlin2.never
 import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
-import com.twilio.conversations.Attributes
 import com.twilio.conversations.Conversation
 import com.twilio.conversations.ConversationsClient
+import com.twilio.conversations.Media
 import com.twilio.conversations.Message
 import com.twilio.conversations.Participant
 import com.twilio.conversations.app.common.enums.ConversationsError
@@ -18,11 +18,11 @@ import com.twilio.conversations.app.common.enums.MessageType
 import com.twilio.conversations.app.common.enums.Reaction
 import com.twilio.conversations.app.common.enums.SendStatus
 import com.twilio.conversations.app.common.extensions.ConversationsException
+import com.twilio.conversations.app.common.extensions.firstMedia
 import com.twilio.conversations.app.common.extensions.getConversation
-import com.twilio.conversations.app.common.extensions.getMediaContentTemporaryUrl
 import com.twilio.conversations.app.common.extensions.getMessageByIndex
+import com.twilio.conversations.app.common.extensions.getTemporaryContentUrl
 import com.twilio.conversations.app.common.extensions.sendMessage
-import com.twilio.conversations.app.common.extensions.setAttributes
 import com.twilio.conversations.app.common.getReactions
 import com.twilio.conversations.app.createTestMessageDataItem
 import com.twilio.conversations.app.data.ConversationsClientWrapper
@@ -95,6 +95,7 @@ class MessageListManagerTest {
 
         mockkStatic("com.twilio.conversations.app.common.extensions.TwilioExtensionsKt")
         mockkStatic("com.twilio.conversations.app.common.DataConverterKt")
+        mockkStatic("com.twilio.conversations.extensions.ConversationsExtensionsKt")
         mockkStatic("android.os.Looper")
         every { Looper.getMainLooper() } returns mockk()
 
@@ -410,12 +411,14 @@ class MessageListManagerTest {
     }
 
     @Test
-    fun `getMediaContentTemporaryUrl returns Media getContentTemporaryUrl`() = runBlockingTest {
+    fun `getMediaContentTemporaryUrl returns Media getTemporaryContentUrl`() = runBlockingTest {
         val messageIndex = 1L
         val mediaTempUrl = "url"
         val message = mockk<Message>()
-        coEvery { message.getMediaContentTemporaryUrl() } returns mediaTempUrl
+        val media = mockk<Media>()
         coEvery { conversation.getMessageByIndex(messageIndex) } returns message
+        every { message.firstMedia } returns media
+        coEvery { media.getTemporaryContentUrl() } returns mediaTempUrl
 
         assertEquals(mediaTempUrl, messageListManager.getMediaContentTemporaryUrl(messageIndex))
     }
