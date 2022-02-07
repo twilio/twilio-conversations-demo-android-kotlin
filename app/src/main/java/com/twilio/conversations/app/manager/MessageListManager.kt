@@ -2,7 +2,7 @@ package com.twilio.conversations.app.manager
 
 import com.google.gson.Gson
 import com.twilio.conversations.Attributes
-import com.twilio.conversations.Message
+import com.twilio.conversations.MediaUploadListener
 import com.twilio.conversations.app.common.*
 import com.twilio.conversations.app.common.enums.*
 import com.twilio.conversations.app.common.extensions.*
@@ -55,7 +55,7 @@ class MessageListManagerImpl(
         val conversation = conversationsClient.getConversationsClient().getConversation(conversationSid)
         val participantSid = conversation.getParticipantByIdentity(identity).sid
         val attributes = Attributes(uuid)
-        val options = Message.options().withBody(text).withAttributes(attributes)
+
         val message = MessageDataItem(
             "",
             conversationSid,
@@ -71,22 +71,28 @@ class MessageListManagerImpl(
             uuid
         )
         conversationsRepository.insertMessage(message)
-        val sentMessage = conversation.sendMessage(options).toMessageDataItem(identity, uuid)
+
+        val sentMessage = conversation.sendTextMessage(
+            attributes,
+            text
+        ).toMessageDataItem(identity, uuid)
+
         conversationsRepository.updateMessageByUuid(sentMessage)
     }
 
     override suspend fun retrySendTextMessage(messageUuid: String) {
         val message = withContext(dispatchers.io()) { conversationsRepository.getMessageByUuid(messageUuid) } ?: return
         if (message.sendStatus == SendStatus.SENDING.value) return
+
         conversationsRepository.updateMessageByUuid(message.copy(sendStatus = SendStatus.SENDING.value))
+
         val identity = conversationsClient.getConversationsClient().myIdentity
-        val attributes = Attributes(message.uuid)
-        val options = Message.options().withBody(message.body).withAttributes(attributes)
-        val sentMessage = conversationsClient
-            .getConversationsClient()
-            .getConversation(conversationSid)
-            .sendMessage(options)
-            .toMessageDataItem(identity, message.uuid)
+        val conversation = conversationsClient.getConversationsClient().getConversation(conversationSid)
+
+        val sentMessage = conversation.sendTextMessage(
+            Attributes(message.uuid),
+            message.body
+        ).toMessageDataItem(identity, message.uuid)
 
         conversationsRepository.updateMessageByUuid(sentMessage)
     }
@@ -102,7 +108,6 @@ class MessageListManagerImpl(
         val conversation = conversationsClient.getConversationsClient().getConversation(conversationSid)
         val participantSid = conversation.getParticipantByIdentity(identity).sid
         val attributes = Attributes(messageUuid)
-        val options = getMediaMessageOptions(uri, inputStream, fileName, mimeType, messageUuid)
         val message = MessageDataItem(
             "",
             conversationSid,
@@ -121,7 +126,15 @@ class MessageListManagerImpl(
             mediaType = mimeType
         )
         conversationsRepository.insertMessage(message)
-        val sentMessage = conversation.sendMessage(options).toMessageDataItem(identity, messageUuid)
+
+        val sentMessage = conversation.sendMediaMessage(
+            attributes,
+            inputStream,
+            mimeType,
+            fileName,
+            createMediaUploadListener(uri, messageUuid)
+        ).toMessageDataItem(identity, messageUuid)
+
         conversationsRepository.updateMessageByUuid(sentMessage)
     }
 
@@ -137,48 +150,53 @@ class MessageListManagerImpl(
         }
         conversationsRepository.updateMessageByUuid(message.copy(sendStatus = SendStatus.SENDING.value))
         val identity = conversationsClient.getConversationsClient().myIdentity
-        val options = getMediaMessageOptions(message.mediaUploadUri, inputStream,
-            message.mediaFileName, message.mediaType, messageUuid)
+        val conversation = conversationsClient.getConversationsClient().getConversation(conversationSid)
 
-        val sentMessage = conversationsClient
-            .getConversationsClient()
-            .getConversation(conversationSid)
-            .sendMessage(options)
-            .toMessageDataItem(identity, message.uuid)
+        val sentMessage = conversation.sendMediaMessage(
+            Attributes(messageUuid),
+            inputStream,
+            message.mediaType,
+            message.mediaFileName,
+            createMediaUploadListener(message.mediaUploadUri, messageUuid)
+        ).toMessageDataItem(identity, message.uuid)
 
         conversationsRepository.updateMessageByUuid(sentMessage)
     }
 
-    private fun getMediaMessageOptions(
+    private fun createMediaUploadListener(
         uri: String,
-        inputStream: InputStream,
-        fileName: String?,
-        mimeType: String?,
-        messageUuid: String
-    ): Message.Options {
-        val attributes = Attributes(messageUuid)
-        var options = Message.options().withMedia(inputStream, mimeType).withAttributes(attributes)
-            .withMediaProgressListener(
-                onStarted = {
-                    Timber.d("Upload started for $uri")
-                    conversationsRepository.updateMessageMediaUploadStatus(messageUuid, uploading = true)
-                },
-                onProgress = { uploadedBytes ->
-                    Timber.d("Upload progress for $uri: $uploadedBytes bytes")
-                    conversationsRepository.updateMessageMediaUploadStatus(
-                        messageUuid,
-                        uploadedBytes = uploadedBytes
-                    )
-                },
-                onCompleted = {
-                    Timber.d("Upload for $uri complete")
-                    conversationsRepository.updateMessageMediaUploadStatus(messageUuid, uploading = false)
-                }
-            )
-        if (fileName != null) {
-            options = options.withMediaFileName(fileName)
+        messageUuid: String,
+    ): MediaUploadListener {
+
+        return object: MediaUploadListener {
+            override fun onStarted() {
+                Timber.d("Upload started for $uri")
+                conversationsRepository.updateMessageMediaUploadStatus(
+                    messageUuid
+                )
+            }
+
+            override fun onProgress(uploadedBytes: kotlin.Long) {
+                Timber.d("Upload progress for $uri: $uploadedBytes bytes")
+                conversationsRepository.updateMessageMediaUploadStatus(
+                    messageUuid,
+                    uploadedBytes = uploadedBytes
+                )
+            }
+
+            override fun onCompleted(mediaSid: kotlin.String) {
+                Timber.d("Upload for $uri complete: $mediaSid")
+                conversationsRepository.updateMessageMediaUploadStatus(
+                    messageUuid,
+                    uploading = false
+                )
+            }
+
+            override fun onFailed(errorInfo: com.twilio.conversations.ErrorInfo) {
+                Timber.d("Upload failed: " + errorInfo)
+            }
         }
-        return options
+
     }
 
     override suspend fun updateMessageStatus(messageUuid: String, sendStatus: SendStatus, errorCode: Int) {

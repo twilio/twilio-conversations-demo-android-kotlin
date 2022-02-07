@@ -7,9 +7,11 @@ import com.twilio.conversations.ConversationsClient.SynchronizationStatus.COMPLE
 import com.twilio.conversations.ErrorInfo.Companion.CONVERSATION_NOT_SYNCHRONIZED
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.CrashIn
+import com.twilio.conversations.extensions.buildAndSend
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.suspendCancellableCoroutine
 import timber.log.Timber
+import java.io.InputStream
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -207,13 +209,22 @@ suspend fun Conversation.getMessagesBefore(index: Long, count: Int): List<Messag
     })
 }
 
-suspend fun Conversation.sendMessage(unsentMessage: Conversation.UnsentMessage): Message = suspendCoroutine { continuation ->
-    unsentMessage.send(object : CallbackListener<Message> {
+suspend fun Conversation.sendTextMessage(attributes: Attributes, body: String?): Message {
+    return prepareMessage()
+        .setAttributes(attributes)
+        .setBody(body)
+        .buildAndSend()
+}
 
-        override fun onSuccess(message: Message) = continuation.resume(message)
-
-        override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
-    })
+suspend fun Conversation.sendMediaMessage(attributes: Attributes,
+                                          inputStream: InputStream,
+                                          mimeType: String?,
+                                          fileName: String?,
+                                          mediaUploadListener: MediaUploadListener): Message {
+    return prepareMessage()
+        .setAttributes(attributes)
+        .addMedia(inputStream, mimeType ?: "", fileName, mediaUploadListener)
+        .buildAndSend()
 }
 
 suspend fun Conversation.advanceLastReadMessageIndex(index: Long): Long = suspendCoroutine { continuation ->
@@ -468,15 +479,3 @@ inline fun createConversationListener(
     override fun onSynchronizationChanged(conversation: Conversation) = onSynchronizationChanged(conversation)
 
 }
-
-inline fun Message.Options.withMediaProgressListener(
-    crossinline onStarted: () -> Unit = {},
-    crossinline onProgress: (uploadedBytes: Long) -> Unit = {},
-    crossinline onCompleted: () -> Unit = {}
-): Message.Options = withMediaProgressListener(object : ProgressListener {
-    override fun onStarted() = onStarted()
-
-    override fun onProgress(uploadedBytes: Long) = onProgress(uploadedBytes)
-
-    override fun onCompleted(mediaSid: String?) = onCompleted()
-})
