@@ -72,9 +72,9 @@ class MessageListManagerImpl(
         )
         conversationsRepository.insertMessage(message)
 
-        val sentMessage = conversation.sendMessage {
-            setAttributes(attributes)
-            setBody(text)
+        val sentMessage = conversation.doSendMessage {
+            this.attributes = attributes
+            this.body = text
         }.toMessageDataItem(identity, uuid)
 
         conversationsRepository.updateMessageByUuid(sentMessage)
@@ -89,9 +89,9 @@ class MessageListManagerImpl(
         val identity = conversationsClient.getConversationsClient().myIdentity
         val conversation = conversationsClient.getConversationsClient().getConversation(conversationSid)
 
-        val sentMessage = conversation.sendMessage {
-            setAttributes(Attributes(message.uuid))
-            setBody(message.body)
+        val sentMessage = conversation.doSendMessage {
+            this.attributes = Attributes(message.uuid)
+            this.body = message.body
         }.toMessageDataItem(identity, message.uuid)
 
         conversationsRepository.updateMessageByUuid(sentMessage)
@@ -127,8 +127,8 @@ class MessageListManagerImpl(
         )
         conversationsRepository.insertMessage(message)
 
-        val sentMessage = conversation.sendMessage {
-            setAttributes(attributes)
+        val sentMessage = conversation.doSendMessage {
+            this.attributes = attributes
             addMedia(
                 inputStream,
                 mimeType ?: "",
@@ -154,9 +154,8 @@ class MessageListManagerImpl(
         val identity = conversationsClient.getConversationsClient().myIdentity
         val conversation = conversationsClient.getConversationsClient().getConversation(conversationSid)
 
-
-        val sentMessage = conversation.sendMessage {
-            setAttributes(Attributes(messageUuid))
+        val sentMessage = conversation.doSendMessage {
+            this.attributes = Attributes(messageUuid)
             addMedia(
                 inputStream,
                 message.mediaType ?: "",

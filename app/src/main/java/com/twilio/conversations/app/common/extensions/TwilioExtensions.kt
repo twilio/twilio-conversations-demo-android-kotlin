@@ -7,6 +7,8 @@ import com.twilio.conversations.ConversationsClient.SynchronizationStatus.COMPLE
 import com.twilio.conversations.ErrorInfo.Companion.CONVERSATION_NOT_SYNCHRONIZED
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.CrashIn
+import com.twilio.conversations.extensions.MessageBuilder
+import com.twilio.conversations.extensions.sendMessage
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.suspendCancellableCoroutine
 import timber.log.Timber
@@ -207,13 +209,9 @@ suspend fun Conversation.getMessagesBefore(index: Long, count: Int): List<Messag
     })
 }
 
-suspend fun Conversation.sendMessage(block: Conversation.MessageBuilder.() -> Unit): Message = suspendCoroutine { continuation ->
-    prepareMessage().apply(block).buildAndSend(object : CallbackListener<Message> {
-
-        override fun onSuccess(message: Message) = continuation.resume(message)
-
-        override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
-    })
+// non-inline wrapper for inline function - to make it mockable
+suspend fun Conversation.doSendMessage(block: MessageBuilder.() -> Unit): Message {
+    return sendMessage(block)
 }
 
 suspend fun Conversation.advanceLastReadMessageIndex(index: Long): Long = suspendCoroutine { continuation ->
