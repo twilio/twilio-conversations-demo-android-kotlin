@@ -1,6 +1,5 @@
 package com.twilio.conversations.app.manager
 
-import com.twilio.conversations.app.common.extensions.createConversation
 import com.twilio.conversations.app.common.extensions.destroy
 import com.twilio.conversations.app.common.extensions.getConversation
 import com.twilio.conversations.app.common.extensions.join
@@ -9,6 +8,7 @@ import com.twilio.conversations.app.common.extensions.muteConversation
 import com.twilio.conversations.app.common.extensions.setFriendlyName
 import com.twilio.conversations.app.common.extensions.unmuteConversation
 import com.twilio.conversations.app.data.ConversationsClientWrapper
+import com.twilio.conversations.extensions.createConversation
 
 interface ConversationListManager {
     suspend fun createConversation(friendlyName: String): String
