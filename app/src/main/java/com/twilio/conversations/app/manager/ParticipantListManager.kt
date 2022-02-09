@@ -4,6 +4,7 @@ import com.twilio.conversations.Attributes
 import com.twilio.conversations.Participant
 import com.twilio.conversations.app.common.extensions.*
 import com.twilio.conversations.app.data.ConversationsClientWrapper
+import com.twilio.conversations.extensions.removeParticipant
 import com.twilio.conversations.extensions.waitForSynchronization
 import org.json.JSONObject
 
