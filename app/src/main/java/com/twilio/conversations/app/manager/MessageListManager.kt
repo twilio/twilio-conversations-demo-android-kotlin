@@ -12,6 +12,7 @@ import com.twilio.conversations.app.data.models.ReactionAttributes
 import com.twilio.conversations.app.repository.ConversationsRepository
 import com.twilio.conversations.extensions.advanceLastReadMessageIndex
 import com.twilio.conversations.extensions.getConversation
+import com.twilio.conversations.extensions.getMessageByIndex
 import com.twilio.conversations.extensions.getTemporaryContentUrl
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
