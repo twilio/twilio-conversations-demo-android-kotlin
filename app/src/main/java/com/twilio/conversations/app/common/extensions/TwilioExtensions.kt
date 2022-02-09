@@ -32,24 +32,6 @@ fun ConversationsClient.simulateCrash(where: CrashIn) {
     method.invoke(this, where.value)
 }
 
-suspend fun Conversation.addParticipantByIdentity(identity: String, attributes: Attributes = Attributes.DEFAULT): Unit = suspendCancellableCoroutine { continuation ->
-    addParticipantByIdentity(identity, attributes, object : StatusListener {
-
-        override fun onSuccess() = continuation.resume(Unit)
-
-        override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
-    })
-}
-
-suspend fun Conversation.addParticipantByAddress(address: String, proxyAddress: String, attributes: Attributes = Attributes.DEFAULT): Unit = suspendCancellableCoroutine { continuation ->
-    addParticipantByAddress(address, proxyAddress, attributes, object : StatusListener {
-
-        override fun onSuccess() = continuation.resume(Unit)
-
-        override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
-    })
-}
-
 suspend fun Participant.getAndSubscribeUser(): User = suspendCancellableCoroutine { continuation ->
     getAndSubscribeUser(object : CallbackListener<User> {
 
