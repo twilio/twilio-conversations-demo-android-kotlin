@@ -2,9 +2,6 @@ package com.twilio.conversations.app.common.extensions
 
 import android.content.Context
 import com.twilio.conversations.*
-import com.twilio.conversations.ConversationsClient.Properties
-import com.twilio.conversations.ConversationsClient.SynchronizationStatus.COMPLETED
-import com.twilio.conversations.ErrorInfo.Companion.CONVERSATION_NOT_SYNCHRONIZED
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.CrashIn
 import com.twilio.conversations.extensions.buildAndSend
@@ -18,34 +15,6 @@ import kotlin.coroutines.suspendCoroutine
 
 class ConversationsException(val error: ConversationsError, val errorInfo: ErrorInfo? = null) : Exception("$error") {
     constructor(errorInfo: ErrorInfo) : this(ConversationsError.fromErrorInfo(errorInfo), errorInfo)
-}
-
-suspend fun createAndSyncClient(context: Context, token: String, properties: Properties = Properties.newBuilder().createProperties()): ConversationsClient {
-    val client = createConversationsClient(context, token, properties)
-    client.waitForSynchronization()
-    return client
-}
-
-private suspend fun createConversationsClient(applicationContext: Context, token: String, properties: Properties) =
-    suspendCoroutine<ConversationsClient> { continuation ->
-        ConversationsClient.create(applicationContext, token, properties, object : CallbackListener<ConversationsClient> {
-            override fun onSuccess(conversationsClient: ConversationsClient) = continuation.resume(conversationsClient)
-
-            override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
-        })
-    }
-
-private suspend fun ConversationsClient.waitForSynchronization(): Unit = suspendCancellableCoroutine { continuation ->
-    addListener(
-        onClientSynchronization = { status ->
-            synchronized(continuation) {
-                if (continuation.isActive && status >= COMPLETED) {
-                    removeAllListeners()
-                    continuation.resume(Unit)
-                }
-            }
-        }
-    )
 }
 
 suspend fun ConversationsClient.registerFCMToken(token: String) = suspendCancellableCoroutine<Unit> { continuation ->

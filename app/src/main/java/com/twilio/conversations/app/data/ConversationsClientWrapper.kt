@@ -10,8 +10,8 @@ import com.twilio.conversations.app.common.enums.ConversationsError.TOKEN_ACCESS
 import com.twilio.conversations.app.common.enums.ConversationsError.TOKEN_ERROR
 import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.common.extensions.addListener
-import com.twilio.conversations.app.common.extensions.createAndSyncClient
 import com.twilio.conversations.app.common.extensions.updateToken
+import com.twilio.conversations.extensions.createAndSyncConversationsClient
 import kotlinx.coroutines.*
 import timber.log.Timber
 import java.io.FileNotFoundException
@@ -40,7 +40,7 @@ class ConversationsClientWrapper(private val applicationContext: Context) {
         val token = getToken(identity, password)
         Timber.d("token: $token")
 
-        val client = createAndSyncClient(applicationContext, token)
+        val client = createAndSyncConversationsClient(applicationContext, token)
         this.deferredClient.complete(client)
 
         client.addListener(
