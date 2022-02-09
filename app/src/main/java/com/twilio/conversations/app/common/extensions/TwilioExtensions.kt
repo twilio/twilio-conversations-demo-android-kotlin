@@ -130,47 +130,6 @@ suspend fun User.setFriendlyName(friendlyName: String): Unit = suspendCoroutine 
 // @todo: remove once support multiple media
 val Message.firstMedia: Media? get() = attachedMedia.firstOrNull()
 
-inline fun ConversationsClient.addListener(
-    crossinline onConversationAdded: (conversation: Conversation) -> Unit = {},
-    crossinline onConversationUpdated: (conversation: Conversation, reason: Conversation.UpdateReason) -> Unit = { _, _ -> Unit },
-    crossinline onConversationDeleted: (conversation: Conversation) -> Unit = {},
-    crossinline onConversationSynchronizationChange: (conversation: Conversation) -> Unit = {},
-    crossinline onError: (errorInfo: ErrorInfo) -> Unit = {},
-    crossinline onUserUpdated: (user: User, reason: User.UpdateReason) -> Unit = { _, _ -> Unit },
-    crossinline onUserSubscribed: (user: User) -> Unit = {},
-    crossinline onUserUnsubscribed: (user: User) -> Unit = {},
-    crossinline onClientSynchronization: (status: ConversationsClient.SynchronizationStatus) -> Unit = {},
-    crossinline onNewMessageNotification: (conversationSid: String, messageSid: String, messageIndex: Long) -> Unit = { _, _, _ -> Unit },
-    crossinline onAddedToConversationNotification: (conversationSid: String) -> Unit = {},
-    crossinline onRemovedFromConversationNotification: (conversationSid: String) -> Unit = {},
-    crossinline onNotificationSubscribed: () -> Unit = {},
-    crossinline onNotificationFailed: (errorInfo: ErrorInfo) -> Unit = {},
-    crossinline onConnectionStateChange: (state: ConversationsClient.ConnectionState) -> Unit = {},
-    crossinline onTokenExpired: () -> Unit = {},
-    crossinline onTokenAboutToExpire: () -> Unit = {}) {
-
-    val listener = createClientListener(
-        onConversationAdded,
-        onConversationUpdated,
-        onConversationDeleted,
-        onConversationSynchronizationChange,
-        onError,
-        onUserUpdated,
-        onUserSubscribed,
-        onUserUnsubscribed,
-        onClientSynchronization,
-        onNewMessageNotification,
-        onAddedToConversationNotification,
-        onRemovedFromConversationNotification,
-        onNotificationSubscribed,
-        onNotificationFailed,
-        onConnectionStateChange,
-        onTokenExpired,
-        onTokenAboutToExpire)
-
-    addListener(listener)
-}
-
 inline fun createClientListener(
     crossinline onConversationAdded: (conversation: Conversation) -> Unit = {},
     crossinline onConversationUpdated: (conversation: Conversation, reason: Conversation.UpdateReason) -> Unit = { _, _ -> Unit },

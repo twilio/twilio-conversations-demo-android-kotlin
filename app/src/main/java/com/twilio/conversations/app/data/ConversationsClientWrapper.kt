@@ -9,8 +9,8 @@ import com.twilio.conversations.app.BuildConfig
 import com.twilio.conversations.app.common.enums.ConversationsError.TOKEN_ACCESS_DENIED
 import com.twilio.conversations.app.common.enums.ConversationsError.TOKEN_ERROR
 import com.twilio.conversations.app.common.extensions.ConversationsException
-import com.twilio.conversations.app.common.extensions.addListener
 import com.twilio.conversations.app.common.extensions.updateToken
+import com.twilio.conversations.extensions.addListener
 import com.twilio.conversations.extensions.createAndSyncConversationsClient
 import kotlinx.coroutines.*
 import timber.log.Timber
