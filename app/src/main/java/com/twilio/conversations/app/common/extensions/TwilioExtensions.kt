@@ -95,14 +95,6 @@ suspend fun Conversation.removeMessage(message: Message): Unit = suspendCoroutin
     })
 }
 
-suspend fun Conversation.join(): Unit = suspendCoroutine { continuation ->
-    join(object : StatusListener {
-        override fun onSuccess() = continuation.resume(Unit)
-
-        override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
-    })
-}
-
 suspend fun Conversation.muteConversation(): Unit = suspendCoroutine { continuation ->
     setNotificationLevel(Conversation.NotificationLevel.MUTED, object : StatusListener {
         override fun onSuccess() = continuation.resume(Unit)
