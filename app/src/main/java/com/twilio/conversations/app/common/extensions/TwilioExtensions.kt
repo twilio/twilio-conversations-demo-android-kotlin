@@ -32,14 +32,6 @@ fun ConversationsClient.simulateCrash(where: CrashIn) {
     method.invoke(this, where.value)
 }
 
-suspend fun ConversationsClient.createConversation(friendlyName: String): Conversation = suspendCoroutine { continuation ->
-    createConversation(friendlyName, object : CallbackListener<Conversation> {
-        override fun onSuccess(result: Conversation) = continuation.resume(result)
-
-        override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
-    })
-}
-
 suspend fun Conversation.removeParticipant(participant: Participant): Unit = suspendCancellableCoroutine { continuation ->
     removeParticipant(participant, object : StatusListener {
 
