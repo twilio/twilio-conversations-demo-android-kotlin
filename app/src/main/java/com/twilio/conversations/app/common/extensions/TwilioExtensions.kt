@@ -68,15 +68,6 @@ suspend fun Conversation.getUnreadMessageCount(): Long? = suspendCancellableCoro
     })
 }
 
-suspend fun Conversation.getLastMessages(count: Int): List<Message> = suspendCoroutine { continuation ->
-    getLastMessages(count, object : CallbackListener<List<Message>> {
-
-        override fun onSuccess(result: List<Message>) = continuation.resume(result)
-
-        override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
-    })
-}
-
 suspend fun Conversation.getMessagesBefore(index: Long, count: Int): List<Message> = suspendCoroutine { continuation ->
     getMessagesBefore(index, count, object : CallbackListener<List<Message>> {
 
