@@ -82,15 +82,6 @@ suspend fun Conversation.removeMessage(message: Message): Unit = suspendCoroutin
     })
 }
 
-suspend fun Message.setAttributes(attributes: Attributes): Unit = suspendCoroutine { continuation ->
-    setAttributes(attributes, object : StatusListener {
-
-        override fun onSuccess() = continuation.resume(Unit)
-
-        override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
-    })
-}
-
 suspend fun Conversation.join(): Unit = suspendCoroutine { continuation ->
     join(object : StatusListener {
         override fun onSuccess() = continuation.resume(Unit)

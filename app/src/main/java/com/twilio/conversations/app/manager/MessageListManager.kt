@@ -14,6 +14,7 @@ import com.twilio.conversations.extensions.advanceLastReadMessageIndex
 import com.twilio.conversations.extensions.getConversation
 import com.twilio.conversations.extensions.getMessageByIndex
 import com.twilio.conversations.extensions.getTemporaryContentUrl
+import com.twilio.conversations.extensions.setAttributes
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import timber.log.Timber
