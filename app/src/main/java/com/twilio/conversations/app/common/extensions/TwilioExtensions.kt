@@ -94,31 +94,6 @@ suspend fun ConversationsClient.createConversation(friendlyName: String): Conver
     })
 }
 
-suspend fun Conversation.waitForSynchronization(): Conversation {
-    val complete = CompletableDeferred<Unit>()
-    val listener = addListener(
-        onSynchronizationChanged = { conversation ->
-            synchronized<Unit>(complete) {
-                if (complete.isCompleted) return@addListener
-                if (conversation.synchronizationStatus == Conversation.SynchronizationStatus.FAILED) {
-                    val errorInfo = ErrorInfo(CONVERSATION_NOT_SYNCHRONIZED, "Conversation synchronization failed: ${conversation.sid}}")
-                    complete.completeExceptionally(ConversationsException(errorInfo))
-                } else if (conversation.synchronizationStatus.value >= Conversation.SynchronizationStatus.ALL.value) {
-                    complete.complete(Unit)
-                }
-            }
-        }
-    )
-
-    try {
-        complete.await()
-    } finally {
-        removeListener(listener)
-    }
-
-    return this
-}
-
 suspend fun Conversation.removeParticipant(participant: Participant): Unit = suspendCancellableCoroutine { continuation ->
     removeParticipant(participant, object : StatusListener {
 
