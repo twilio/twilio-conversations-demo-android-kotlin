@@ -117,61 +117,6 @@ suspend fun User.setFriendlyName(friendlyName: String): Unit = suspendCoroutine 
 // @todo: remove once multiple media is supported
 val Message.firstMedia: Media? get() = attachedMedia.firstOrNull()
 
-inline fun createClientListener(
-    crossinline onConversationAdded: (conversation: Conversation) -> Unit = {},
-    crossinline onConversationUpdated: (conversation: Conversation, reason: Conversation.UpdateReason) -> Unit = { _, _ -> Unit },
-    crossinline onConversationDeleted: (conversation: Conversation) -> Unit = {},
-    crossinline onConversationSynchronizationChange: (conversation: Conversation) -> Unit = {},
-    crossinline onError: (errorInfo: ErrorInfo) -> Unit = {},
-    crossinline onUserUpdated: (user: User, reason: User.UpdateReason) -> Unit = { _, _ -> Unit },
-    crossinline onUserSubscribed: (user: User) -> Unit = {},
-    crossinline onUserUnsubscribed: (user: User) -> Unit = {},
-    crossinline onClientSynchronization: (status: ConversationsClient.SynchronizationStatus) -> Unit = {},
-    crossinline onNewMessageNotification: (conversationSid: String, messageSid: String, messageIndex: Long) -> Unit = { _, _, _ -> Unit },
-    crossinline onAddedToConversationNotification: (conversationSid: String) -> Unit = {},
-    crossinline onRemovedFromConversationNotification: (conversationSid: String) -> Unit = {},
-    crossinline onNotificationSubscribed: () -> Unit = {},
-    crossinline onNotificationFailed: (errorInfo: ErrorInfo) -> Unit = {},
-    crossinline onConnectionStateChange: (state: ConversationsClient.ConnectionState) -> Unit = {},
-    crossinline onTokenExpired: () -> Unit = {},
-    crossinline onTokenAboutToExpire: () -> Unit = {}
-): ConversationsClientListener = object : ConversationsClientListener {
-
-    override fun onConversationAdded(conversation: Conversation) = onConversationAdded(conversation)
-
-    override fun onConversationUpdated(conversation: Conversation, reason: Conversation.UpdateReason) = onConversationUpdated(conversation, reason)
-
-    override fun onConversationDeleted(conversation: Conversation) = onConversationDeleted(conversation)
-
-    override fun onConversationSynchronizationChange(conversation: Conversation) = onConversationSynchronizationChange(conversation)
-
-    override fun onError(errorInfo: ErrorInfo) = onError(errorInfo)
-
-    override fun onUserUpdated(user: User, reason: User.UpdateReason) = onUserUpdated(user, reason)
-
-    override fun onUserSubscribed(user: User) = onUserSubscribed(user)
-
-    override fun onUserUnsubscribed(user: User) = onUserUnsubscribed(user)
-
-    override fun onClientSynchronization(status: ConversationsClient.SynchronizationStatus) = onClientSynchronization(status)
-
-    override fun onNewMessageNotification(conversationSid: String, messageSid: String, messageIndex: Long) = onNewMessageNotification(conversationSid, messageSid, messageIndex)
-
-    override fun onAddedToConversationNotification(conversationSid: String) = onAddedToConversationNotification(conversationSid)
-
-    override fun onRemovedFromConversationNotification(conversationSid: String) = onRemovedFromConversationNotification(conversationSid)
-
-    override fun onNotificationSubscribed() = onNotificationSubscribed()
-
-    override fun onNotificationFailed(errorInfo: ErrorInfo) = onNotificationFailed(errorInfo)
-
-    override fun onConnectionStateChange(state: ConversationsClient.ConnectionState) = onConnectionStateChange(state)
-
-    override fun onTokenExpired() = onTokenExpired()
-
-    override fun onTokenAboutToExpire() = onTokenAboutToExpire()
-}
-
 inline fun createConversationListener(
     crossinline onParticipantAdded: (participant: Participant) -> Unit = {},
     crossinline onParticipantUpdated: (participant: Participant, updateReason: Participant.UpdateReason) -> Unit = { _, _ -> Unit },

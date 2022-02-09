@@ -16,6 +16,7 @@ import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus.*
 import com.twilio.conversations.app.data.models.RepositoryResult
+import com.twilio.conversations.extensions.ConversationsClientListener
 import com.twilio.conversations.extensions.getConversation
 import com.twilio.conversations.extensions.getLastMessages
 import com.twilio.conversations.extensions.getMessagesBefore
@@ -66,7 +67,7 @@ class ConversationsRepositoryImpl(
 
     private val repositoryScope = CoroutineScope(dispatchers.io() + SupervisorJob())
 
-    private val clientListener = createClientListener(
+    private val clientListener = ConversationsClientListener(
             onConversationDeleted = { conversation ->
                 launch {
                     Timber.d("Conversation deleted $conversation")
@@ -287,7 +288,7 @@ class ConversationsRepositoryImpl(
 
     override fun getSelfUser(): Flow<User> = callbackFlow {
         val client = conversationsClientWrapper.getConversationsClient()
-        val listener = createClientListener (
+        val listener = ConversationsClientListener (
             onUserUpdated = { user, _ ->
                 user.takeIf { it.identity == client.myIdentity}
                     ?.let { trySend(it).isSuccess }
