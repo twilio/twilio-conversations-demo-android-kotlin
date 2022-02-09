@@ -172,32 +172,6 @@ inline fun createClientListener(
     override fun onTokenAboutToExpire() = onTokenAboutToExpire()
 }
 
-inline fun Conversation.addListener(
-    crossinline onMessageAdded: (message: Message) -> Unit = {},
-    crossinline onMessageUpdated: (message: Message, reason: Message.UpdateReason) -> Unit = { _, _ -> Unit },
-    crossinline onMessageDeleted: (message: Message) -> Unit = {},
-    crossinline onParticipantAdded: (participant: Participant) -> Unit = {},
-    crossinline onParticipantUpdated: (participant: Participant, reason: Participant.UpdateReason) -> Unit = { _, _ -> Unit },
-    crossinline onParticipantDeleted: (participant: Participant) -> Unit = {},
-    crossinline onTypingStarted: (conversation: Conversation, participant: Participant) -> Unit = { _, _ -> Unit },
-    crossinline onTypingEnded: (conversation: Conversation, participant: Participant) -> Unit = { _, _ -> Unit },
-    crossinline onSynchronizationChanged: (conversation: Conversation) -> Unit = {}): ConversationListener {
-
-    val listener = createConversationListener(
-        onParticipantAdded,
-        onParticipantUpdated,
-        onParticipantDeleted,
-        onMessageAdded,
-        onMessageUpdated,
-        onMessageDeleted,
-        onTypingStarted,
-        onTypingEnded,
-        onSynchronizationChanged
-    )
-    addListener(listener)
-    return listener
-}
-
 inline fun createConversationListener(
     crossinline onParticipantAdded: (participant: Participant) -> Unit = {},
     crossinline onParticipantUpdated: (participant: Participant, updateReason: Participant.UpdateReason) -> Unit = { _, _ -> Unit },
