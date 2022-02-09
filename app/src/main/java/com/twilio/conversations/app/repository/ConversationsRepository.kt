@@ -16,6 +16,7 @@ import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus.*
 import com.twilio.conversations.app.data.models.RepositoryResult
+import com.twilio.conversations.extensions.getConversation
 import com.twilio.conversations.extensions.waitForSynchronization
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BroadcastChannel

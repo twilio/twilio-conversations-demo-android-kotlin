@@ -19,7 +19,6 @@ import com.twilio.conversations.app.common.asParticipantDataItem
 import com.twilio.conversations.app.common.enums.ConversationsError.UNKNOWN
 import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.common.extensions.getAndSubscribeUser
-import com.twilio.conversations.app.common.extensions.getConversation
 import com.twilio.conversations.app.common.extensions.getLastMessages
 import com.twilio.conversations.app.common.toMessageDataItem
 import com.twilio.conversations.app.createTestConversationDataItem
@@ -38,6 +37,7 @@ import com.twilio.conversations.app.testUtil.CoroutineTestRule
 import com.twilio.conversations.app.testUtil.toConversationMock
 import com.twilio.conversations.app.testUtil.toMessageMock
 import com.twilio.conversations.app.testUtil.toParticipantMock
+import com.twilio.conversations.extensions.getConversation
 import com.twilio.conversations.extensions.waitForSynchronization
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery

@@ -10,6 +10,7 @@ import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 import com.twilio.conversations.app.data.models.ReactionAttributes
 import com.twilio.conversations.app.repository.ConversationsRepository
+import com.twilio.conversations.extensions.getConversation
 import com.twilio.conversations.extensions.getTemporaryContentUrl
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
