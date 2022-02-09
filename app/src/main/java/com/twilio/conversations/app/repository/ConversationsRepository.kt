@@ -16,6 +16,7 @@ import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus.*
 import com.twilio.conversations.app.data.models.RepositoryResult
+import com.twilio.conversations.extensions.ConversationListener
 import com.twilio.conversations.extensions.ConversationsClientListener
 import com.twilio.conversations.extensions.getConversation
 import com.twilio.conversations.extensions.getLastMessages
@@ -87,7 +88,7 @@ class ConversationsRepositoryImpl(
             }
     )
 
-    private val conversationListener = createConversationListener(
+    private val conversationListener = ConversationListener(
         onTypingStarted = { conversation, participant ->
             Timber.d("${participant.identity} started typing in ${conversation.friendlyName}")
             this@ConversationsRepositoryImpl.launch {

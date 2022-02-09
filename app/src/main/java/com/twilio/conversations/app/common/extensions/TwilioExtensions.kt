@@ -116,39 +116,3 @@ suspend fun User.setFriendlyName(friendlyName: String): Unit = suspendCoroutine 
 
 // @todo: remove once multiple media is supported
 val Message.firstMedia: Media? get() = attachedMedia.firstOrNull()
-
-inline fun createConversationListener(
-    crossinline onParticipantAdded: (participant: Participant) -> Unit = {},
-    crossinline onParticipantUpdated: (participant: Participant, updateReason: Participant.UpdateReason) -> Unit = { _, _ -> Unit },
-    crossinline onParticipantDeleted: (participant: Participant) -> Unit = {},
-    crossinline onMessageAdded: (message: Message) -> Unit = {},
-    crossinline onMessageUpdated: (message: Message, updateReason: Message.UpdateReason) -> Unit = { _, _ -> Unit },
-    crossinline onMessageDeleted: (message: Message) -> Unit = {},
-    crossinline onTypingStarted: (conversation: Conversation, participant: Participant) -> Unit = { _, _ -> Unit },
-    crossinline onTypingEnded: (conversation: Conversation, participant: Participant) -> Unit = { _, _ -> Unit },
-    crossinline onSynchronizationChanged: (conversation: Conversation) -> Unit = {}
-): ConversationListener = object : ConversationListener {
-
-    override fun onParticipantAdded(participant: Participant) = onParticipantAdded(participant)
-
-    override fun onParticipantUpdated(participant: Participant, updateReason: Participant.UpdateReason) =
-        onParticipantUpdated(participant, updateReason)
-
-    override fun onParticipantDeleted(participant: Participant) = onParticipantDeleted(participant)
-
-    override fun onMessageAdded(message: Message) = onMessageAdded(message)
-
-    override fun onMessageUpdated(message: Message, updateReason: Message.UpdateReason) =
-        onMessageUpdated(message, updateReason)
-
-    override fun onMessageDeleted(message: Message) = onMessageDeleted(message)
-
-    override fun onTypingStarted(conversation: Conversation, participant: Participant) =
-        onTypingStarted(conversation, participant)
-
-    override fun onTypingEnded(conversation: Conversation, participant: Participant) =
-        onTypingEnded(conversation, participant)
-
-    override fun onSynchronizationChanged(conversation: Conversation) = onSynchronizationChanged(conversation)
-
-}
