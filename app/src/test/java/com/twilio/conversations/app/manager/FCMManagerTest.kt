@@ -6,10 +6,10 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.twilio.conversations.ConversationsClient
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.extensions.ConversationsException
-import com.twilio.conversations.app.common.extensions.registerFCMToken
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.CredentialStorage
 import com.twilio.conversations.app.testUtil.whenCall
+import com.twilio.conversations.extensions.registerFCMToken
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.impl.annotations.MockK
@@ -62,7 +62,7 @@ class FCMManagerTest {
         MockKAnnotations.init(this)
         Dispatchers.setMain(mainThreadSurrogate)
 
-        mockkStatic("com.twilio.conversations.app.common.extensions.TwilioExtensionsKt")
+        mockkStatic("com.twilio.conversations.extensions.ConversationsExtensionsKt")
         whenCall(application.applicationContext).thenReturn(context)
         conversationsClient = PowerMockito.mock(ConversationsClient::class.java)
         coEvery { conversationsClientWrapper.getConversationsClient() } returns conversationsClient
@@ -79,7 +79,7 @@ class FCMManagerTest {
     @Test
     fun `onNewToken - token saved in credentials if registered`() = runBlocking {
         val token = "fcm_token"
-        coEvery { conversationsClient.registerFCMToken(token) } returns Unit
+        coEvery { conversationsClient.registerFCMToken(any()) } returns Unit
         fcmManager.onNewToken(token)
         verify(credentialStorage, times(1)).fcmToken = token
     }
@@ -87,7 +87,7 @@ class FCMManagerTest {
     @Test
     fun `onNewToken - token not saved in credentials if registration failed`() = runBlocking {
         val token = "fcm_token"
-        coEvery { conversationsClient.registerFCMToken(token) } throws ConversationsException(ConversationsError.TOKEN_ERROR)
+        coEvery { conversationsClient.registerFCMToken(any()) } throws ConversationsException(ConversationsError.TOKEN_ERROR)
         fcmManager.onNewToken(token)
         verify(credentialStorage, times(0)).fcmToken = token
     }

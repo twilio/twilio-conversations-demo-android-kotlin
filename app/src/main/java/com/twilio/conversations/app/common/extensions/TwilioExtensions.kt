@@ -17,29 +17,6 @@ class ConversationsException(val error: ConversationsError, val errorInfo: Error
     constructor(errorInfo: ErrorInfo) : this(ConversationsError.fromErrorInfo(errorInfo), errorInfo)
 }
 
-suspend fun ConversationsClient.registerFCMToken(token: String) = suspendCancellableCoroutine<Unit> { continuation ->
-    registerFCMToken(ConversationsClient.FCMToken(token), object : StatusListener {
-
-        override fun onSuccess() {
-            if (continuation.isActive) continuation.resume(Unit)
-        }
-
-        override fun onError(errorInfo: ErrorInfo) {
-            Timber.d("Failed to register for FCM: $token, $errorInfo")
-            if (continuation.isActive) continuation.resumeWithException(ConversationsException(errorInfo))
-        }
-    })
-}
-
-suspend fun ConversationsClient.unregisterFCMToken(token: String) = suspendCancellableCoroutine<Unit> { continuation ->
-    unregisterFCMToken(ConversationsClient.FCMToken(token), object : StatusListener {
-
-        override fun onSuccess() = continuation.resume(Unit)
-
-        override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
-    })
-}
-
 suspend fun ConversationsClient.updateToken(token: String) = suspendCancellableCoroutine<Unit> { continuation ->
     updateToken(token, object : StatusListener {
 
