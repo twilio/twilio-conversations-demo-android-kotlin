@@ -16,6 +16,7 @@ import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus.*
 import com.twilio.conversations.app.data.models.RepositoryResult
+import com.twilio.conversations.extensions.waitForSynchronization
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
@@ -298,10 +299,11 @@ class ConversationsRepositoryImpl(
         emit(FETCHING)
         try {
             val identity = conversationsClientWrapper.getConversationsClient().myIdentity
-            val messages = conversationsClientWrapper
+            val conversation = conversationsClientWrapper
                 .getConversationsClient()
                 .getConversation(conversationSid)
-                .waitForSynchronization()
+            conversation.waitForSynchronization()
+            val messages = conversation
                 .fetch()
                 .asMessageDataItems(identity)
             localCache.messagesDao().insert(messages)
