@@ -98,14 +98,6 @@ suspend fun Conversation.unmuteConversation(): Unit = suspendCoroutine { continu
     })
 }
 
-suspend fun Conversation.destroy(): Unit = suspendCoroutine { continuation ->
-    destroy(object : StatusListener {
-        override fun onSuccess() = continuation.resume(Unit)
-
-        override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
-    })
-}
-
 suspend fun Conversation.setFriendlyName(friendlyName: String): Unit = suspendCoroutine { continuation ->
     setFriendlyName(friendlyName, object : StatusListener {
         override fun onSuccess() = continuation.resume(Unit)

@@ -1,12 +1,12 @@
 package com.twilio.conversations.app.manager
 
-import com.twilio.conversations.app.common.extensions.destroy
 import com.twilio.conversations.app.common.extensions.muteConversation
 import com.twilio.conversations.app.common.extensions.setFriendlyName
 import com.twilio.conversations.app.common.extensions.unmuteConversation
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.extensions.createConversation
 import com.twilio.conversations.extensions.getConversation
+import com.twilio.conversations.extensions.destroy
 import com.twilio.conversations.extensions.join
 import com.twilio.conversations.extensions.leave
 
