@@ -73,15 +73,6 @@ suspend fun Conversation.doSendMessage(block: MessageBuilder.() -> Unit): Messag
     return sendMessage(block)
 }
 
-suspend fun Conversation.getMessageByIndex(index: Long): Message = suspendCoroutine { continuation ->
-    getMessageByIndex(index, object : CallbackListener<Message> {
-
-        override fun onSuccess(message: Message) = continuation.resume(message)
-
-        override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
-    })
-}
-
 suspend fun Conversation.removeMessage(message: Message): Unit = suspendCoroutine { continuation ->
     removeMessage(message, object : StatusListener {
 

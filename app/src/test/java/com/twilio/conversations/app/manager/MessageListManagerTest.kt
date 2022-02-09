@@ -19,7 +19,6 @@ import com.twilio.conversations.app.common.enums.Reaction
 import com.twilio.conversations.app.common.enums.SendStatus
 import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.common.extensions.firstMedia
-import com.twilio.conversations.app.common.extensions.getMessageByIndex
 import com.twilio.conversations.app.common.extensions.doSendMessage
 import com.twilio.conversations.app.common.getReactions
 import com.twilio.conversations.app.createTestMessageDataItem
@@ -31,6 +30,7 @@ import com.twilio.conversations.app.testUtil.CoroutineTestRule
 import com.twilio.conversations.app.testUtil.toMessageMock
 import com.twilio.conversations.app.testUtil.whenCall
 import com.twilio.conversations.extensions.getConversation
+import com.twilio.conversations.extensions.getMessageByIndex
 import com.twilio.conversations.extensions.getTemporaryContentUrl
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
