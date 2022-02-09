@@ -68,15 +68,6 @@ suspend fun Conversation.getUnreadMessageCount(): Long? = suspendCancellableCoro
     })
 }
 
-suspend fun ConversationsClient.getConversation(sidOrUniqueName: String): Conversation = suspendCoroutine { continuation ->
-    getConversation(sidOrUniqueName, object : CallbackListener<Conversation> {
-
-        override fun onSuccess(result: Conversation) = continuation.resume(result)
-
-        override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
-    })
-}
-
 suspend fun Conversation.getLastMessages(count: Int): List<Message> = suspendCoroutine { continuation ->
     getLastMessages(count, object : CallbackListener<List<Message>> {
 
