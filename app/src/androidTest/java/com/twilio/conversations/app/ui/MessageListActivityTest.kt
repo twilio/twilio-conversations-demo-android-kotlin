@@ -306,7 +306,7 @@ class MessageListActivityTest {
     fun incomingMediaMessageDisplayed() {
         val messages = getMockedMessages(
             1, messageBody,
-            conversationSid, Direction.INCOMING.value, messageAuthor, type = Message.Type.MEDIA,
+            conversationSid, Direction.INCOMING.value, messageAuthor, type = MessageType.MEDIA,
             mediaFileName = "test.txt", mediaSize = 100
         ).asMessageListViewItems()
         testInjector.messageResultConversation.trySendBlocking(
@@ -323,7 +323,7 @@ class MessageListActivityTest {
     fun incomingMediaMessageProgressDisplayed() {
         val messages = getMockedMessages(
             1, messageBody,
-            conversationSid, Direction.INCOMING.value, messageAuthor, type = Message.Type.MEDIA,
+            conversationSid, Direction.INCOMING.value, messageAuthor, type = MessageType.MEDIA,
             mediaFileName = "test.txt", mediaSize = 100, mediaDownloadState = DOWNLOADING,
             mediaDownloadedBytes = 10
         ).asMessageListViewItems()
@@ -341,7 +341,7 @@ class MessageListActivityTest {
     fun incomingMediaMessageCompletedDisplayed() {
         val messages = getMockedMessages(
             1, messageBody,
-            conversationSid, Direction.INCOMING.value, messageAuthor, type = Message.Type.MEDIA,
+            conversationSid, Direction.INCOMING.value, messageAuthor, type = MessageType.MEDIA,
             mediaFileName = "test.txt", mediaSize = 100, mediaDownloadState = DOWNLOADING,
             mediaDownloadedBytes = 100, mediaUri = "file://"
         ).asMessageListViewItems()
@@ -359,7 +359,7 @@ class MessageListActivityTest {
     fun outgoingMediaMessageDisplayed() {
         val messages = getMockedMessages(
             1, messageBody,
-            conversationSid, Direction.OUTGOING.value, messageAuthor, type = Message.Type.MEDIA,
+            conversationSid, Direction.OUTGOING.value, messageAuthor, type = MessageType.MEDIA,
             mediaFileName = "test.txt", mediaSize = 100
         ).asMessageListViewItems()
         testInjector.messageResultConversation.trySendBlocking(
@@ -376,7 +376,7 @@ class MessageListActivityTest {
     fun outgoingMediaMessageProgressDisplayed() {
         val messages = getMockedMessages(
             1, messageBody,
-            conversationSid, Direction.OUTGOING.value, messageAuthor, type = Message.Type.MEDIA,
+            conversationSid, Direction.OUTGOING.value, messageAuthor, type = MessageType.MEDIA,
             mediaFileName = "test.txt", mediaSize = 100, mediaDownloadState = DOWNLOADING,
             mediaDownloadedBytes = 10
         ).asMessageListViewItems()
@@ -394,7 +394,7 @@ class MessageListActivityTest {
     fun outgoingMediaMessageCompletedDisplayed() {
         val messages = getMockedMessages(
             1, messageBody,
-            conversationSid, Direction.OUTGOING.value, messageAuthor, type = Message.Type.MEDIA,
+            conversationSid, Direction.OUTGOING.value, messageAuthor, type = MessageType.MEDIA,
             mediaFileName = "test.txt", mediaSize = 100, mediaDownloadState = DownloadState.NOT_STARTED,
             mediaDownloadedBytes = 100, mediaUri = "file://"
         ).asMessageListViewItems()

@@ -8,20 +8,21 @@ import com.nhaarman.mockitokotlin2.inOrder
 import com.nhaarman.mockitokotlin2.never
 import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
-import com.twilio.conversations.Attributes
 import com.twilio.conversations.Conversation
 import com.twilio.conversations.ConversationsClient
+import com.twilio.conversations.Media
 import com.twilio.conversations.Message
 import com.twilio.conversations.Participant
 import com.twilio.conversations.app.common.enums.ConversationsError
+import com.twilio.conversations.app.common.enums.MessageType
 import com.twilio.conversations.app.common.enums.Reaction
 import com.twilio.conversations.app.common.enums.SendStatus
 import com.twilio.conversations.app.common.extensions.ConversationsException
+import com.twilio.conversations.app.common.extensions.firstMedia
 import com.twilio.conversations.app.common.extensions.getConversation
-import com.twilio.conversations.app.common.extensions.getMediaContentTemporaryUrl
 import com.twilio.conversations.app.common.extensions.getMessageByIndex
+import com.twilio.conversations.app.common.extensions.getTemporaryContentUrl
 import com.twilio.conversations.app.common.extensions.sendMessage
-import com.twilio.conversations.app.common.extensions.setAttributes
 import com.twilio.conversations.app.common.getReactions
 import com.twilio.conversations.app.createTestMessageDataItem
 import com.twilio.conversations.app.data.ConversationsClientWrapper
@@ -94,6 +95,7 @@ class MessageListManagerTest {
 
         mockkStatic("com.twilio.conversations.app.common.extensions.TwilioExtensionsKt")
         mockkStatic("com.twilio.conversations.app.common.DataConverterKt")
+        mockkStatic("com.twilio.conversations.extensions.ConversationsExtensionsKt")
         mockkStatic("android.os.Looper")
         every { Looper.getMainLooper() } returns mockk()
 
@@ -227,7 +229,7 @@ class MessageListManagerTest {
         messageListManager.sendMediaMessage(mediaUri, mockk(), fileName, mimeType, messageUuid)
 
         verify(conversationsRepository).insertMessage(argThat {
-            type == Message.Type.MEDIA.value
+            type == MessageType.MEDIA.value
                     && body == null
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENDING.value
@@ -253,7 +255,7 @@ class MessageListManagerTest {
         }
 
         verify(conversationsRepository).insertMessage(argThat {
-            type == Message.Type.MEDIA.value
+            type == MessageType.MEDIA.value
                     && body == null
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENDING.value
@@ -263,7 +265,7 @@ class MessageListManagerTest {
         })
 
         verify(conversationsRepository, never()).updateMessageByUuid(argThat {
-            type == Message.Type.MEDIA.value
+            type == MessageType.MEDIA.value
                     && body == null
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENT.value
@@ -289,7 +291,7 @@ class MessageListManagerTest {
         }
 
         verify(conversationsRepository, never()).insertMessage(argThat {
-            type == Message.Type.MEDIA.value
+            type == MessageType.MEDIA.value
                     && body == null
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENDING.value
@@ -299,7 +301,7 @@ class MessageListManagerTest {
         })
 
         verify(conversationsRepository, never()).updateMessageByUuid(argThat {
-            type == Message.Type.MEDIA.value
+            type == MessageType.MEDIA.value
                     && body == null
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENT.value
@@ -317,14 +319,14 @@ class MessageListManagerTest {
         val mimeType = "mimeType"
         val message = createTestMessageDataItem(uuid = messageUuid, author = participantIdentity,
             sendStatus = SendStatus.ERROR.value, mediaUploadUri = mediaUri, mediaFileName = fileName,
-            mediaType = mimeType, type = Message.Type.MEDIA.value, mediaSid = "sid")
+            mediaType = mimeType, type = MessageType.MEDIA.value, mediaSid = "sid")
         every { participant.sid } returns message.participantSid
         coEvery { conversation.sendMessage(any()) } returns message.toMessageMock(participant)
         whenCall(conversationsRepository.getMessageByUuid(message.uuid)).thenReturn(message)
         messageListManager.retrySendMediaMessage(mockk(), message.uuid)
 
         inOrder(conversationsRepository).verify(conversationsRepository).updateMessageByUuid(argThat {
-            type == Message.Type.MEDIA.value
+            type == MessageType.MEDIA.value
                     && body == ""
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENDING.value
@@ -332,7 +334,7 @@ class MessageListManagerTest {
                     && mediaType == mimeType
         })
         inOrder(conversationsRepository).verify(conversationsRepository).updateMessageByUuid(argThat {
-            type == Message.Type.MEDIA.value
+            type == MessageType.MEDIA.value
                     && body == ""
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENT.value
@@ -349,14 +351,14 @@ class MessageListManagerTest {
         val mimeType = "mimeType"
         val message = createTestMessageDataItem(uuid = messageUuid, author = participantIdentity,
             sendStatus = SendStatus.SENDING.value, mediaUploadUri = mediaUri, mediaFileName = fileName,
-            mediaType = mimeType, type = Message.Type.MEDIA.value, mediaSid = "sid")
+            mediaType = mimeType, type = MessageType.MEDIA.value, mediaSid = "sid")
         coEvery { participant.sid } returns message.participantSid
         coEvery { conversation.sendMessage(any()) } returns message.toMessageMock(participant)
         whenCall(conversationsRepository.getMessageByUuid(message.uuid)).thenReturn(message)
         messageListManager.retrySendMediaMessage(mockk(), message.uuid)
 
         verify(conversationsRepository, times(0)).updateMessageByUuid(argThat {
-            type == Message.Type.MEDIA.value
+            type == MessageType.MEDIA.value
                     && body == ""
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENT.value
@@ -373,7 +375,7 @@ class MessageListManagerTest {
         val mimeType = "mimeType"
         val message = createTestMessageDataItem(uuid = messageUuid, author = participantIdentity,
             sendStatus = SendStatus.ERROR.value, mediaUploadUri = mediaUri, mediaFileName = fileName,
-            mediaType = mimeType, type = Message.Type.MEDIA.value, mediaSid = "sid")
+            mediaType = mimeType, type = MessageType.MEDIA.value, mediaSid = "sid")
         coEvery { participant.sid } returns message.participantSid
         coEvery { conversation.sendMessage(any()) } returns message.toMessageMock(participant)
         coEvery { conversationsClient.getConversation(any()) } throws ConversationsException(ConversationsError.MESSAGE_SEND_FAILED)
@@ -385,7 +387,7 @@ class MessageListManagerTest {
         }
 
         verify(conversationsRepository).updateMessageByUuid(argThat {
-            type == Message.Type.MEDIA.value
+            type == MessageType.MEDIA.value
                     && body == ""
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENDING.value
@@ -409,12 +411,14 @@ class MessageListManagerTest {
     }
 
     @Test
-    fun `getMediaContentTemporaryUrl returns Media getContentTemporaryUrl`() = runBlockingTest {
+    fun `getMediaContentTemporaryUrl returns Media getTemporaryContentUrl`() = runBlockingTest {
         val messageIndex = 1L
         val mediaTempUrl = "url"
         val message = mockk<Message>()
-        coEvery { message.getMediaContentTemporaryUrl() } returns mediaTempUrl
+        val media = mockk<Media>()
         coEvery { conversation.getMessageByIndex(messageIndex) } returns message
+        every { message.firstMedia } returns media
+        coEvery { media.getTemporaryContentUrl() } returns mediaTempUrl
 
         assertEquals(mediaTempUrl, messageListManager.getMediaContentTemporaryUrl(messageIndex))
     }

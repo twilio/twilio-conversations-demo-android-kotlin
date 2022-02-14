@@ -21,6 +21,7 @@ import com.twilio.conversations.app.common.extensions.asLastMessageDateString
 import com.twilio.conversations.app.common.extensions.asLastMessageTextColor
 import com.twilio.conversations.app.common.extensions.asMessageCount
 import com.twilio.conversations.app.common.extensions.asMessageDateString
+import com.twilio.conversations.app.common.extensions.firstMedia
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
@@ -48,23 +49,24 @@ fun Conversation.toConversationDataItem(): ConversationDataItem {
 }
 
 fun Message.toMessageDataItem(currentUserIdentity: String = participant.identity, uuid: String = ""): MessageDataItem {
+    val media = firstMedia  // @todo: support multiple media
     return MessageDataItem(
         this.sid,
         this.conversationSid,
         this.participantSid,
-        this.type.value,
+        if (media != null) MessageType.MEDIA.value else MessageType.TEXT.value,
         this.author,
         this.dateCreatedAsDate.time,
-        this.messageBody ?: "",
+        this.body ?: "",
         this.messageIndex,
         this.attributes.toString(),
         if (this.author == currentUserIdentity) Direction.OUTGOING.value else Direction.INCOMING.value,
         if (this.author == currentUserIdentity) SendStatus.SENT.value else SendStatus.UNDEFINED.value,
         uuid,
-        if (this.type == Message.Type.MEDIA) this.mediaSid else null,
-        if (this.type == Message.Type.MEDIA) this.mediaFileName else null,
-        if (this.type == Message.Type.MEDIA) this.mediaType else null,
-        if (this.type == Message.Type.MEDIA) this.mediaSize else null
+        media?.sid,
+        media?.filename,
+        media?.contentType,
+        media?.size
     )
 }
 

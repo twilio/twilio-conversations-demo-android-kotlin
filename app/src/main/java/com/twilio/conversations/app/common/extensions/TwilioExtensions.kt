@@ -207,8 +207,8 @@ suspend fun Conversation.getMessagesBefore(index: Long, count: Int): List<Messag
     })
 }
 
-suspend fun Conversation.sendMessage(message: Message.Options): Message = suspendCoroutine { continuation ->
-    sendMessage(message, object : CallbackListener<Message> {
+suspend fun Conversation.sendMessage(block: Conversation.MessageBuilder.() -> Unit): Message = suspendCoroutine { continuation ->
+    prepareMessage().apply(block).buildAndSend(object : CallbackListener<Message> {
 
         override fun onSuccess(message: Message) = continuation.resume(message)
 
@@ -308,12 +308,17 @@ suspend fun User.setFriendlyName(friendlyName: String): Unit = suspendCoroutine 
     })
 }
 
-suspend fun Message.getMediaContentTemporaryUrl(): String = suspendCoroutine { continuation ->
-    getMediaContentTemporaryUrl(object : CallbackListener<String> {
-        override fun onSuccess(contentTemporaryUrl: String) = continuation.resume(contentTemporaryUrl)
+// @todo: remove once multiple media is supported
+val Message.firstMedia: Media? get() = attachedMedia.firstOrNull()
+
+suspend fun Media.getTemporaryContentUrl() = suspendCancellableCoroutine<String> { continuation ->
+    val cancellation = getTemporaryContentUrl(object : CallbackListener<String> {
+        override fun onSuccess(url: String) = continuation.resume(url)
 
         override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(ConversationsException(errorInfo))
     })
+
+    continuation.invokeOnCancellation { cancellation.cancel() }
 }
 
 inline fun ConversationsClient.addListener(
@@ -473,15 +478,3 @@ inline fun createConversationListener(
     override fun onSynchronizationChanged(conversation: Conversation) = onSynchronizationChanged(conversation)
 
 }
-
-inline fun Message.Options.withMediaProgressListener(
-    crossinline onStarted: () -> Unit = {},
-    crossinline onProgress: (uploadedBytes: Long) -> Unit = {},
-    crossinline onCompleted: () -> Unit = {}
-): Message.Options = withMediaProgressListener(object : ProgressListener {
-    override fun onStarted() = onStarted()
-
-    override fun onProgress(uploadedBytes: Long) = onProgress(uploadedBytes)
-
-    override fun onCompleted(mediaSid: String?) = onCompleted()
-})
