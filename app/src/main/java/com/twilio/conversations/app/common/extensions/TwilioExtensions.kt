@@ -207,8 +207,8 @@ suspend fun Conversation.getMessagesBefore(index: Long, count: Int): List<Messag
     })
 }
 
-suspend fun Conversation.sendMessage(message: Message.Options): Message = suspendCoroutine { continuation ->
-    sendMessage(message, object : CallbackListener<Message> {
+suspend fun Conversation.sendMessage(unsentMessage: Conversation.UnsentMessage): Message = suspendCoroutine { continuation ->
+    unsentMessage.send(object : CallbackListener<Message> {
 
         override fun onSuccess(message: Message) = continuation.resume(message)
 
