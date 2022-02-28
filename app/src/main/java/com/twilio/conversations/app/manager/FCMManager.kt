@@ -9,9 +9,12 @@ import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
+import android.text.format.Formatter
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.PRIORITY_HIGH
 import androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
@@ -33,7 +36,6 @@ private const val NOTIFICATION_ID = 1234
 interface FCMManager : LifecycleObserver {
     suspend fun onNewToken(token: String)
     suspend fun onMessageReceived(payload: NotificationPayload)
-    fun getTargetIntent(type: NotificationPayload.Type, conversationSid: String): Intent
     fun showNotification(payload: NotificationPayload)
 }
 
@@ -76,7 +78,7 @@ class FCMManagerImpl(
         }
     }
 
-    override fun getTargetIntent(type: NotificationPayload.Type, conversationSid: String): Intent {
+    fun getTargetIntent(type: NotificationPayload.Type, conversationSid: String): Intent {
         return when (type) {
             NotificationPayload.Type.NEW_MESSAGE -> MessageListActivity.getStartIntent(context, conversationSid)
             NotificationPayload.Type.ADDED_TO_CONVERSATION -> MessageListActivity.getStartIntent(context, conversationSid)
@@ -85,9 +87,35 @@ class FCMManagerImpl(
         }
     }
 
-    override fun showNotification(payload: NotificationPayload) {
-        Timber.d("showNotification: ${payload.conversationSid}")
+    val NotificationPayload.textForNotification: String get() = when (type) {
+        NotificationPayload.Type.NEW_MESSAGE -> when {
+            mediaCount > 1 -> context.getString(R.string.notification_media_message, mediaCount)
+            mediaCount > 0 -> context.getString(R.string.notification_media) + ": " +
+                        mediaFilename.ifEmpty { Formatter.formatShortFileSize(context, mediaSize) }
+            else -> body
+        }
+        else -> body
+    }
 
+    val NotificationPayload.largeIconId: Int? get() = when (type) {
+        NotificationPayload.Type.NEW_MESSAGE -> when {
+            mediaCount > 1 -> R.drawable.ic_media_multiple_attachments
+            mediaCount > 0 -> with(mediaContentType) {
+                when {
+                    startsWith("image/") -> R.drawable.ic_media_image
+                    startsWith("video/") -> R.drawable.ic_media_video
+                    startsWith("audio/") -> R.drawable.ic_media_audio
+                    else -> R.drawable.ic_media_document
+                }
+            }
+            else -> null
+        }
+        else -> null
+    }
+
+    val NotificationPayload.largeIcon get() = largeIconId?.let { ContextCompat.getDrawable(context, it)?.toBitmap() }
+
+    fun buildNotification(payload: NotificationPayload): Notification {
         val intent = getTargetIntent(payload.type, payload.conversationSid)
         val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_ONE_SHOT)
 
@@ -100,8 +128,9 @@ class FCMManagerImpl(
 
         val notificationBuilder = NotificationCompat.Builder(context, NOTIFICATION_CONVERSATION_ID)
             .setSmallIcon(R.drawable.ic_notification)
+            .setLargeIcon(payload.largeIcon)
             .setContentTitle(title)
-            .setContentText(payload.body)
+            .setContentText(payload.textForNotification)
             .setAutoCancel(true)
             .setPriority(PRIORITY_HIGH)
             .setVisibility(VISIBILITY_PUBLIC)
@@ -117,7 +146,12 @@ class FCMManagerImpl(
             notificationBuilder.setDefaults(Notification.DEFAULT_SOUND)
             Timber.d("Playing default sound")
         }
-        val notification = notificationBuilder.build()
+
+        return notificationBuilder.build()
+    }
+
+    override fun showNotification(payload: NotificationPayload) {
+        Timber.d("showNotification: ${payload.conversationSid}")
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationChannel = NotificationChannel(
@@ -128,6 +162,7 @@ class FCMManagerImpl(
             notificationManager.createNotificationChannel(notificationChannel)
         }
 
+        val notification = buildNotification(payload)
         notificationManager.notify(NOTIFICATION_ID, notification)
     }
 
