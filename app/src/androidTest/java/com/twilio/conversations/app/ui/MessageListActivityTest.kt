@@ -151,13 +151,13 @@ class MessageListActivityTest {
 
     @Test
     fun typingIndicatorDisplayed() {
-        testInjector.typingParticipantsListConversation.offer(listOf(plainParticipant.copy(friendlyName = "user1")))
+        testInjector.typingParticipantsListConversation.trySend(listOf(plainParticipant.copy(friendlyName = "user1")))
         onView(withId(R.id.typingIndicator)).check(matches(withText("user1 is typing…")))
     }
 
     @Test
     fun typingIndicatorMaxLength() {
-        testInjector.typingParticipantsListConversation.offer(
+        testInjector.typingParticipantsListConversation.trySend(
             listOf(
                 plainParticipant.copy(friendlyName = "user1"),
                 plainParticipant.copy(friendlyName = "user2"),

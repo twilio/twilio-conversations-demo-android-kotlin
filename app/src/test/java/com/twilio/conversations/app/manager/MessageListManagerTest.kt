@@ -168,7 +168,7 @@ class MessageListManagerTest {
     }
 
     @Test
-    fun `retrySendMessage() should update local cache with send status SENT on success`() = runBlockingTest {
+    fun `retrySendMessage() should update local cache with send status SENT on success`() = runBlockingTest(testDispatcher) {
         val message = createTestMessageDataItem(body = "test message", uuid = "uuid",
             author = participantIdentity, sendStatus = SendStatus.ERROR.value)
         coEvery { participant.sid } returns message.participantSid
@@ -185,7 +185,7 @@ class MessageListManagerTest {
     }
 
     @Test
-    fun `retrySendMessage() should NOT update local cache if already sending`() = runBlockingTest {
+    fun `retrySendMessage() should NOT update local cache if already sending`() = runBlockingTest(testDispatcher) {
         val message = createTestMessageDataItem(body = "test message", uuid = "uuid",
             author = participantIdentity, sendStatus = SendStatus.SENDING.value)
         coEvery { participant.sid } returns message.participantSid
@@ -199,7 +199,7 @@ class MessageListManagerTest {
     }
 
     @Test
-    fun `retrySendMessage() should update local cache with send status SENDING on failure`() = runBlockingTest {
+    fun `retrySendMessage() should update local cache with send status SENDING on failure`() = runBlockingTest(testDispatcher) {
         val message = createTestMessageDataItem(body = "test message", uuid = "uuid",
             author = participantIdentity, sendStatus = SendStatus.ERROR.value)
         coEvery { participant.sid } returns message.participantSid
@@ -312,7 +312,7 @@ class MessageListManagerTest {
     }
 
     @Test
-    fun `retrySendMediaMessage() should update local cache with send status SENT on success`() = runBlockingTest {
+    fun `retrySendMediaMessage() should update local cache with send status SENT on success`() = runBlockingTest(testDispatcher) {
         val messageUuid = "uuid"
         val mediaUri = "uri"
         val fileName = "fileName"
@@ -344,7 +344,7 @@ class MessageListManagerTest {
     }
 
     @Test
-    fun `retrySendMediaMessage() should NOT update local cache if already sending`() = runBlockingTest {
+    fun `retrySendMediaMessage() should NOT update local cache if already sending`() = runBlockingTest(testDispatcher) {
         val messageUuid = "uuid"
         val mediaUri = "uri"
         val fileName = "fileName"
@@ -368,7 +368,7 @@ class MessageListManagerTest {
     }
 
     @Test
-    fun `retrySendMediaMessage() should update local cache with send status SENDING on failure`() = runBlockingTest {
+    fun `retrySendMediaMessage() should update local cache with send status SENDING on failure`() = runBlockingTest(testDispatcher) {
         val messageUuid = "uuid"
         val mediaUri = "uri"
         val fileName = "fileName"

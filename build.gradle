@@ -4,11 +4,11 @@ wrapper {
 }
 
 buildscript {
-    ext.kotlin_version = '1.5.31'
-    ext.kotlinx_coroutines_version = '1.5.2'
+    ext.kotlin_version = '1.6.20'
+    ext.kotlinx_coroutines_version = '1.6.0'
     ext.mockk_version = '1.12.2'
     ext.paging_version = '2.1.2'
-    ext.room_version = '2.3.0'
+    ext.room_version = '2.4.2'
 
     repositories {
         google()
@@ -16,7 +16,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.3'
+        classpath 'com.android.tools.build:gradle:7.0.4'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.google.gms:google-services:4.3.10'
         classpath 'com.google.firebase:firebase-crashlytics-gradle:2.7.1'
