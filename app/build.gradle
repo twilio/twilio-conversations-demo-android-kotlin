@@ -3,10 +3,10 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'com.google.gms.google-services'
-apply plugin: 'com.google.firebase.crashlytics'
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 33
+    buildToolsVersion = "33.0.0"
     if (findProperty("androidNdkVersion")) {
         ndkVersion androidNdkVersion // Correct NDK setup is necessary for stripping native symbols in release build
     }
@@ -14,7 +14,7 @@ android {
     defaultConfig {
         applicationId "com.twilio.conversations.app"
         minSdkVersion 21
-        targetSdkVersion 31
+        targetSdkVersion 32
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -31,24 +31,10 @@ android {
             // set debuggable flag in order to make it possible for mockito to create mocks in release build.
             // release apk must be repacked without this flag before publishing
             debuggable true
-
-            firebaseCrashlytics {
-                nativeSymbolUploadEnabled true
-
-                println "release: unstrippedNativeLibsDir \"build/intermediates/merged_native_libs/release/out/lib\""
-                unstrippedNativeLibsDir "build/intermediates/merged_native_libs/release/out/lib"
-            }
         }
         debug {
             applicationIdSuffix ".debug"
             versionNameSuffix "-debug"
-
-            firebaseCrashlytics {
-                nativeSymbolUploadEnabled true
-
-                println "debug: unstrippedNativeLibsDir \"build/intermediates/merged_native_libs/debug/out/lib\""
-                unstrippedNativeLibsDir "build/intermediates/merged_native_libs/debug/out/lib"
-            }
         }
     }
 
@@ -63,12 +49,12 @@ android {
 
     compileOptions {
         coreLibraryDesugaringEnabled true
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = JavaVersion.VERSION_11.toString()
         useIR = true
         freeCompilerArgs += [
                 "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
