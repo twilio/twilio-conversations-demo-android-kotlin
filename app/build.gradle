@@ -7,6 +7,8 @@ apply plugin: 'com.google.firebase.crashlytics'
 
 android {
     compileSdkVersion 31
+    buildToolsVersion "31.0.0"
+
     if (findProperty("androidNdkVersion")) {
         ndkVersion androidNdkVersion // Correct NDK setup is necessary for stripping native symbols in release build
     }
@@ -69,7 +71,6 @@ android {
 
     kotlinOptions {
         jvmTarget = "1.8"
-        useIR = true
         freeCompilerArgs += [
                 "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
                 "-Xopt-in=kotlinx.coroutines.ObsoleteCoroutinesApi",
@@ -116,12 +117,12 @@ dependencies {
 
     // Android
     implementation 'androidx.appcompat:appcompat:1.3.1'
-    implementation 'androidx.core:core-ktx:1.6.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
+    implementation 'androidx.core:core-ktx:1.8.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
-    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.3.1'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1'
-    implementation 'androidx.preference:preference-ktx:1.1.1'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1'
+    implementation 'androidx.preference:preference-ktx:1.2.0'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation "androidx.paging:paging-runtime-ktx:$paging_version"
     implementation 'androidx.emoji:emoji-bundled:1.1.0'
@@ -132,7 +133,7 @@ dependencies {
     kapt "androidx.room:room-compiler:$room_version"
 
     // Material
-    implementation 'com.google.android.material:material:1.4.0'
+    implementation 'com.google.android.material:material:1.6.1'
 
     // Timber
     implementation 'com.jakewharton.timber:timber:4.7.1'

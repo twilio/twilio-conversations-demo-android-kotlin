@@ -31,7 +31,7 @@ inline fun <reified T : ViewModel> Fragment.lazyViewModel(noinline creator: (() 
 
 class BaseViewModelFactory<T>(val creator: () -> T) : ViewModelProvider.Factory {
 
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         @Suppress("UNCHECKED_CAST")
         return creator() as T
     }
