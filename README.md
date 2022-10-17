@@ -4,7 +4,7 @@ This demo app SDK version: ![](https://img.shields.io/badge/SDK%20version-3.0.0-
 
 Latest available SDK version: [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.twilio/conversations-android/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.twilio/conversations-android)
 
-[![CircleCI](https://circleci.com/gh/twilio/twilio-conversations-demo-kotlin.svg?style=shield)](https://app.circleci.com/pipelines/github/twilio/twilio-conversations-demo-kotlin)
+[![CircleCI](https://circleci.com/gh/twilio/twilio-conversations-demo-android-kotlin.svg?style=shield)](https://app.circleci.com/pipelines/github/twilio/twilio-conversations-demo-android-kotlin)
 
 ## Getting Started
 
