@@ -38,17 +38,12 @@ import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
 import java.util.*
 
-@RunWith(PowerMockRunner::class)
-@PrepareForTest(
-    Conversation::class,
-    User::class
-)
 class ConversationListViewModelTest {
 
-    @Rule
+    @get:Rule
     var coroutineTestRule = CoroutineTestRule()
 
-    @Rule
+    @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
     @MockK

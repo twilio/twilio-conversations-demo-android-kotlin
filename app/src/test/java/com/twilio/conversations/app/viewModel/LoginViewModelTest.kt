@@ -21,6 +21,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
@@ -34,6 +37,7 @@ import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
+import org.powermock.core.classloader.annotations.MockPolicy
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
 
@@ -54,14 +58,13 @@ class LoginViewModelTest {
     @Mock
     private lateinit var loginManager: LoginManager
 
-    @RelaxedMockK
+    @Mock
     private lateinit var connectivityMonitor: ConnectivityMonitor
 
     @Before
     fun setUp() {
-        MockKAnnotations.init(this)
         Dispatchers.setMain(Dispatchers.Unconfined)
-
+        whenCall(connectivityMonitor.isNetworkAvailable).thenReturn(MutableStateFlow(true))
         loginViewModel = LoginViewModel(loginManager, connectivityMonitor)
     }
 
