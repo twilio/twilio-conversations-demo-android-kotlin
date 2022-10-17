@@ -18,6 +18,7 @@ import com.twilio.conversations.app.testUtil.waitNotCalled
 import com.twilio.conversations.app.testUtil.waitValue
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
+import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
 import junit.framework.TestCase.assertEquals
@@ -35,16 +36,12 @@ import org.junit.runner.RunWith
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
 
-@RunWith(PowerMockRunner::class)
-@PrepareForTest(
-    Conversation::class
-)
 class ConversationDetailsViewModelTest {
 
-    @Rule
+    @get:Rule
     var coroutineTestRule = CoroutineTestRule()
 
-    @Rule
+    @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
     private val participantIdentity = "participantIdentity"
@@ -228,12 +225,12 @@ class ConversationDetailsViewModelTest {
     fun `conversationDetailViewModel_addNonChatParticipant() should call onParticipantAdded on success`() = runBlocking {
         coEvery { conversationsRepository.getConversationParticipants(any()) } returns
                 flowOf(RepositoryResult(listOf(), RepositoryRequestStatus.COMPLETE))
-        coEvery { participantListManager.addNonChatParticipant(participantPhone, participantProxyPhone, participantFriendlyName) } returns Unit
+        coJustRun { participantListManager.addNonChatParticipant(participantPhone, participantProxyPhone, participantFriendlyName) }
 
         val conversationDetailViewModel = ConversationDetailsViewModel(conversationSid, conversationsRepository, conversationListManager, participantListManager)
         conversationDetailViewModel.addNonChatParticipant(participantPhone, participantProxyPhone)
 
-        coVerify { participantListManager.addNonChatParticipant(participantPhone, participantProxyPhone, participantFriendlyName) }
+        coVerify(timeout = 1000) { participantListManager.addNonChatParticipant(participantPhone, participantProxyPhone, participantFriendlyName) }
         assertTrue(conversationDetailViewModel.onParticipantAdded.waitCalled())
     }
 
@@ -246,7 +243,7 @@ class ConversationDetailsViewModelTest {
         val conversationDetailViewModel = ConversationDetailsViewModel(conversationSid, conversationsRepository, conversationListManager, participantListManager)
         conversationDetailViewModel.addNonChatParticipant(participantPhone, participantProxyPhone)
 
-        coVerify { participantListManager.addNonChatParticipant(participantPhone, participantProxyPhone, participantFriendlyName) }
+        coVerify(timeout = 1000) { participantListManager.addNonChatParticipant(participantPhone, participantProxyPhone, participantFriendlyName) }
         assertTrue(conversationDetailViewModel.onDetailsError.waitValue(ConversationsError.PARTICIPANT_ADD_FAILED))
     }
 }

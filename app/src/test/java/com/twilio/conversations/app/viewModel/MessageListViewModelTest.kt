@@ -45,16 +45,12 @@ import org.powermock.modules.junit4.PowerMockRunner
 import java.io.InputStream
 import java.util.*
 
-@RunWith(PowerMockRunner::class)
-@PrepareForTest(
-    Conversation::class
-)
 class MessageListViewModelTest {
 
-    @Rule
+    @get:Rule
     var coroutineTestRule = CoroutineTestRule()
 
-    @Rule
+    @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
     private val conversationSid = "conversationSid"
