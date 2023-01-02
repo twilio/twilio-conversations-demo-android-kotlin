@@ -141,3 +141,4 @@ Build in debug configuration, this will enable verbose logging.
 ## License
 
 MIT
+test
