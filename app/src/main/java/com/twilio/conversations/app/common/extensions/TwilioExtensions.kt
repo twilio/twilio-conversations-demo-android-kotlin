@@ -4,9 +4,10 @@ import android.content.Context
 import com.twilio.conversations.*
 import com.twilio.conversations.ConversationsClient.Properties
 import com.twilio.conversations.ConversationsClient.SynchronizationStatus.COMPLETED
-import com.twilio.conversations.ErrorInfo.Companion.CONVERSATION_NOT_SYNCHRONIZED
+import com.twilio.util.ErrorInfo.Companion.CONVERSATION_NOT_SYNCHRONIZED
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.CrashIn
+import com.twilio.util.ErrorInfo
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.suspendCancellableCoroutine
 import timber.log.Timber

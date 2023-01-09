@@ -10,6 +10,7 @@ import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 import com.twilio.conversations.app.data.models.ReactionAttributes
 import com.twilio.conversations.app.repository.ConversationsRepository
+import com.twilio.util.ErrorInfo
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import timber.log.Timber
@@ -196,7 +197,7 @@ class MessageListManagerImpl(
                 )
             }
 
-            override fun onFailed(errorInfo: com.twilio.conversations.ErrorInfo) {
+            override fun onFailed(errorInfo: ErrorInfo) {
                 Timber.d("Upload failed: " + errorInfo)
             }
         }

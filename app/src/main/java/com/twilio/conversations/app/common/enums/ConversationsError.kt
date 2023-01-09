@@ -1,6 +1,6 @@
 package com.twilio.conversations.app.common.enums
 
-import com.twilio.conversations.ErrorInfo
+import com.twilio.util.ErrorInfo
 
 enum class ConversationsError(val code: Int, val message: String) {
     UNKNOWN(-1, "Unknown error"),

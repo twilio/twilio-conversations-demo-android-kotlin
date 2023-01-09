@@ -105,7 +105,7 @@ android {
 
 dependencies {
     // Twilio
-    implementation "com.twilio:conversations-android-with-symbols:3.0.0"
+    implementation "com.twilio:conversations-android-with-symbols:4.0.2"
     // or without symbols:
     // implementation "com.twilio:conversations-android:3.0.0"
 
