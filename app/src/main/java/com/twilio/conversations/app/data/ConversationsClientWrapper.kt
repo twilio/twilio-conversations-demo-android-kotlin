@@ -6,12 +6,13 @@ import androidx.annotation.RestrictTo
 import androidx.annotation.RestrictTo.Scope
 import com.twilio.conversations.ConversationsClient
 import com.twilio.conversations.app.BuildConfig
+import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.ConversationsError.TOKEN_ACCESS_DENIED
 import com.twilio.conversations.app.common.enums.ConversationsError.TOKEN_ERROR
-import com.twilio.conversations.app.common.extensions.ConversationsException
-import com.twilio.conversations.app.common.extensions.addListener
-import com.twilio.conversations.app.common.extensions.createAndSyncClient
-import com.twilio.conversations.app.common.extensions.updateToken
+import com.twilio.conversations.app.common.extensions.createTwilioException
+import com.twilio.conversations.extensions.StatusListener
+import com.twilio.conversations.extensions.addListener
+import com.twilio.conversations.extensions.createAndSyncConversationsClient
 import kotlinx.coroutines.*
 import timber.log.Timber
 import java.io.FileNotFoundException
@@ -40,7 +41,7 @@ class ConversationsClientWrapper(private val applicationContext: Context) {
         val token = getToken(identity, password)
         Timber.d("token: $token")
 
-        val client = createAndSyncClient(applicationContext, token)
+        val client = createAndSyncConversationsClient(applicationContext, token)
         this.deferredClient.complete(client)
 
         client.addListener(
@@ -69,9 +70,9 @@ class ConversationsClientWrapper(private val applicationContext: Context) {
 
             return@withContext URL(uri).readText()
         } catch (e: FileNotFoundException) {
-            throw ConversationsException(TOKEN_ACCESS_DENIED)
+            throw createTwilioException(TOKEN_ACCESS_DENIED)
         } catch (e: Exception) {
-            throw ConversationsException(TOKEN_ERROR)
+            throw createTwilioException(TOKEN_ERROR)
         }
     }
 
@@ -80,7 +81,10 @@ class ConversationsClientWrapper(private val applicationContext: Context) {
 
         val result = runCatching {
             val twilioToken = getToken(identity, password)
-            getConversationsClient().updateToken(twilioToken)
+            getConversationsClient().updateToken(
+                twilioToken,
+                StatusListener(onError = { throw createTwilioException(ConversationsError.UNKNOWN) })
+            )
         }
 
         if (result.isFailure && notifyOnFailure) {

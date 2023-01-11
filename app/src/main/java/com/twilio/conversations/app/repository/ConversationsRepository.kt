@@ -1,12 +1,26 @@
 package com.twilio.conversations.app.repository
 
 import androidx.paging.PagedList
-import com.twilio.conversations.*
+import com.twilio.conversations.Conversation
+import com.twilio.conversations.Message
 import com.twilio.conversations.Participant.Type.CHAT
-import com.twilio.conversations.app.common.*
+import com.twilio.conversations.User
+import com.twilio.conversations.app.common.DefaultDispatcherProvider
+import com.twilio.conversations.app.common.DispatcherProvider
+import com.twilio.conversations.app.common.asMessageDataItems
+import com.twilio.conversations.app.common.asMessageListViewItems
+import com.twilio.conversations.app.common.asParticipantDataItem
 import com.twilio.conversations.app.common.enums.CrashIn
-import com.twilio.conversations.app.common.extensions.*
-import com.twilio.conversations.app.common.extensions.ConversationsException
+import com.twilio.conversations.app.common.extensions.getAndSubscribeUser
+import com.twilio.conversations.app.common.extensions.getMessageCount
+import com.twilio.conversations.app.common.extensions.getParticipantCount
+import com.twilio.conversations.app.common.extensions.getUnreadMessageCount
+import com.twilio.conversations.app.common.extensions.simulateCrash
+import com.twilio.conversations.app.common.extensions.toConversationsError
+import com.twilio.conversations.app.common.extensions.waitForSynchronization
+import com.twilio.conversations.app.common.toConversationDataItem
+import com.twilio.conversations.app.common.toFlow
+import com.twilio.conversations.app.common.toMessageDataItem
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.localCache.LocalCacheProvider
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
@@ -14,13 +28,36 @@ import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
-import com.twilio.conversations.app.data.models.RepositoryRequestStatus.*
+import com.twilio.conversations.app.data.models.RepositoryRequestStatus.COMPLETE
+import com.twilio.conversations.app.data.models.RepositoryRequestStatus.Error
+import com.twilio.conversations.app.data.models.RepositoryRequestStatus.FETCHING
+import com.twilio.conversations.app.data.models.RepositoryRequestStatus.SUBSCRIBING
 import com.twilio.conversations.app.data.models.RepositoryResult
-import kotlinx.coroutines.*
+import com.twilio.conversations.extensions.ConversationListener
+import com.twilio.conversations.extensions.ConversationsClientListener
+import com.twilio.conversations.extensions.getConversation
+import com.twilio.conversations.extensions.getLastMessages
+import com.twilio.conversations.extensions.getMessagesBefore
+import com.twilio.util.TwilioException
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import timber.log.Timber
 
 interface ConversationsRepository {
@@ -62,7 +99,7 @@ class ConversationsRepositoryImpl(
 
     private val repositoryScope = CoroutineScope(dispatchers.io() + SupervisorJob())
 
-    private val clientListener = createClientListener(
+    private val clientListener = ConversationsClientListener(
             onConversationDeleted = { conversation ->
                 launch {
                     Timber.d("Conversation deleted $conversation")
@@ -82,7 +119,7 @@ class ConversationsRepositoryImpl(
             }
     )
 
-    private val conversationListener = createConversationListener(
+    private val conversationListener = ConversationListener(
         onTypingStarted = { conversation, participant ->
             Timber.d("${participant.identity} started typing in ${conversation.friendlyName}")
             this@ConversationsRepositoryImpl.launch {
@@ -283,9 +320,9 @@ class ConversationsRepositoryImpl(
 
     override fun getSelfUser(): Flow<User> = callbackFlow {
         val client = conversationsClientWrapper.getConversationsClient()
-        val listener = createClientListener (
+        val listener = ConversationsClientListener(
             onUserUpdated = { user, _ ->
-                user.takeIf { it.identity == client.myIdentity}
+                user.takeIf { it.identity == client.myIdentity }
                     ?.let { trySend(it).isSuccess }
             }
         )
@@ -309,9 +346,9 @@ class ConversationsRepositoryImpl(
                 updateConversationLastMessage(conversationSid)
             }
             emit(COMPLETE)
-        } catch (e: ConversationsException) {
-            Timber.d("fetchMessages error: ${e.error.message}")
-            emit(Error(e.error))
+        } catch (e: TwilioException) {
+            Timber.d("fetchMessages error: ${e.errorInfo.message}")
+            emit(Error(e.toConversationsError()))
         }
     }
 
@@ -320,9 +357,9 @@ class ConversationsRepositoryImpl(
         try {
             insertOrUpdateConversation(conversationSid)
             emit(COMPLETE)
-        } catch (e: ConversationsException) {
-            Timber.d("fetchConversations error: ${e.error.message}")
-            emit(Error(e.error))
+        } catch (e: TwilioException) {
+            Timber.d("fetchConversations error: ${e.errorInfo.message}")
+            emit(Error(e.toConversationsError()))
         }
     }
 
@@ -337,9 +374,9 @@ class ConversationsRepositoryImpl(
                 localCache.participantsDao().insertOrReplace(participant.asParticipantDataItem(user = user))
             }
             emit(COMPLETE)
-        } catch (e: ConversationsException) {
-            Timber.d("fetchParticipants error: ${e.error.message}")
-            emit(Error(e.error))
+        } catch (e: TwilioException) {
+            Timber.d("fetchParticipants error: ${e.errorInfo.message}")
+            emit(Error(e.toConversationsError()))
         }
     }
 
@@ -364,18 +401,18 @@ class ConversationsRepositoryImpl(
                     launch {
                         try {
                             insertOrUpdateConversation(it.sid)
-                        } catch (e: ConversationsException) {
-                            Timber.d("insertOrUpdateConversation error: ${e.error.message}")
-                            status = Error(e.error)
+                        } catch (e: TwilioException) {
+                            Timber.d("insertOrUpdateConversation error: ${e.errorInfo.message}")
+                            status = Error(e.toConversationsError())
                         }
                     }
                 }
             }
             Timber.d("fetchConversations completed with status: $status")
             send(status)
-        } catch (e: ConversationsException) {
-            Timber.d("fetchConversations error: ${e.error.message}")
-            send(Error(e.error))
+        } catch (e: TwilioException) {
+            Timber.d("fetchConversations error: ${e.errorInfo.message}")
+            send(Error(e.toConversationsError()))
         }
     }
 

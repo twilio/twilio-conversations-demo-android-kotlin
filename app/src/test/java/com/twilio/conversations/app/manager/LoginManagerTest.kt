@@ -3,7 +3,7 @@ package com.twilio.conversations.app.manager
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.twilio.conversations.app.common.FirebaseTokenManager
 import com.twilio.conversations.app.common.enums.ConversationsError
-import com.twilio.conversations.app.common.extensions.ConversationsException
+import com.twilio.conversations.app.common.extensions.createTwilioException
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.CredentialStorage
 import com.twilio.conversations.app.repository.ConversationsRepository
@@ -107,7 +107,7 @@ class LoginManagerTest {
     @Test
     fun `signIn() should not attempt to clear credentials when fatal error occurred`() = runBlockingTest {
         val error = ConversationsError.TOKEN_ACCESS_DENIED
-        whenCall(conversationsClientWrapper.create(INVALID_CREDENTIAL, INVALID_CREDENTIAL)).then { throw ConversationsException(error) }
+        whenCall(conversationsClientWrapper.create(INVALID_CREDENTIAL, INVALID_CREDENTIAL)).then { throw createTwilioException(error) }
         runCatching { loginManager.signIn(INVALID_CREDENTIAL, INVALID_CREDENTIAL) }
         verify(credentialStorage, times(0)).clearCredentials()
     }
@@ -115,7 +115,7 @@ class LoginManagerTest {
     @Test
     fun `signIn() should not attempt to store credentials when error occurred`() = runBlockingTest {
         val error = ConversationsError.GENERIC_ERROR
-        whenCall(conversationsClientWrapper.create(INVALID_CREDENTIAL, INVALID_CREDENTIAL)).then { throw ConversationsException(error) }
+        whenCall(conversationsClientWrapper.create(INVALID_CREDENTIAL, INVALID_CREDENTIAL)).then { throw createTwilioException(error) }
         runCatching { loginManager.signIn(INVALID_CREDENTIAL, INVALID_CREDENTIAL) }
         verify(credentialStorage, times(0)).storeCredentials(INVALID_CREDENTIAL, INVALID_CREDENTIAL)
     }
@@ -130,7 +130,7 @@ class LoginManagerTest {
     fun `signInUsingStoredCredentials() should attempt to clear credentials when fatal error occurred`() = runBlockingTest {
         credentialStorageNotEmpty(credentialStorage, OUTDATED_CREDENTIAL)
         val error = ConversationsError.TOKEN_ACCESS_DENIED
-        whenCall(conversationsClientWrapper.create(OUTDATED_CREDENTIAL, OUTDATED_CREDENTIAL)).then { throw ConversationsException(error) }
+        whenCall(conversationsClientWrapper.create(OUTDATED_CREDENTIAL, OUTDATED_CREDENTIAL)).then { throw createTwilioException(error) }
         runCatching { loginManager.signInUsingStoredCredentials() }
         verify(credentialStorage, times(1)).clearCredentials()
     }

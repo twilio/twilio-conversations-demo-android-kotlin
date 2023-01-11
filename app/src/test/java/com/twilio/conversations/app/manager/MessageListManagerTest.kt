@@ -2,7 +2,6 @@ package com.twilio.conversations.app.manager
 
 import android.os.Looper
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.google.gson.Gson
 import com.nhaarman.mockitokotlin2.argThat
 import com.nhaarman.mockitokotlin2.inOrder
 import com.nhaarman.mockitokotlin2.never
@@ -15,23 +14,17 @@ import com.twilio.conversations.Message
 import com.twilio.conversations.Participant
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.MessageType
-import com.twilio.conversations.app.common.enums.Reaction
 import com.twilio.conversations.app.common.enums.SendStatus
-import com.twilio.conversations.app.common.extensions.ConversationsException
-import com.twilio.conversations.app.common.extensions.firstMedia
-import com.twilio.conversations.app.common.extensions.getConversation
-import com.twilio.conversations.app.common.extensions.getMessageByIndex
-import com.twilio.conversations.app.common.extensions.getTemporaryContentUrl
-import com.twilio.conversations.app.common.extensions.sendMessage
-import com.twilio.conversations.app.common.getReactions
+import com.twilio.conversations.app.common.extensions.createTwilioException
+import com.twilio.conversations.app.common.extensions.toConversationsError
 import com.twilio.conversations.app.createTestMessageDataItem
 import com.twilio.conversations.app.data.ConversationsClientWrapper
-import com.twilio.conversations.app.data.models.ReactionAttributes
-import com.twilio.conversations.app.getExpectedReactions
 import com.twilio.conversations.app.repository.ConversationsRepository
 import com.twilio.conversations.app.testUtil.CoroutineTestRule
 import com.twilio.conversations.app.testUtil.toMessageMock
 import com.twilio.conversations.app.testUtil.whenCall
+import com.twilio.conversations.extensions.sendMessage
+import com.twilio.util.TwilioException
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.every
@@ -44,7 +37,6 @@ import kotlinx.coroutines.test.TestCoroutineDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.test.setMain
-import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -131,11 +123,11 @@ class MessageListManagerTest {
     fun `sendTextMessage() should update local cache with send status SENDING on failure`() = runBlockingTest {
         val message = createTestMessageDataItem(body = "test message", uuid = "uuid")
         coEvery { participant.sid } returns message.participantSid
-        coEvery { conversation.sendMessage(any()) } throws ConversationsException(ConversationsError.MESSAGE_SEND_FAILED)
+        coEvery { conversation.sendMessage(any()) } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
         try {
             messageListManager.sendTextMessage(message.body!!, message.uuid)
-        } catch (e: ConversationsException) {
-            assert(ConversationsError.MESSAGE_SEND_FAILED == e.error)
+        } catch (e: TwilioException) {
+            assert(ConversationsError.MESSAGE_SEND_FAILED == e.toConversationsError())
         }
 
         verify(conversationsRepository).insertMessage(argThat {
@@ -151,11 +143,11 @@ class MessageListManagerTest {
     fun `sendTextMessage() should NOT update local cache with on participant failure`() = runBlockingTest {
         val message = createTestMessageDataItem(body = "test message", uuid = "uuid")
         coEvery { participant.sid } returns message.participantSid
-        coEvery { conversation.getParticipantByIdentity(any()) } throws ConversationsException(ConversationsError.MESSAGE_SEND_FAILED)
+        coEvery { conversation.getParticipantByIdentity(any()) } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
         try {
             messageListManager.sendTextMessage(message.body!!, message.uuid)
-        } catch (e: ConversationsException) {
-            assert(ConversationsError.MESSAGE_SEND_FAILED == e.error)
+        } catch (e: TwilioException) {
+            assert(ConversationsError.MESSAGE_SEND_FAILED == e.toConversationsError())
         }
 
         verify(conversationsRepository, times(0)).insertMessage(argThat {
@@ -204,12 +196,12 @@ class MessageListManagerTest {
             author = participantIdentity, sendStatus = SendStatus.ERROR.value)
         coEvery { participant.sid } returns message.participantSid
         coEvery { conversation.sendMessage(any()) } returns message.toMessageMock(participant)
-        coEvery { conversationsClient.getConversation(any()) } throws ConversationsException(ConversationsError.MESSAGE_SEND_FAILED)
+        coEvery { conversationsClient.getConversation(any(), any()) } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
         whenCall(conversationsRepository.getMessageByUuid(message.uuid)).thenReturn(message)
         try {
             messageListManager.retrySendTextMessage(message.uuid)
-        } catch (e: ConversationsException) {
-            assert(ConversationsError.MESSAGE_SEND_FAILED == e.error)
+        } catch (e: TwilioException) {
+            assert(ConversationsError.MESSAGE_SEND_FAILED == e.toConversationsError())
         }
 
         verify(conversationsRepository).updateMessageByUuid(argThat {
@@ -247,11 +239,11 @@ class MessageListManagerTest {
         val mimeType = "mimeType"
         val message = createTestMessageDataItem()
         every { participant.sid } returns message.participantSid
-        coEvery { conversation.sendMessage(any()) } throws ConversationsException(ConversationsError.MESSAGE_SEND_FAILED)
+        coEvery { conversation.sendMessage(any()) } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
         try {
             messageListManager.sendMediaMessage(mediaUri, mockk(), fileName, mimeType, messageUuid)
-        } catch (e: ConversationsException) {
-            assert(ConversationsError.MESSAGE_SEND_FAILED == e.error)
+        } catch (e: TwilioException) {
+            assert(ConversationsError.MESSAGE_SEND_FAILED == e.toConversationsError())
         }
 
         verify(conversationsRepository).insertMessage(argThat {
@@ -283,11 +275,11 @@ class MessageListManagerTest {
         val mimeType = "mimeType"
         val message = createTestMessageDataItem()
         every { participant.sid } returns message.participantSid
-        coEvery { conversation.getParticipantByIdentity(any()) } throws ConversationsException(ConversationsError.MESSAGE_SEND_FAILED)
+        coEvery { conversation.getParticipantByIdentity(any()) } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
         try {
             messageListManager.sendMediaMessage(mediaUri, mockk(), fileName, mimeType, messageUuid)
-        } catch (e: ConversationsException) {
-            assert(ConversationsError.MESSAGE_SEND_FAILED == e.error)
+        } catch (e: TwilioException) {
+            assert(ConversationsError.MESSAGE_SEND_FAILED == e.toConversationsError())
         }
 
         verify(conversationsRepository, never()).insertMessage(argThat {
@@ -378,12 +370,12 @@ class MessageListManagerTest {
             mediaType = mimeType, type = MessageType.MEDIA.value, mediaSid = "sid")
         coEvery { participant.sid } returns message.participantSid
         coEvery { conversation.sendMessage(any()) } returns message.toMessageMock(participant)
-        coEvery { conversationsClient.getConversation(any()) } throws ConversationsException(ConversationsError.MESSAGE_SEND_FAILED)
+        coEvery { conversationsClient.getConversation(any(), any()) } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
         whenCall(conversationsRepository.getMessageByUuid(message.uuid)).thenReturn(message)
         try {
             messageListManager.retrySendMediaMessage(mockk(), message.uuid)
-        } catch (e: ConversationsException) {
-            assert(ConversationsError.MESSAGE_SEND_FAILED == e.error)
+        } catch (e: TwilioException) {
+            assert(ConversationsError.MESSAGE_SEND_FAILED == e.toConversationsError())
         }
 
         verify(conversationsRepository).updateMessageByUuid(argThat {
@@ -416,9 +408,9 @@ class MessageListManagerTest {
         val mediaTempUrl = "url"
         val message = mockk<Message>()
         val media = mockk<Media>()
-        coEvery { conversation.getMessageByIndex(messageIndex) } returns message
+        coEvery { conversation.getMessageByIndex(messageIndex, any()) } returns message
         every { message.firstMedia } returns media
-        coEvery { media.getTemporaryContentUrl() } returns mediaTempUrl
+        coEvery { media.getTemporaryContentUrl(any()) } returns mediaTempUrl
 
         assertEquals(mediaTempUrl, messageListManager.getMediaContentTemporaryUrl(messageIndex))
     }

@@ -2,13 +2,12 @@ package com.twilio.conversations.app.viewModel
 
 import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.twilio.conversations.Conversation
 import com.twilio.conversations.User
 import com.twilio.conversations.app.asPagedList
 import com.twilio.conversations.app.common.asMessageListViewItems
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.DownloadState
-import com.twilio.conversations.app.common.extensions.ConversationsException
+import com.twilio.conversations.app.common.extensions.createTwilioException
 import com.twilio.conversations.app.createTestConversationDataItem
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
@@ -38,10 +37,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
-import org.powermock.core.classloader.annotations.PrepareForTest
-import org.powermock.modules.junit4.PowerMockRunner
 import java.io.InputStream
 import java.util.*
 
@@ -132,7 +128,7 @@ class MessageListViewModelTest {
 
     @Test
     fun `messageListViewModel_sendTextMessage should call onMessageError on failure`() = runBlocking {
-        coEvery { messageListManager.sendTextMessage(any(), any()) } throws ConversationsException(ConversationsError.MESSAGE_SEND_FAILED)
+        coEvery { messageListManager.sendTextMessage(any(), any()) } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
         messageListViewModel = MessageListViewModel(context, conversationSid, conversationsRepository, messageListManager)
         messageListViewModel.sendTextMessage(messageBody)
 
@@ -152,7 +148,7 @@ class MessageListViewModelTest {
 
     @Test
     fun `messageListViewModel_resendTextMessage should call onMessageError on failure`() = runBlocking {
-        coEvery { messageListManager.retrySendTextMessage(any()) } throws ConversationsException(ConversationsError.MESSAGE_SEND_FAILED)
+        coEvery { messageListManager.retrySendTextMessage(any()) } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
         messageListViewModel = MessageListViewModel(context, conversationSid, conversationsRepository, messageListManager)
         messageListViewModel.resendTextMessage(UUID.randomUUID().toString())
 
@@ -186,7 +182,7 @@ class MessageListViewModelTest {
 
     @Test
     fun `sendMediaMessage should call onMessageError on failure`() = runBlocking {
-        coEvery { messageListManager.sendMediaMessage(any(), any(), any(), any(), any()) } throws ConversationsException(ConversationsError.MESSAGE_SEND_FAILED)
+        coEvery { messageListManager.sendMediaMessage(any(), any(), any(), any(), any()) } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
         messageListViewModel = MessageListViewModel(context, conversationSid, conversationsRepository, messageListManager)
         messageListViewModel.sendMediaMessage("", mock(InputStream::class.java), null, null)
 
@@ -206,7 +202,7 @@ class MessageListViewModelTest {
 
     @Test
     fun `resendMediaMessage should call onMessageError on failure`() = runBlocking {
-        coEvery { messageListManager.retrySendMediaMessage(any(), any()) } throws ConversationsException(ConversationsError.MESSAGE_SEND_FAILED)
+        coEvery { messageListManager.retrySendMediaMessage(any(), any()) } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
         messageListViewModel = MessageListViewModel(context, conversationSid, conversationsRepository, messageListManager)
         messageListViewModel.resendMediaMessage( mock(InputStream::class.java), "")
 

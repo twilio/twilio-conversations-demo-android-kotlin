@@ -40,3 +40,7 @@ enum class ConversationsError(val code: Int, val message: String) {
         fun fromErrorInfo(errorInfo: ErrorInfo) = values().firstOrNull { it.code == errorInfo.code } ?: UNKNOWN
     }
 }
+
+fun ConversationsError.toErrorInfo(): ErrorInfo {
+    return ErrorInfo(code, message)
+}

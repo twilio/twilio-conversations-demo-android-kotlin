@@ -6,14 +6,13 @@ import androidx.lifecycle.viewModelScope
 import com.twilio.conversations.app.common.SingleLiveEvent
 import com.twilio.conversations.app.common.asParticipantListViewItems
 import com.twilio.conversations.app.common.enums.ConversationsError
-import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.data.models.ParticipantListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.manager.ParticipantListManager
 import com.twilio.conversations.app.repository.ConversationsRepository
+import com.twilio.util.TwilioException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import kotlin.properties.Delegates
@@ -70,7 +69,7 @@ class ParticipantListViewModel(
         try {
             participantListManager.removeParticipant(participant.sid)
             onParticipantRemoved.call()
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             Timber.d("Failed to remove participant")
             onParticipantError.value = ConversationsError.PARTICIPANT_REMOVE_FAILED
         }

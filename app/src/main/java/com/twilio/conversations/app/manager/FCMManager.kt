@@ -19,14 +19,17 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
+import com.twilio.conversations.ConversationsClient
 import com.twilio.conversations.NotificationPayload
 import com.twilio.conversations.app.R
-import com.twilio.conversations.app.common.extensions.ConversationsException
-import com.twilio.conversations.app.common.extensions.registerFCMToken
+import com.twilio.conversations.app.common.enums.ConversationsError
+import com.twilio.conversations.app.common.extensions.createTwilioException
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.CredentialStorage
 import com.twilio.conversations.app.ui.ConversationListActivity
 import com.twilio.conversations.app.ui.MessageListActivity
+import com.twilio.conversations.extensions.StatusListener
+import com.twilio.util.TwilioException
 import timber.log.Timber
 
 private const val NOTIFICATION_CONVERSATION_ID = "twilio_notification_id"
@@ -57,10 +60,13 @@ class FCMManagerImpl(
         Timber.d("FCM Token received: $token")
         try {
             if (token != credentialStorage.fcmToken && conversationsClient.isClientCreated) {
-                conversationsClient.getConversationsClient().registerFCMToken(token)
+                conversationsClient.getConversationsClient().registerFCMToken(
+                    ConversationsClient.FCMToken(token),
+                    StatusListener(onError = { throw createTwilioException(ConversationsError.UNKNOWN) })
+                )
             }
             credentialStorage.fcmToken = token
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             Timber.d("Failed to register FCM token")
         }
     }

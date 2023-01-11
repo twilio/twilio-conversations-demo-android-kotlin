@@ -2,7 +2,7 @@ package com.twilio.conversations.app.viewModel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.twilio.conversations.app.common.enums.ConversationsError
-import com.twilio.conversations.app.common.extensions.ConversationsException
+import com.twilio.conversations.app.common.extensions.createTwilioException
 import com.twilio.conversations.app.manager.ConnectivityMonitor
 import com.twilio.conversations.app.manager.LoginManager
 import com.twilio.conversations.app.testUtil.INVALID_CREDENTIAL
@@ -10,9 +10,6 @@ import com.twilio.conversations.app.testUtil.VALID_CREDENTIAL
 import com.twilio.conversations.app.testUtil.waitCalled
 import com.twilio.conversations.app.testUtil.waitValue
 import com.twilio.conversations.app.testUtil.whenCall
-import io.mockk.MockKAnnotations
-import io.mockk.impl.annotations.MockK
-import io.mockk.impl.annotations.RelaxedMockK
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
@@ -22,8 +19,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
@@ -37,7 +32,6 @@ import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
-import org.powermock.core.classloader.annotations.MockPolicy
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
 
@@ -122,7 +116,7 @@ class LoginViewModelTest {
     @Test
     fun `Should call onSignInError when sign in fails`() = runBlockingTest {
         val error = ConversationsError.TOKEN_ACCESS_DENIED
-        whenCall(loginManager.signIn(INVALID_CREDENTIAL, INVALID_CREDENTIAL)).then { throw ConversationsException(error) }
+        whenCall(loginManager.signIn(INVALID_CREDENTIAL, INVALID_CREDENTIAL)).then { throw createTwilioException(error) }
         loginViewModel.signIn(INVALID_CREDENTIAL, INVALID_CREDENTIAL)
         assertTrue(loginViewModel.onSignInError.waitCalled())
     }
@@ -130,7 +124,7 @@ class LoginViewModelTest {
     @Test
     fun `Should not call onSignInSuccess when sign in fails`() = runBlockingTest {
         val error = ConversationsError.TOKEN_ERROR
-        whenCall(loginManager.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)).then { throw ConversationsException(error) }
+        whenCall(loginManager.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)).then { throw createTwilioException(error) }
         loginViewModel.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
         assertFalse(loginViewModel.onSignInSuccess.waitCalled())
     }

@@ -1,13 +1,16 @@
 package com.twilio.conversations.app.manager
 
+import com.twilio.conversations.ConversationsClient
 import com.twilio.conversations.app.common.FirebaseTokenManager
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.ConversationsError.NO_STORED_CREDENTIALS
-import com.twilio.conversations.app.common.extensions.ConversationsException
-import com.twilio.conversations.app.common.extensions.registerFCMToken
+import com.twilio.conversations.app.common.extensions.createTwilioException
+import com.twilio.conversations.app.common.extensions.toConversationsError
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.CredentialStorage
 import com.twilio.conversations.app.repository.ConversationsRepository
+import com.twilio.conversations.extensions.StatusListener
+import com.twilio.util.TwilioException
 import timber.log.Timber
 
 interface LoginManager {
@@ -32,7 +35,14 @@ class LoginManagerImpl(
             val token = firebaseTokenManager.retrieveToken()
             credentialStorage.fcmToken = token
             Timber.d("Registering for FCM: $token")
-            conversationsClient.getConversationsClient().registerFCMToken(token)
+            conversationsClient.getConversationsClient().registerFCMToken(
+                ConversationsClient.FCMToken(token),
+                StatusListener(onError = {
+                    throw createTwilioException(
+                        ConversationsError.UNKNOWN
+                    )
+                })
+            )
         } catch (e: Exception) {
             Timber.d(e, "Failed to register FCM")
         }
@@ -56,7 +66,7 @@ class LoginManagerImpl(
 
     override suspend fun signInUsingStoredCredentials() {
         Timber.d("signInUsingStoredCredentials")
-        if (credentialStorage.isEmpty()) throw ConversationsException(NO_STORED_CREDENTIALS)
+        if (credentialStorage.isEmpty()) throw createTwilioException(NO_STORED_CREDENTIALS)
 
         val identity = credentialStorage.identity
         val password = credentialStorage.password
@@ -65,8 +75,8 @@ class LoginManagerImpl(
             conversationsClient.create(identity, password)
             conversationsRepository.subscribeToConversationsClientEvents()
             registerForFcm()
-        } catch (e: ConversationsException) {
-            handleError(e.error)
+        } catch (e: TwilioException) {
+            handleError(e.toConversationsError())
             throw e
         }
     }

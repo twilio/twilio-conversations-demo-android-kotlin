@@ -18,9 +18,8 @@ import com.twilio.conversations.app.common.asMessageListViewItems
 import com.twilio.conversations.app.common.asParticipantDataItem
 import com.twilio.conversations.app.common.enums.ConversationsError.UNKNOWN
 import com.twilio.conversations.app.common.extensions.ConversationsException
+import com.twilio.conversations.app.common.extensions.createTwilioException
 import com.twilio.conversations.app.common.extensions.getAndSubscribeUser
-import com.twilio.conversations.app.common.extensions.getConversation
-import com.twilio.conversations.app.common.extensions.getLastMessages
 import com.twilio.conversations.app.common.extensions.waitForSynchronization
 import com.twilio.conversations.app.common.toMessageDataItem
 import com.twilio.conversations.app.createTestConversationDataItem
@@ -175,7 +174,7 @@ class ConversationsRepositoryTest {
 
         every { localCacheProvider.conversationsDao().getUserConversations() } returns flowOf(emptyList())
         every { conversationsClient.myConversations } returns listOf(expectedConversation.toConversationMock())
-        coEvery { conversationsClient.getConversation(any()) } throws ConversationsException(UNKNOWN)
+        coEvery { conversationsClient.getConversation(any()) } throws createTwilioException(UNKNOWN)
 
         val actualStatus = conversationsRepository.getUserConversations().toList().last().requestStatus
         assertEquals(UNKNOWN, (actualStatus as RepositoryRequestStatus.Error).error)
@@ -285,7 +284,7 @@ class ConversationsRepositoryTest {
 
         every { localCacheProvider.messagesDao().getMessagesSorted(any())} returns ItemDataSource.factory(emptyList())
         coEvery { conversation.getLastMessages(any()).asMessageDataItems(any()) } returns listOf(expectedMessage)
-        coEvery { conversationsClient.getConversation(any()) } throws ConversationsException(UNKNOWN)
+        coEvery { conversationsClient.getConversation(any()) } throws createTwilioException(UNKNOWN)
 
         val actualStatus = conversationsRepository.getMessages(conversationSid, MESSAGE_COUNT)
             .first { it.requestStatus is RepositoryRequestStatus.Error }.requestStatus

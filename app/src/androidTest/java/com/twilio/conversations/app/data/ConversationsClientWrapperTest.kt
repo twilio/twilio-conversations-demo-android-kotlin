@@ -5,7 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.twilio.conversations.app.INVALID_IDENTITY
 import com.twilio.conversations.app.INVALID_PASSWORD
-import com.twilio.conversations.app.common.extensions.ConversationsException
+import com.twilio.util.TwilioException
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
@@ -25,7 +25,7 @@ class ConversationsClientWrapperTest {
         conversationsClientWrapper = ConversationsClientWrapper.INSTANCE
     }
 
-    @Test(expected = ConversationsException::class)
+    @Test(expected = TwilioException::class)
     fun create_withInvalidCredentials_returnsError() = runBlocking {
         conversationsClientWrapper.create(INVALID_IDENTITY, INVALID_PASSWORD)
     }

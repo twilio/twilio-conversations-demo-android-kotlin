@@ -5,8 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.twilio.conversations.app.common.SingleLiveEvent
 import com.twilio.conversations.app.common.enums.ConversationsError
-import com.twilio.conversations.app.common.extensions.ConversationsException
+import com.twilio.conversations.app.common.extensions.toConversationsError
 import com.twilio.conversations.app.manager.LoginManager
+import com.twilio.util.TwilioException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -44,8 +45,8 @@ class SplashViewModel(
             try {
                 loginManager.signInUsingStoredCredentials()
                 onCloseSplashScreen.call()
-            } catch (e: ConversationsException) {
-                delayAndShowLoginScreen(e.error)
+            } catch (e: TwilioException) {
+                delayAndShowLoginScreen(e.toConversationsError())
             }
         }
     }

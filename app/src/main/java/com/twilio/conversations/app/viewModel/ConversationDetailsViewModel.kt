@@ -6,13 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.twilio.conversations.app.common.SingleLiveEvent
 import com.twilio.conversations.app.common.asConversationDetailsViewItem
 import com.twilio.conversations.app.common.enums.ConversationsError
-import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.data.models.ConversationDetailsViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.manager.ConversationListManager
 import com.twilio.conversations.app.manager.ParticipantListManager
 import com.twilio.conversations.app.repository.ConversationsRepository
-import kotlinx.coroutines.flow.collect
+import com.twilio.util.TwilioException
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -63,7 +62,7 @@ class ConversationDetailsViewModel(
             setShowProgress(true)
             conversationListManager.renameConversation(conversationSid, friendlyName)
             onConversationRenamed.call()
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             Timber.d("Failed to rename conversation")
             onDetailsError.value = ConversationsError.CONVERSATION_RENAME_FAILED
         } finally {
@@ -80,7 +79,7 @@ class ConversationDetailsViewModel(
             setShowProgress(true)
             conversationListManager.muteConversation(conversationSid)
             onConversationMuted.value = true
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             Timber.d("Failed to mute conversation")
             onDetailsError.value = ConversationsError.CONVERSATION_MUTE_FAILED
         } finally {
@@ -97,7 +96,7 @@ class ConversationDetailsViewModel(
             setShowProgress(true)
             conversationListManager.unmuteConversation(conversationSid)
             onConversationMuted.value = false
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             Timber.d("Failed to unmute conversation")
             onDetailsError.value = ConversationsError.CONVERSATION_UNMUTE_FAILED
         } finally {
@@ -114,7 +113,7 @@ class ConversationDetailsViewModel(
             setShowProgress(true)
             conversationListManager.leaveConversation(conversationSid)
             onConversationLeft.call()
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             Timber.d("Failed to remove conversation")
             onDetailsError.value = ConversationsError.CONVERSATION_REMOVE_FAILED
         } finally {
@@ -131,7 +130,7 @@ class ConversationDetailsViewModel(
             setShowProgress(true)
             participantListManager.addChatParticipant(identity)
             onParticipantAdded.value = identity
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             Timber.d("Failed to add chat participant")
             onDetailsError.value = ConversationsError.PARTICIPANT_ADD_FAILED
         } finally {
@@ -148,7 +147,7 @@ class ConversationDetailsViewModel(
             setShowProgress(true)
             participantListManager.addNonChatParticipant(phone, proxyPhone, friendlyName = "$phone")
             onParticipantAdded.value = phone
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             Timber.d("Failed to add non-chat participant")
             onDetailsError.value = ConversationsError.PARTICIPANT_ADD_FAILED
         } finally {

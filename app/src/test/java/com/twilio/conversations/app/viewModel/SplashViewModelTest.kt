@@ -2,7 +2,7 @@ package com.twilio.conversations.app.viewModel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.twilio.conversations.app.common.enums.ConversationsError
-import com.twilio.conversations.app.common.extensions.ConversationsException
+import com.twilio.conversations.app.common.extensions.createTwilioException
 import com.twilio.conversations.app.data.CredentialStorage
 import com.twilio.conversations.app.manager.LoginManager
 import com.twilio.conversations.app.testUtil.waitCalled
@@ -118,7 +118,7 @@ class SplashViewModelTest {
     fun `Should call onShowLoginScreen when  error occurred`() = runBlocking {
         val error = ConversationsError.TOKEN_ACCESS_DENIED
         whenCall(loginManager.isLoggedIn()).thenReturn(false)
-        whenCall(loginManager.signInUsingStoredCredentials()).then { throw ConversationsException(error) }
+        whenCall(loginManager.signInUsingStoredCredentials()).then { throw createTwilioException(error) }
 
         splashViewModel.signInOrLaunchSignInActivity()
 
@@ -129,7 +129,7 @@ class SplashViewModelTest {
     fun `Should call onShowLoginScreen when response is empty credentials error`() = runBlocking {
         val error = ConversationsError.NO_STORED_CREDENTIALS
         whenCall(loginManager.isLoggedIn()).thenReturn(false)
-        whenCall(loginManager.signInUsingStoredCredentials()).then { throw ConversationsException(error) }
+        whenCall(loginManager.signInUsingStoredCredentials()).then { throw createTwilioException(error) }
 
         splashViewModel.signInOrLaunchSignInActivity()
 

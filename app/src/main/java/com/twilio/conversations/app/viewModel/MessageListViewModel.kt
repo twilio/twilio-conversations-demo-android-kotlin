@@ -14,21 +14,28 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.net.toFile
 import androidx.core.net.toUri
-import androidx.lifecycle.*
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.map
+import androidx.lifecycle.viewModelScope
 import androidx.paging.PagedList
 import com.twilio.conversations.app.common.SingleLiveEvent
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.DownloadState
 import com.twilio.conversations.app.common.enums.Reactions
 import com.twilio.conversations.app.common.enums.SendStatus
-import com.twilio.conversations.app.common.extensions.*
+import com.twilio.conversations.app.common.extensions.getInt
+import com.twilio.conversations.app.common.extensions.getLong
+import com.twilio.conversations.app.common.extensions.getString
+import com.twilio.conversations.app.common.extensions.queryById
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.manager.MessageListManager
 import com.twilio.conversations.app.repository.ConversationsRepository
-import kotlinx.coroutines.flow.collect
+import com.twilio.util.TwilioException
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -118,7 +125,7 @@ class MessageListViewModel(
             messageListManager.sendTextMessage(message, messageUuid)
             onMessageSent.call()
             Timber.d("Message sent: $messageUuid")
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             Timber.d("Text message send error: ${e.errorInfo?.status}:${e.errorInfo?.code} ${e.errorInfo?.message}")
             messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo?.code ?: 0)
             onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
@@ -130,7 +137,7 @@ class MessageListViewModel(
             messageListManager.retrySendTextMessage(messageUuid)
             onMessageSent.call()
             Timber.d("Message re-sent: $messageUuid")
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo?.code ?: 0)
             onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
         }
@@ -143,7 +150,7 @@ class MessageListViewModel(
                 messageListManager.sendMediaMessage(uri, inputStream, fileName, mimeType, messageUuid)
                 onMessageSent.call()
                 Timber.d("Media message sent: $messageUuid")
-            } catch (e: ConversationsException) {
+            } catch (e: TwilioException) {
                 Timber.d("Media message send error: ${e.errorInfo?.status}:${e.errorInfo?.code} ${e.errorInfo?.message}")
                 messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo?.code ?: 0)
                 onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
@@ -155,7 +162,7 @@ class MessageListViewModel(
             messageListManager.retrySendMediaMessage(inputStream, messageUuid)
             onMessageSent.call()
             Timber.d("Media re-sent: $messageUuid")
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo?.code ?: 0)
             onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
         }
@@ -164,7 +171,7 @@ class MessageListViewModel(
     fun handleMessageDisplayed(messageIndex: Long) = viewModelScope.launch {
         try {
             messageListManager.notifyMessageRead(messageIndex)
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             // Ignored
         }
     }
@@ -177,7 +184,7 @@ class MessageListViewModel(
     fun setReactions(reactions: Reactions) = viewModelScope.launch {
         try {
             messageListManager.setReactions(selectedMessageIndex, reactions)
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             onMessageError.value = ConversationsError.REACTION_UPDATE_FAILED
         }
     }
@@ -199,7 +206,7 @@ class MessageListViewModel(
         try {
             messageListManager.removeMessage(selectedMessageIndex)
             onMessageRemoved.call()
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             Timber.d("Failed to remove message")
             onMessageError.value = ConversationsError.MESSAGE_REMOVE_FAILED
         }
