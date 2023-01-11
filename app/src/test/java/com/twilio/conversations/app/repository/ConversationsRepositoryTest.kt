@@ -17,7 +17,6 @@ import com.twilio.conversations.app.common.asMessageDataItems
 import com.twilio.conversations.app.common.asMessageListViewItems
 import com.twilio.conversations.app.common.asParticipantDataItem
 import com.twilio.conversations.app.common.enums.ConversationsError.UNKNOWN
-import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.common.extensions.createTwilioException
 import com.twilio.conversations.app.common.extensions.getAndSubscribeUser
 import com.twilio.conversations.app.common.extensions.waitForSynchronization
@@ -38,6 +37,8 @@ import com.twilio.conversations.app.testUtil.CoroutineTestRule
 import com.twilio.conversations.app.testUtil.toConversationMock
 import com.twilio.conversations.app.testUtil.toMessageMock
 import com.twilio.conversations.app.testUtil.toParticipantMock
+import com.twilio.conversations.extensions.getConversation
+import com.twilio.conversations.extensions.getLastMessages
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.confirmVerified
@@ -269,7 +270,7 @@ class ConversationsRepositoryTest {
     @Test
     fun `getMessages() should return error if cannot fetch conversation descriptors`() = runBlocking {
         every { localCacheProvider.messagesDao().getMessagesSorted(any()) } returns ItemDataSource.factory(emptyList())
-        coEvery { conversation.getLastMessages(any()).asMessageDataItems(any()) } throws ConversationsException(UNKNOWN)
+        coEvery { conversation.getLastMessages(any()).asMessageDataItems(any()) } throws createTwilioException(UNKNOWN)
 
         val actualStatus = conversationsRepository.getMessages("conversationSid", MESSAGE_COUNT)
             .first { it.requestStatus is RepositoryRequestStatus.Error }.requestStatus

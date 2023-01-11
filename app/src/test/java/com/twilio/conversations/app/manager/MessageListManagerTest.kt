@@ -16,6 +16,7 @@ import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.MessageType
 import com.twilio.conversations.app.common.enums.SendStatus
 import com.twilio.conversations.app.common.extensions.createTwilioException
+import com.twilio.conversations.app.common.extensions.firstMedia
 import com.twilio.conversations.app.common.extensions.toConversationsError
 import com.twilio.conversations.app.createTestMessageDataItem
 import com.twilio.conversations.app.data.ConversationsClientWrapper
@@ -23,6 +24,9 @@ import com.twilio.conversations.app.repository.ConversationsRepository
 import com.twilio.conversations.app.testUtil.CoroutineTestRule
 import com.twilio.conversations.app.testUtil.toMessageMock
 import com.twilio.conversations.app.testUtil.whenCall
+import com.twilio.conversations.extensions.getConversation
+import com.twilio.conversations.extensions.getMessageByIndex
+import com.twilio.conversations.extensions.getTemporaryContentUrl
 import com.twilio.conversations.extensions.sendMessage
 import com.twilio.util.TwilioException
 import io.mockk.MockKAnnotations
@@ -408,9 +412,9 @@ class MessageListManagerTest {
         val mediaTempUrl = "url"
         val message = mockk<Message>()
         val media = mockk<Media>()
-        coEvery { conversation.getMessageByIndex(messageIndex, any()) } returns message
+        coEvery { conversation.getMessageByIndex(messageIndex) } returns message
         every { message.firstMedia } returns media
-        coEvery { media.getTemporaryContentUrl(any()) } returns mediaTempUrl
+        coEvery { media.getTemporaryContentUrl() } returns mediaTempUrl
 
         assertEquals(mediaTempUrl, messageListManager.getMediaContentTemporaryUrl(messageIndex))
     }
