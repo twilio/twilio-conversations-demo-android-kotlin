@@ -9,7 +9,7 @@ import com.twilio.conversations.app.common.extensions.toConversationsError
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.CredentialStorage
 import com.twilio.conversations.app.repository.ConversationsRepository
-import com.twilio.conversations.extensions.StatusListener
+import com.twilio.conversations.extensions.registerFCMToken
 import com.twilio.util.TwilioException
 import timber.log.Timber
 
@@ -36,12 +36,7 @@ class LoginManagerImpl(
             credentialStorage.fcmToken = token
             Timber.d("Registering for FCM: $token")
             conversationsClient.getConversationsClient().registerFCMToken(
-                ConversationsClient.FCMToken(token),
-                StatusListener(onError = {
-                    throw createTwilioException(
-                        ConversationsError.UNKNOWN
-                    )
-                })
+                ConversationsClient.FCMToken(token)
             )
         } catch (e: Exception) {
             Timber.d(e, "Failed to register FCM")

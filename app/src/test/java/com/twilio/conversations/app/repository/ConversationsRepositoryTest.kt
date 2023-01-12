@@ -107,6 +107,7 @@ class ConversationsRepositoryTest {
 
         mockkStatic("com.twilio.conversations.app.common.extensions.TwilioExtensionsKt")
         mockkStatic("com.twilio.conversations.app.common.DataConverterKt")
+        mockkStatic("com.twilio.conversations.extensions.ConversationsExtensionsKt")
 
         every { conversationsClient.myIdentity } returns myIdentity
         every { conversationsClient.addListener(any()) } answers { clientListener = it.invocation.args[0] as ConversationsClientListener }

@@ -6,11 +6,10 @@ import androidx.annotation.RestrictTo
 import androidx.annotation.RestrictTo.Scope
 import com.twilio.conversations.ConversationsClient
 import com.twilio.conversations.app.BuildConfig
-import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.enums.ConversationsError.TOKEN_ACCESS_DENIED
 import com.twilio.conversations.app.common.enums.ConversationsError.TOKEN_ERROR
 import com.twilio.conversations.app.common.extensions.createTwilioException
-import com.twilio.conversations.extensions.StatusListener
+import com.twilio.conversations.app.common.extensions.updateToken
 import com.twilio.conversations.extensions.addListener
 import com.twilio.conversations.extensions.createAndSyncConversationsClient
 import kotlinx.coroutines.*
@@ -81,10 +80,7 @@ class ConversationsClientWrapper(private val applicationContext: Context) {
 
         val result = runCatching {
             val twilioToken = getToken(identity, password)
-            getConversationsClient().updateToken(
-                twilioToken,
-                StatusListener(onError = { throw createTwilioException(ConversationsError.UNKNOWN) })
-            )
+            getConversationsClient().updateToken(twilioToken)
         }
 
         if (result.isFailure && notifyOnFailure) {

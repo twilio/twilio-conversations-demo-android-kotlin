@@ -26,6 +26,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.RelaxedMockK
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.Dispatchers
@@ -60,7 +61,7 @@ class MessageListViewModelTest {
     @MockK
     private lateinit var conversationsRepository: ConversationsRepository
 
-    @MockK
+    @RelaxedMockK
     private lateinit var messageListManager: MessageListManager
 
     @MockK

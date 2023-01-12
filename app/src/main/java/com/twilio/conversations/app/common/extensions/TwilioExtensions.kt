@@ -28,6 +28,15 @@ fun ConversationsClient.simulateCrash(where: CrashIn) {
     method.invoke(this, where.value)
 }
 
+suspend fun ConversationsClient.updateToken(token: String) = suspendCancellableCoroutine<Unit> { continuation ->
+    updateToken(token, object : StatusListener {
+
+        override fun onSuccess() = continuation.resume(Unit)
+
+        override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(TwilioException(errorInfo))
+    })
+}
+
 suspend fun Conversation.muteConversation(): Unit = suspendCoroutine { continuation ->
     setNotificationLevel(Conversation.NotificationLevel.MUTED, object : StatusListener {
         override fun onSuccess() = continuation.resume(Unit)

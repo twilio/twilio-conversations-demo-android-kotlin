@@ -22,13 +22,11 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import com.twilio.conversations.ConversationsClient
 import com.twilio.conversations.NotificationPayload
 import com.twilio.conversations.app.R
-import com.twilio.conversations.app.common.enums.ConversationsError
-import com.twilio.conversations.app.common.extensions.createTwilioException
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.CredentialStorage
 import com.twilio.conversations.app.ui.ConversationListActivity
 import com.twilio.conversations.app.ui.MessageListActivity
-import com.twilio.conversations.extensions.StatusListener
+import com.twilio.conversations.extensions.registerFCMToken
 import com.twilio.util.TwilioException
 import timber.log.Timber
 
@@ -60,10 +58,7 @@ class FCMManagerImpl(
         Timber.d("FCM Token received: $token")
         try {
             if (token != credentialStorage.fcmToken && conversationsClient.isClientCreated) {
-                conversationsClient.getConversationsClient().registerFCMToken(
-                    ConversationsClient.FCMToken(token),
-                    StatusListener(onError = { throw createTwilioException(ConversationsError.UNKNOWN) })
-                )
+                conversationsClient.getConversationsClient().registerFCMToken(ConversationsClient.FCMToken(token))
             }
             credentialStorage.fcmToken = token
         } catch (e: TwilioException) {
