@@ -126,8 +126,8 @@ class MessageListViewModel(
             onMessageSent.call()
             Timber.d("Message sent: $messageUuid")
         } catch (e: TwilioException) {
-            Timber.d("Text message send error: ${e.errorInfo?.status}:${e.errorInfo?.code} ${e.errorInfo?.message}")
-            messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo?.code ?: 0)
+            Timber.d("Text message send error: ${e.errorInfo.status}:${e.errorInfo.code} ${e.errorInfo.message}")
+            messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo.code)
             onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
         }
     }
@@ -138,7 +138,7 @@ class MessageListViewModel(
             onMessageSent.call()
             Timber.d("Message re-sent: $messageUuid")
         } catch (e: TwilioException) {
-            messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo?.code ?: 0)
+            messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo.code)
             onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
         }
     }
@@ -151,8 +151,8 @@ class MessageListViewModel(
                 onMessageSent.call()
                 Timber.d("Media message sent: $messageUuid")
             } catch (e: TwilioException) {
-                Timber.d("Media message send error: ${e.errorInfo?.status}:${e.errorInfo?.code} ${e.errorInfo?.message}")
-                messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo?.code ?: 0)
+                Timber.d("Media message send error: ${e.errorInfo.status}:${e.errorInfo.code} ${e.errorInfo.message}")
+                messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo.code)
                 onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
             }
         }
@@ -163,7 +163,7 @@ class MessageListViewModel(
             onMessageSent.call()
             Timber.d("Media re-sent: $messageUuid")
         } catch (e: TwilioException) {
-            messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo?.code ?: 0)
+            messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo.code)
             onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
         }
     }
