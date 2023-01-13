@@ -19,7 +19,6 @@ import com.twilio.conversations.app.common.asParticipantDataItem
 import com.twilio.conversations.app.common.enums.ConversationsError.UNKNOWN
 import com.twilio.conversations.app.common.extensions.createTwilioException
 import com.twilio.conversations.app.common.extensions.getAndSubscribeUser
-import com.twilio.conversations.app.common.extensions.waitForSynchronization
 import com.twilio.conversations.app.common.toMessageDataItem
 import com.twilio.conversations.app.createTestConversationDataItem
 import com.twilio.conversations.app.createTestMessageDataItem
@@ -39,6 +38,7 @@ import com.twilio.conversations.app.testUtil.toMessageMock
 import com.twilio.conversations.app.testUtil.toParticipantMock
 import com.twilio.conversations.extensions.getConversation
 import com.twilio.conversations.extensions.getLastMessages
+import com.twilio.conversations.extensions.waitForSynchronization
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.confirmVerified
@@ -113,7 +113,7 @@ class ConversationsRepositoryTest {
         every { conversationsClient.addListener(any()) } answers { clientListener = it.invocation.args[0] as ConversationsClientListener }
         every { conversationsClient.myConversations } returns emptyList()
 
-        coEvery { conversation.waitForSynchronization() } returns conversation
+        coEvery { conversation.waitForSynchronization() } returns Unit
         coEvery { conversationsClient.getConversation(any()) } returns conversation
         coEvery { conversationsClientWrapper.getConversationsClient() } returns conversationsClient
 

@@ -9,11 +9,8 @@ import com.twilio.conversations.Participant
 import com.twilio.conversations.StatusListener
 import com.twilio.conversations.User
 import com.twilio.conversations.app.common.enums.CrashIn
-import com.twilio.conversations.extensions.addListener
 import com.twilio.util.ErrorInfo
-import com.twilio.util.ErrorInfo.Companion.CONVERSATION_NOT_SYNCHRONIZED
 import com.twilio.util.TwilioException
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -97,31 +94,6 @@ suspend fun Conversation.getUnreadMessageCount(): Long? = suspendCancellableCoro
     })
 }
 
-suspend fun Conversation.waitForSynchronization(): Conversation {
-    val complete = CompletableDeferred<Unit>()
-    val listener = addListener(
-        onSynchronizationChanged = { conversation ->
-            synchronized<Unit>(complete) {
-                if (complete.isCompleted) return@addListener
-                if (conversation.synchronizationStatus == Conversation.SynchronizationStatus.FAILED) {
-                    val errorInfo = ErrorInfo(CONVERSATION_NOT_SYNCHRONIZED, "Conversation synchronization failed: ${conversation.sid}}")
-                    complete.completeExceptionally(TwilioException(errorInfo))
-                } else if (conversation.synchronizationStatus.value >= Conversation.SynchronizationStatus.ALL.value) {
-                    complete.complete(Unit)
-                }
-            }
-        }
-    )
-
-    try {
-        complete.await()
-    } finally {
-        removeListener(listener)
-    }
-
-    return this
-}
-
 suspend fun Participant.getAndSubscribeUser(): User = suspendCancellableCoroutine { continuation ->
     getAndSubscribeUser(object : CallbackListener<User> {
 
@@ -138,4 +110,3 @@ suspend fun User.setFriendlyName(friendlyName: String): Unit = suspendCoroutine 
         override fun onError(errorInfo: ErrorInfo) = continuation.resumeWithException(TwilioException(errorInfo))
     })
 }
-

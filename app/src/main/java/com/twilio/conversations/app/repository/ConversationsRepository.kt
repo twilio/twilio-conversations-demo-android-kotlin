@@ -17,7 +17,6 @@ import com.twilio.conversations.app.common.extensions.getParticipantCount
 import com.twilio.conversations.app.common.extensions.getUnreadMessageCount
 import com.twilio.conversations.app.common.extensions.simulateCrash
 import com.twilio.conversations.app.common.extensions.toConversationsError
-import com.twilio.conversations.app.common.extensions.waitForSynchronization
 import com.twilio.conversations.app.common.toConversationDataItem
 import com.twilio.conversations.app.common.toFlow
 import com.twilio.conversations.app.common.toMessageDataItem
@@ -38,6 +37,7 @@ import com.twilio.conversations.extensions.ConversationsClientListener
 import com.twilio.conversations.extensions.getConversation
 import com.twilio.conversations.extensions.getLastMessages
 import com.twilio.conversations.extensions.getMessagesBefore
+import com.twilio.conversations.extensions.waitForSynchronization
 import com.twilio.util.TwilioException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -338,7 +338,7 @@ class ConversationsRepositoryImpl(
             val messages = conversationsClientWrapper
                 .getConversationsClient()
                 .getConversation(conversationSid)
-                .waitForSynchronization()
+                .apply { waitForSynchronization() }
                 .fetch()
                 .asMessageDataItems(identity)
             localCache.messagesDao().insert(messages)
