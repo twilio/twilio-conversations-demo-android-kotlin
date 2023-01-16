@@ -6,10 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.twilio.conversations.app.common.SingleLiveEvent
 import com.twilio.conversations.app.common.asUserViewItem
 import com.twilio.conversations.app.common.enums.ConversationsError
-import com.twilio.conversations.app.common.extensions.ConversationsException
 import com.twilio.conversations.app.manager.LoginManager
 import com.twilio.conversations.app.manager.UserManager
 import com.twilio.conversations.app.repository.ConversationsRepository
+import com.twilio.util.TwilioException
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -34,7 +34,7 @@ class ProfileViewModel(
             userManager.setFriendlyName(friendlyName)
             Timber.d("Self user updated: $friendlyName")
             onUserUpdated.call()
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             Timber.d("Failed to update self user")
             onError.value = ConversationsError.USER_UPDATE_FAILED
         }

@@ -1,10 +1,9 @@
 package com.twilio.conversations.app.viewModel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.twilio.conversations.Conversation
 import com.twilio.conversations.app.common.asConversationDetailsViewItem
 import com.twilio.conversations.app.common.enums.ConversationsError
-import com.twilio.conversations.app.common.extensions.ConversationsException
+import com.twilio.conversations.app.common.extensions.createTwilioException
 import com.twilio.conversations.app.createTestConversationDataItem
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
@@ -32,9 +31,6 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.powermock.core.classloader.annotations.PrepareForTest
-import org.powermock.modules.junit4.PowerMockRunner
 
 class ConversationDetailsViewModelTest {
 
@@ -96,7 +92,7 @@ class ConversationDetailsViewModelTest {
     @Test
     fun `conversationDetailViewModel_muteConversation() should call onDetailsError on failure`() = runBlocking {
         val conversationSid = "sid"
-        coEvery { conversationListManager.muteConversation(conversationSid) } throws ConversationsException(ConversationsError.CONVERSATION_MUTE_FAILED)
+        coEvery { conversationListManager.muteConversation(conversationSid) } throws createTwilioException(ConversationsError.CONVERSATION_MUTE_FAILED)
 
         conversationDetailsViewModel = ConversationDetailsViewModel(conversationSid, conversationsRepository, conversationListManager, participantListManager)
         conversationDetailsViewModel.muteConversation()
@@ -121,7 +117,7 @@ class ConversationDetailsViewModelTest {
     @Test
     fun `conversationDetailViewModel_unmuteConversation() should call onDetailsError on failure`() = runBlocking {
         val conversationSid = "sid"
-        coEvery { conversationListManager.unmuteConversation(conversationSid) } throws ConversationsException(ConversationsError.CONVERSATION_UNMUTE_FAILED)
+        coEvery { conversationListManager.unmuteConversation(conversationSid) } throws createTwilioException(ConversationsError.CONVERSATION_UNMUTE_FAILED)
 
         conversationDetailsViewModel = ConversationDetailsViewModel(conversationSid, conversationsRepository, conversationListManager, participantListManager)
         conversationDetailsViewModel.unmuteConversation()
@@ -158,7 +154,7 @@ class ConversationDetailsViewModelTest {
     @Test
     fun `conversationDetailViewModel_leaveConversation() should call onDetailsError on failure`() = runBlocking {
         val conversationSid = "sid"
-        coEvery { conversationListManager.leaveConversation(conversationSid) } throws ConversationsException(ConversationsError.CONVERSATION_REMOVE_FAILED)
+        coEvery { conversationListManager.leaveConversation(conversationSid) } throws createTwilioException(ConversationsError.CONVERSATION_REMOVE_FAILED)
 
         conversationDetailsViewModel = ConversationDetailsViewModel(conversationSid, conversationsRepository, conversationListManager, participantListManager)
         conversationDetailsViewModel.leaveConversation()
@@ -185,7 +181,7 @@ class ConversationDetailsViewModelTest {
     fun `conversationDetailViewModel_renameConversation() should call onDetailsError on failure`() = runBlocking {
         val conversationSid = "sid"
         val friendlyName = conversationName + "2"
-        coEvery { conversationListManager.renameConversation(conversationSid, friendlyName) } throws ConversationsException(ConversationsError.CONVERSATION_RENAME_FAILED)
+        coEvery { conversationListManager.renameConversation(conversationSid, friendlyName) } throws createTwilioException(ConversationsError.CONVERSATION_RENAME_FAILED)
 
         conversationDetailsViewModel = ConversationDetailsViewModel(conversationSid, conversationsRepository, conversationListManager, participantListManager)
         conversationDetailsViewModel.renameConversation(friendlyName)
@@ -212,7 +208,7 @@ class ConversationDetailsViewModelTest {
     fun `conversationDetailViewModel_addChatParticipant() should call onParticipantError on failure`() = runBlocking {
         coEvery { conversationsRepository.getConversationParticipants(any()) } returns
                 flowOf(RepositoryResult(listOf(), RepositoryRequestStatus.COMPLETE))
-        coEvery { participantListManager.addChatParticipant(participantIdentity) } throws ConversationsException(ConversationsError.PARTICIPANT_ADD_FAILED)
+        coEvery { participantListManager.addChatParticipant(participantIdentity) } throws createTwilioException(ConversationsError.PARTICIPANT_ADD_FAILED)
 
         val conversationDetailViewModel = ConversationDetailsViewModel(conversationSid, conversationsRepository, conversationListManager, participantListManager)
         conversationDetailViewModel.addChatParticipant(participantIdentity)
@@ -238,7 +234,7 @@ class ConversationDetailsViewModelTest {
     fun `conversationDetailViewModel_addNonChatParticipant() should call onParticipantError on failure`() = runBlocking {
         coEvery { conversationsRepository.getConversationParticipants(any()) } returns
                 flowOf(RepositoryResult(listOf(), RepositoryRequestStatus.COMPLETE))
-        coEvery { participantListManager.addNonChatParticipant(participantPhone, participantProxyPhone, participantFriendlyName) } throws ConversationsException(ConversationsError.PARTICIPANT_ADD_FAILED)
+        coEvery { participantListManager.addNonChatParticipant(participantPhone, participantProxyPhone, participantFriendlyName) } throws createTwilioException(ConversationsError.PARTICIPANT_ADD_FAILED)
 
         val conversationDetailViewModel = ConversationDetailsViewModel(conversationSid, conversationsRepository, conversationListManager, participantListManager)
         conversationDetailViewModel.addNonChatParticipant(participantPhone, participantProxyPhone)

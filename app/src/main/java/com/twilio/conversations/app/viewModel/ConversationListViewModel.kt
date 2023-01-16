@@ -1,17 +1,23 @@
 package com.twilio.conversations.app.viewModel
 
 import android.content.Context
-import androidx.lifecycle.*
-import com.twilio.conversations.app.common.*
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.viewModelScope
+import com.twilio.conversations.app.common.SingleLiveEvent
+import com.twilio.conversations.app.common.asConversationListViewItems
 import com.twilio.conversations.app.common.enums.ConversationsError
-import com.twilio.conversations.app.common.extensions.ConversationsException
+import com.twilio.conversations.app.common.merge
 import com.twilio.conversations.app.data.models.ConversationListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.manager.ConnectivityMonitor
 import com.twilio.conversations.app.manager.ConversationListManager
 import com.twilio.conversations.app.repository.ConversationsRepository
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
+import com.twilio.util.TwilioException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import kotlin.properties.Delegates
 
@@ -99,7 +105,7 @@ class ConversationListViewModel(
             conversationListManager.joinConversation(conversationSid)
             Timber.d("Created conversation: $friendlyName $conversationSid")
             onConversationCreated.call()
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             Timber.d("Failed to create conversation")
             onConversationError.value = ConversationsError.CONVERSATION_CREATE_FAILED
         } finally {
@@ -116,7 +122,7 @@ class ConversationListViewModel(
             setConversationLoading(conversationSid, true)
             conversationListManager.muteConversation(conversationSid)
             onConversationMuted.value = true
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             Timber.d("Failed to mute conversation")
             onConversationError.value = ConversationsError.CONVERSATION_MUTE_FAILED
         } finally {
@@ -133,7 +139,7 @@ class ConversationListViewModel(
             setConversationLoading(conversationSid, true)
             conversationListManager.unmuteConversation(conversationSid)
             onConversationMuted.value = false
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             Timber.d("Failed to unmute conversation")
             onConversationError.value = ConversationsError.CONVERSATION_UNMUTE_FAILED
         } finally {
@@ -150,7 +156,7 @@ class ConversationListViewModel(
             setConversationLoading(conversationSid, true)
             conversationListManager.leaveConversation(conversationSid)
             onConversationLeft.call()
-        } catch (e: ConversationsException) {
+        } catch (e: TwilioException) {
             Timber.d("Failed to leave conversation")
             onConversationError.value = ConversationsError.CONVERSATION_LEAVE_FAILED
         } finally {

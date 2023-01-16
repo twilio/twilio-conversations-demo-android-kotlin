@@ -1,11 +1,10 @@
 package com.twilio.conversations.app.viewModel
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.twilio.conversations.Participant
 import com.twilio.conversations.app.PARTICIPANT_COUNT
 import com.twilio.conversations.app.common.asParticipantListViewItems
 import com.twilio.conversations.app.common.enums.ConversationsError
-import com.twilio.conversations.app.common.extensions.ConversationsException
+import com.twilio.conversations.app.common.extensions.createTwilioException
 import com.twilio.conversations.app.createTestParticipantDataItem
 import com.twilio.conversations.app.createTestParticipantListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
@@ -27,10 +26,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.powermock.core.classloader.annotations.PrepareForTest
-import org.powermock.modules.junit4.PowerMockRunner
-import java.util.Locale
+import java.util.*
 
 class ParticipantListViewModelTest {
 
@@ -134,7 +130,7 @@ class ParticipantListViewModelTest {
     fun `participantListViewModel_removeParticipant() should call onParticipantError on failure`() = runBlocking {
         coEvery { conversationsRepository.getConversationParticipants(any()) } returns
                 flowOf(RepositoryResult(listOf(), RepositoryRequestStatus.COMPLETE))
-        coEvery { participantListManager.removeParticipant(participant.sid) } throws ConversationsException(ConversationsError.PARTICIPANT_REMOVE_FAILED)
+        coEvery { participantListManager.removeParticipant(participant.sid) } throws createTwilioException(ConversationsError.PARTICIPANT_REMOVE_FAILED)
 
         val participantListViewModel = ParticipantListViewModel(conversationSid, conversationsRepository, participantListManager)
         participantListViewModel.selectedParticipant = participant

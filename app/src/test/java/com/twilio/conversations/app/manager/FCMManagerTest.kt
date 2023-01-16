@@ -5,15 +5,17 @@ import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.twilio.conversations.ConversationsClient
 import com.twilio.conversations.app.common.enums.ConversationsError
-import com.twilio.conversations.app.common.extensions.ConversationsException
-import com.twilio.conversations.app.common.extensions.registerFCMToken
+import com.twilio.conversations.app.common.extensions.createTwilioException
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.CredentialStorage
-import com.twilio.conversations.app.testUtil.whenCall
+import com.twilio.conversations.extensions.registerFCMToken
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.mockkStatic
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
@@ -24,10 +26,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mock
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
-import org.powermock.api.mockito.PowerMockito
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
 
@@ -45,16 +43,17 @@ class FCMManagerTest {
     @Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
-    @Mock
+    @MockK
     private lateinit var application: Application
-    @Mock
+    @MockK
     private lateinit var context: Context
     @MockK
     private lateinit var conversationsClientWrapper: ConversationsClientWrapper
-    @Mock
+    @RelaxedMockK
     private lateinit var credentialStorage: CredentialStorage
-
+    @MockK
     private lateinit var conversationsClient: ConversationsClient
+
     private lateinit var fcmManager: FCMManager
 
     @Before
@@ -62,9 +61,9 @@ class FCMManagerTest {
         MockKAnnotations.init(this)
         Dispatchers.setMain(mainThreadSurrogate)
 
-        mockkStatic("com.twilio.conversations.app.common.extensions.TwilioExtensionsKt")
-        whenCall(application.applicationContext).thenReturn(context)
-        conversationsClient = PowerMockito.mock(ConversationsClient::class.java)
+        mockkStatic("com.twilio.conversations.extensions.ConversationsExtensionsKt")
+
+        every { application.applicationContext } returns context
         coEvery { conversationsClientWrapper.getConversationsClient() } returns conversationsClient
         coEvery { conversationsClientWrapper.isClientCreated } returns true
 
@@ -79,16 +78,16 @@ class FCMManagerTest {
     @Test
     fun `onNewToken - token saved in credentials if registered`() = runBlocking {
         val token = "fcm_token"
-        coEvery { conversationsClient.registerFCMToken(token) } returns Unit
+        coEvery { conversationsClient.registerFCMToken(any()) } returns Unit
         fcmManager.onNewToken(token)
-        verify(credentialStorage, times(1)).fcmToken = token
+        verify(exactly = 1) { credentialStorage.fcmToken = token }
     }
 
     @Test
     fun `onNewToken - token not saved in credentials if registration failed`() = runBlocking {
         val token = "fcm_token"
-        coEvery { conversationsClient.registerFCMToken(token) } throws ConversationsException(ConversationsError.TOKEN_ERROR)
+        coEvery { conversationsClient.registerFCMToken(any()) } throws createTwilioException(ConversationsError.TOKEN_ERROR)
         fcmManager.onNewToken(token)
-        verify(credentialStorage, times(0)).fcmToken = token
+        verify(exactly = 0) { credentialStorage.fcmToken = token }
     }
 }

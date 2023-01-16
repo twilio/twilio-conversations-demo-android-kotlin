@@ -2,12 +2,10 @@ package com.twilio.conversations.app.viewModel
 
 import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.twilio.conversations.Conversation
-import com.twilio.conversations.User
 import com.twilio.conversations.app.USER_CONVERSATION_COUNT
 import com.twilio.conversations.app.common.asConversationListViewItems
 import com.twilio.conversations.app.common.enums.ConversationsError
-import com.twilio.conversations.app.common.extensions.ConversationsException
+import com.twilio.conversations.app.common.extensions.createTwilioException
 import com.twilio.conversations.app.createTestConversationDataItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.data.models.RepositoryResult
@@ -33,9 +31,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.powermock.core.classloader.annotations.PrepareForTest
-import org.powermock.modules.junit4.PowerMockRunner
 import java.util.*
 
 class ConversationListViewModelTest {
@@ -154,7 +149,7 @@ class ConversationListViewModelTest {
     fun `conversationListViewModel_createConversation() should call onConversationError on failure`() = runBlocking {
         val conversationName = "Private Conversation"
 
-        coEvery { conversationListManager.createConversation(conversationName)} throws ConversationsException(ConversationsError.CONVERSATION_CREATE_FAILED)
+        coEvery { conversationListManager.createConversation(conversationName)} throws createTwilioException(ConversationsError.CONVERSATION_CREATE_FAILED)
         coEvery { conversationListManager.joinConversation(any()) } returns Unit
 
         val conversationListViewModel = ConversationListViewModel(context, conversationsRepository, conversationListManager, connectivityMonitor)
@@ -170,7 +165,7 @@ class ConversationListViewModelTest {
     @Test
     fun `conversationListViewModel_muteConversation() should call onConversationError on failure`() = runBlocking {
         val conversationSid = "sid"
-        coEvery { conversationListManager.muteConversation(conversationSid) } throws ConversationsException(ConversationsError.CONVERSATION_MUTE_FAILED)
+        coEvery { conversationListManager.muteConversation(conversationSid) } throws createTwilioException(ConversationsError.CONVERSATION_MUTE_FAILED)
 
         val conversationListViewModel = ConversationListViewModel(context, conversationsRepository, conversationListManager, connectivityMonitor)
         conversationListViewModel.muteConversation(conversationSid)
@@ -195,7 +190,7 @@ class ConversationListViewModelTest {
     @Test
     fun `conversationListViewModel_unmuteConversation() should call onConversationError on failure`() = runBlocking {
         val conversationSid = "sid"
-        coEvery { conversationListManager.unmuteConversation(conversationSid) } throws ConversationsException(ConversationsError.CONVERSATION_UNMUTE_FAILED)
+        coEvery { conversationListManager.unmuteConversation(conversationSid) } throws createTwilioException(ConversationsError.CONVERSATION_UNMUTE_FAILED)
 
         val conversationListViewModel = ConversationListViewModel(context, conversationsRepository, conversationListManager, connectivityMonitor)
         conversationListViewModel.unmuteConversation(conversationSid)
@@ -232,7 +227,7 @@ class ConversationListViewModelTest {
     @Test
     fun `conversationListViewModel_leaveConversation() should call onConversationError on failure`() = runBlocking {
         val conversationSid = "sid"
-        coEvery { conversationListManager.leaveConversation(conversationSid) } throws ConversationsException(ConversationsError.CONVERSATION_LEAVE_FAILED)
+        coEvery { conversationListManager.leaveConversation(conversationSid) } throws createTwilioException(ConversationsError.CONVERSATION_LEAVE_FAILED)
 
         val conversationListViewModel = ConversationListViewModel(context, conversationsRepository, conversationListManager, connectivityMonitor)
         conversationListViewModel.leaveConversation(conversationSid)

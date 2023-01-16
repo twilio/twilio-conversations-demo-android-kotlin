@@ -3,13 +3,27 @@ package com.twilio.conversations.app.manager
 import com.google.gson.Gson
 import com.twilio.conversations.Attributes
 import com.twilio.conversations.MediaUploadListener
-import com.twilio.conversations.app.common.*
-import com.twilio.conversations.app.common.enums.*
-import com.twilio.conversations.app.common.extensions.*
+import com.twilio.conversations.app.common.DefaultDispatcherProvider
+import com.twilio.conversations.app.common.DispatcherProvider
+import com.twilio.conversations.app.common.enums.Direction
+import com.twilio.conversations.app.common.enums.DownloadState
+import com.twilio.conversations.app.common.enums.MessageType
+import com.twilio.conversations.app.common.enums.Reactions
+import com.twilio.conversations.app.common.enums.SendStatus
+import com.twilio.conversations.app.common.extensions.firstMedia
+import com.twilio.conversations.app.common.extensions.removeMessage
+import com.twilio.conversations.app.common.toMessageDataItem
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 import com.twilio.conversations.app.data.models.ReactionAttributes
 import com.twilio.conversations.app.repository.ConversationsRepository
+import com.twilio.conversations.extensions.advanceLastReadMessageIndex
+import com.twilio.conversations.extensions.getConversation
+import com.twilio.conversations.extensions.getMessageByIndex
+import com.twilio.conversations.extensions.getTemporaryContentUrl
+import com.twilio.conversations.extensions.sendMessage
+import com.twilio.conversations.extensions.setAttributes
+import com.twilio.util.ErrorInfo
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import timber.log.Timber
@@ -72,8 +86,8 @@ class MessageListManagerImpl(
         conversationsRepository.insertMessage(message)
 
         val sentMessage = conversation.sendMessage {
-            setAttributes(attributes)
-            setBody(text)
+            this.attributes = attributes
+            this.body = text
         }.toMessageDataItem(identity, uuid)
 
         conversationsRepository.updateMessageByUuid(sentMessage)
@@ -89,8 +103,8 @@ class MessageListManagerImpl(
         val conversation = conversationsClient.getConversationsClient().getConversation(conversationSid)
 
         val sentMessage = conversation.sendMessage {
-            setAttributes(Attributes(message.uuid))
-            setBody(message.body)
+            this.attributes = Attributes(message.uuid)
+            this.body = message.body
         }.toMessageDataItem(identity, message.uuid)
 
         conversationsRepository.updateMessageByUuid(sentMessage)
@@ -127,7 +141,7 @@ class MessageListManagerImpl(
         conversationsRepository.insertMessage(message)
 
         val sentMessage = conversation.sendMessage {
-            setAttributes(attributes)
+            this.attributes = attributes
             addMedia(
                 inputStream,
                 mimeType ?: "",
@@ -155,7 +169,7 @@ class MessageListManagerImpl(
 
 
         val sentMessage = conversation.sendMessage {
-            setAttributes(Attributes(messageUuid))
+            this.attributes = Attributes(messageUuid)
             addMedia(
                 inputStream,
                 message.mediaType ?: "",
@@ -196,7 +210,7 @@ class MessageListManagerImpl(
                 )
             }
 
-            override fun onFailed(errorInfo: com.twilio.conversations.ErrorInfo) {
+            override fun onFailed(errorInfo: ErrorInfo) {
                 Timber.d("Upload failed: " + errorInfo)
             }
         }

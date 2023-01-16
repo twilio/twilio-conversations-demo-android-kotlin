@@ -17,11 +17,8 @@ import com.twilio.conversations.app.common.asMessageDataItems
 import com.twilio.conversations.app.common.asMessageListViewItems
 import com.twilio.conversations.app.common.asParticipantDataItem
 import com.twilio.conversations.app.common.enums.ConversationsError.UNKNOWN
-import com.twilio.conversations.app.common.extensions.ConversationsException
+import com.twilio.conversations.app.common.extensions.createTwilioException
 import com.twilio.conversations.app.common.extensions.getAndSubscribeUser
-import com.twilio.conversations.app.common.extensions.getConversation
-import com.twilio.conversations.app.common.extensions.getLastMessages
-import com.twilio.conversations.app.common.extensions.waitForSynchronization
 import com.twilio.conversations.app.common.toMessageDataItem
 import com.twilio.conversations.app.createTestConversationDataItem
 import com.twilio.conversations.app.createTestMessageDataItem
@@ -39,6 +36,9 @@ import com.twilio.conversations.app.testUtil.CoroutineTestRule
 import com.twilio.conversations.app.testUtil.toConversationMock
 import com.twilio.conversations.app.testUtil.toMessageMock
 import com.twilio.conversations.app.testUtil.toParticipantMock
+import com.twilio.conversations.extensions.getConversation
+import com.twilio.conversations.extensions.getLastMessages
+import com.twilio.conversations.extensions.waitForSynchronization
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.confirmVerified
@@ -107,12 +107,13 @@ class ConversationsRepositoryTest {
 
         mockkStatic("com.twilio.conversations.app.common.extensions.TwilioExtensionsKt")
         mockkStatic("com.twilio.conversations.app.common.DataConverterKt")
+        mockkStatic("com.twilio.conversations.extensions.ConversationsExtensionsKt")
 
         every { conversationsClient.myIdentity } returns myIdentity
         every { conversationsClient.addListener(any()) } answers { clientListener = it.invocation.args[0] as ConversationsClientListener }
         every { conversationsClient.myConversations } returns emptyList()
 
-        coEvery { conversation.waitForSynchronization() } returns conversation
+        coEvery { conversation.waitForSynchronization() } returns Unit
         coEvery { conversationsClient.getConversation(any()) } returns conversation
         coEvery { conversationsClientWrapper.getConversationsClient() } returns conversationsClient
 
@@ -175,7 +176,7 @@ class ConversationsRepositoryTest {
 
         every { localCacheProvider.conversationsDao().getUserConversations() } returns flowOf(emptyList())
         every { conversationsClient.myConversations } returns listOf(expectedConversation.toConversationMock())
-        coEvery { conversationsClient.getConversation(any()) } throws ConversationsException(UNKNOWN)
+        coEvery { conversationsClient.getConversation(any()) } throws createTwilioException(UNKNOWN)
 
         val actualStatus = conversationsRepository.getUserConversations().toList().last().requestStatus
         assertEquals(UNKNOWN, (actualStatus as RepositoryRequestStatus.Error).error)
@@ -270,7 +271,7 @@ class ConversationsRepositoryTest {
     @Test
     fun `getMessages() should return error if cannot fetch conversation descriptors`() = runBlocking {
         every { localCacheProvider.messagesDao().getMessagesSorted(any()) } returns ItemDataSource.factory(emptyList())
-        coEvery { conversation.getLastMessages(any()).asMessageDataItems(any()) } throws ConversationsException(UNKNOWN)
+        coEvery { conversation.getLastMessages(any()).asMessageDataItems(any()) } throws createTwilioException(UNKNOWN)
 
         val actualStatus = conversationsRepository.getMessages("conversationSid", MESSAGE_COUNT)
             .first { it.requestStatus is RepositoryRequestStatus.Error }.requestStatus
@@ -285,7 +286,7 @@ class ConversationsRepositoryTest {
 
         every { localCacheProvider.messagesDao().getMessagesSorted(any())} returns ItemDataSource.factory(emptyList())
         coEvery { conversation.getLastMessages(any()).asMessageDataItems(any()) } returns listOf(expectedMessage)
-        coEvery { conversationsClient.getConversation(any()) } throws ConversationsException(UNKNOWN)
+        coEvery { conversationsClient.getConversation(any()) } throws createTwilioException(UNKNOWN)
 
         val actualStatus = conversationsRepository.getMessages(conversationSid, MESSAGE_COUNT)
             .first { it.requestStatus is RepositoryRequestStatus.Error }.requestStatus
