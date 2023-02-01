@@ -12,14 +12,13 @@ import com.twilio.conversations.app.adapters.ParticipantListAdapter
 import com.twilio.conversations.app.common.SheetListener
 import com.twilio.conversations.app.common.extensions.*
 import com.twilio.conversations.app.common.injector
-import kotlinx.android.synthetic.main.activity_participants.*
-import kotlinx.android.synthetic.main.view_participant_details_screen.*
+import com.twilio.conversations.app.databinding.ActivityParticipantsBinding
 import timber.log.Timber
 
 class ParticipantListActivity : BaseActivity() {
-
-    private val sheetBehavior by lazy { BottomSheetBehavior.from(participant_details_sheet) }
-    private val sheetListener by lazy { SheetListener(sheet_background) }
+    private val binding by lazy { ActivityParticipantsBinding.inflate(layoutInflater) }
+    private val sheetBehavior by lazy { BottomSheetBehavior.from(binding.participantDetailsSheet.root) }
+    private val sheetListener by lazy { SheetListener(binding.sheetBackground) }
 
     val participantListViewModel by lazyViewModel {
         injector.createParticipantListViewModel(intent.getStringExtra(EXTRA_CONVERSATION_SID)!!)
@@ -74,40 +73,41 @@ class ParticipantListActivity : BaseActivity() {
     }
 
     private fun initViews() {
-        setSupportActionBar(conversation_toolbar)
+        setSupportActionBar(binding.conversationToolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        conversation_toolbar.setNavigationOnClickListener { onBackPressed() }
+        binding.conversationToolbar.setNavigationOnClickListener { onBackPressed() }
         sheetBehavior.addBottomSheetCallback(sheetListener)
         title = getString(R.string.participant_title)
         val adapter = ParticipantListAdapter { participant ->
             Timber.d("Participant clicked: $participant")
             participantListViewModel.selectedParticipant = participant
-            participant_details_name.text = participant.friendlyName
-            participant_details_status.setText(if (participant.isOnline) R.string.participant_online else R.string.participant_offline)
+
+            binding.participantDetailsSheet.participantDetailsName.text = participant.friendlyName
+            binding.participantDetailsSheet.participantDetailsStatus.setText(if (participant.isOnline) R.string.participant_online else R.string.participant_offline)
             sheetBehavior.show()
         }
 
-        participantRefresh.setOnRefreshListener { participantListViewModel.getConversationParticipants() }
-        participantList.adapter = adapter
+        binding.participantRefresh.setOnRefreshListener { participantListViewModel.getConversationParticipants() }
+        binding.participantList.adapter = adapter
 
-        sheet_background.setOnClickListener {
+        binding.sheetBackground.setOnClickListener {
             sheetBehavior.hide()
         }
 
-        participant_details_remove.setOnClickListener {
+        binding.participantDetailsSheet.participantDetailsRemove.setOnClickListener {
             Timber.d("Participant remove clicked: ${participantListViewModel.selectedParticipant?.sid}")
             participantListViewModel.removeSelectedParticipant()
             sheetBehavior.hide()
         }
 
-        participantListViewModel.participantsList.observe(this, { participants ->
+        participantListViewModel.participantsList.observe(this) { participants ->
             Timber.d("Participants received: $participants")
             adapter.participants = participants
-            participantRefresh.isRefreshing = false
-        })
-        participantListViewModel.onParticipantError.observe(this, { error ->
-            participantListLayout.showSnackbar(getErrorMessage(error))
-        })
+            binding.participantRefresh.isRefreshing = false
+        }
+        participantListViewModel.onParticipantError.observe(this) { error ->
+            binding.participantListLayout.showSnackbar(getErrorMessage(error))
+        }
     }
 
     companion object {

@@ -12,18 +12,14 @@ import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.extensions.*
 import com.twilio.conversations.app.common.injector
 import com.twilio.conversations.app.databinding.ActivityConversationDetailsBinding
-import kotlinx.android.synthetic.main.activity_conversation_details.*
-import kotlinx.android.synthetic.main.view_add_chat_participant_screen.*
-import kotlinx.android.synthetic.main.view_add_non_chat_participant_screen.*
-import kotlinx.android.synthetic.main.view_conversation_rename_screen.*
 import timber.log.Timber
 
 class ConversationDetailsActivity : BaseActivity() {
-
-    private val renameConversationSheet by lazy { BottomSheetBehavior.from(rename_conversation_sheet) }
-    private val addChatParticipantSheet by lazy { BottomSheetBehavior.from(add_chat_participant_sheet) }
-    private val addNonChatParticipantSheet by lazy { BottomSheetBehavior.from(add_non_chat_participant_sheet) }
-    private val sheetListener by lazy { SheetListener(sheet_background) { hideKeyboard() } }
+    private lateinit var binding: ActivityConversationDetailsBinding
+    private val renameConversationSheet by lazy { BottomSheetBehavior.from(binding.renameConversationSheet.root) }
+    private val addChatParticipantSheet by lazy { BottomSheetBehavior.from(binding.addChatParticipantSheet.root) }
+    private val addNonChatParticipantSheet by lazy { BottomSheetBehavior.from(binding.addNonChatParticipantSheet.root) }
+    private val sheetListener by lazy { SheetListener(binding.sheetBackground) { hideKeyboard() } }
     private val progressDialog: AlertDialog by lazy {
         AlertDialog.Builder(this)
             .setCancelable(false)
@@ -38,13 +34,13 @@ class ConversationDetailsActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         Timber.d("onCreate")
         super.onCreate(savedInstanceState)
-        val binding = DataBindingUtil
+        binding = DataBindingUtil
             .setContentView<ActivityConversationDetailsBinding>(this, R.layout.activity_conversation_details)
             .apply {
             lifecycleOwner = this@ConversationDetailsActivity
         }
 
-        initViews(binding)
+        initViews()
     }
 
     override fun onBackPressed() {
@@ -63,7 +59,7 @@ class ConversationDetailsActivity : BaseActivity() {
         super.onBackPressed()
     }
 
-    private fun initViews(binding: ActivityConversationDetailsBinding) {
+    private fun initViews() {
         setSupportActionBar(binding.conversationDetailsToolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         binding.conversationDetailsToolbar.setNavigationOnClickListener { onBackPressed() }
@@ -74,14 +70,14 @@ class ConversationDetailsActivity : BaseActivity() {
 
         binding.addChatParticipantButton.setOnClickListener {
             Timber.d("Add chat participant clicked")
-            add_chat_participant_id_input.text?.clear()
+            binding.addChatParticipantSheet.addChatParticipantIdInput.text?.clear()
             addChatParticipantSheet.show()
         }
 
         binding.addNonChatParticipantButton.setOnClickListener {
             Timber.d("Add non-chat participant clicked")
-            add_non_chat_participant_phone_input.text?.clear()
-            add_non_chat_participant_proxy_input.text?.clear()
+            binding.addNonChatParticipantSheet.addNonChatParticipantPhoneInput.text?.clear()
+            binding.addNonChatParticipantSheet.addNonChatParticipantProxyInput.text?.clear()
             addNonChatParticipantSheet.show()
         }
 
@@ -109,75 +105,80 @@ class ConversationDetailsActivity : BaseActivity() {
             conversationDetailsViewModel.leaveConversation()
         }
 
-        sheet_background.setOnClickListener {
+        binding.sheetBackground.setOnClickListener {
             renameConversationSheet.hide()
             addChatParticipantSheet.hide()
             addNonChatParticipantSheet.hide()
         }
 
-        rename_conversation_cancel_button.setOnClickListener {
+        binding.renameConversationSheet.renameConversationCancelButton.setOnClickListener {
             renameConversationSheet.hide()
         }
 
-        rename_conversation_button.setOnClickListener {
+        binding.renameConversationSheet.renameConversationButton.setOnClickListener {
             Timber.d("Conversation rename clicked")
             renameConversationSheet.hide()
-            conversationDetailsViewModel.renameConversation(rename_conversation_input.text.toString())
+            conversationDetailsViewModel.renameConversation(binding.renameConversationSheet.renameConversationInput.text.toString())
         }
 
-        add_chat_participant_id_cancel_button.setOnClickListener {
+        binding.addChatParticipantSheet.addChatParticipantIdCancelButton.setOnClickListener {
             addChatParticipantSheet.hide()
         }
 
-        add_chat_participant_id_button.setOnClickListener {
+        binding.addChatParticipantSheet.addChatParticipantIdButton.setOnClickListener {
             Timber.d("Add chat participant clicked")
             addChatParticipantSheet.hide()
-            conversationDetailsViewModel.addChatParticipant(add_chat_participant_id_input.text.toString())
+            conversationDetailsViewModel.addChatParticipant(binding.addChatParticipantSheet.addChatParticipantIdInput.text.toString())
         }
 
-        add_non_chat_participant_id_cancel_button.setOnClickListener {
+        binding.addNonChatParticipantSheet.addNonChatParticipantIdCancelButton.setOnClickListener {
             addNonChatParticipantSheet.hide()
         }
 
-        add_non_chat_participant_id_button.setOnClickListener {
+        binding.addNonChatParticipantSheet.addNonChatParticipantIdButton.setOnClickListener {
             Timber.d("Add non-chat participant clicked")
             addNonChatParticipantSheet.hide()
             conversationDetailsViewModel.addNonChatParticipant(
-                    add_non_chat_participant_phone_input.text.toString(),
-                    add_non_chat_participant_proxy_input.text.toString(),
+                    binding.addNonChatParticipantSheet.addNonChatParticipantPhoneInput.text.toString(),
+                    binding.addNonChatParticipantSheet.addNonChatParticipantProxyInput.text.toString(),
             )
         }
 
-        conversationDetailsViewModel.isShowProgress.observe(this, { show ->
+        conversationDetailsViewModel.isShowProgress.observe(this) { show ->
             if (show) {
                 progressDialog.show()
             } else {
                 progressDialog.hide()
             }
-        })
+        }
 
-        conversationDetailsViewModel.conversationDetails.observe(this, { conversationDetails ->
+        conversationDetailsViewModel.conversationDetails.observe(this) { conversationDetails ->
             Timber.d("Conversation details received: $conversationDetails")
             binding.details = conversationDetails
-            rename_conversation_input.setText(conversationDetails.conversationName)
-        })
+            binding.renameConversationSheet.renameConversationInput.setText(conversationDetails.conversationName)
+        }
 
-        conversationDetailsViewModel.onDetailsError.observe(this, { error ->
+        conversationDetailsViewModel.onDetailsError.observe(this) { error ->
             if (error == ConversationsError.CONVERSATION_GET_FAILED) {
                 showToast(R.string.err_failed_to_get_conversation)
                 finish()
             }
-            conversationDetailsLayout.showSnackbar(getErrorMessage(error))
-        })
+            binding.conversationDetailsLayout.showSnackbar(getErrorMessage(error))
+        }
 
-        conversationDetailsViewModel.onConversationLeft.observe(this, {
+        conversationDetailsViewModel.onConversationLeft.observe(this) {
             ConversationListActivity.start(this)
             finish()
-        })
+        }
 
-        conversationDetailsViewModel.onParticipantAdded.observe(this, { identity ->
-            conversationDetailsLayout.showSnackbar(getString(R.string.participant_added_message, identity))
-        })
+        conversationDetailsViewModel.onParticipantAdded.observe(this) { identity ->
+            binding.conversationDetailsLayout.showSnackbar(
+                getString(
+                    R.string.participant_added_message,
+                    identity
+                )
+            )
+        }
     }
 
     companion object {
