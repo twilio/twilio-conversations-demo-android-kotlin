@@ -27,7 +27,7 @@ class ParticipantListActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         Timber.d("onCreate")
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_participants)
+        setContentView(binding.root)
 
         initViews()
     }
