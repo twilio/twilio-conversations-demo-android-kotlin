@@ -26,7 +26,6 @@ import com.twilio.conversations.app.testUtil.WaitForViewMatcher
 import com.twilio.conversations.app.testUtil.atPosition
 import com.twilio.conversations.app.testUtil.waitUntilPopupStateChanged
 import com.twilio.conversations.app.viewModel.ParticipantListViewModel
-import kotlinx.android.synthetic.main.activity_participants.*
 import kotlinx.coroutines.flow.flowOf
 import org.hamcrest.CoreMatchers.allOf
 import org.junit.Before
@@ -118,7 +117,7 @@ class ParticipantListActivityTest {
 
         // Espresso click() will work while the bottom sheet is animating and not trigger the click listener
         // UI tests should be run with disabled animations otherwise we have to sleep here to trigger the listener
-        BottomSheetBehavior.from(activityRule.activity.participant_details_sheet).waitUntilPopupStateChanged(
+        BottomSheetBehavior.from(activityRule.activity.findViewById(R.id.participant_details_sheet)).waitUntilPopupStateChanged(
             BottomSheetBehavior.STATE_EXPANDED)
         WaitForViewMatcher.performOnView(allOf(
             withId(R.id.participant_details_remove),

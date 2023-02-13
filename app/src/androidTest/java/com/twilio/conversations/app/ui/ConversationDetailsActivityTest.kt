@@ -17,7 +17,6 @@ import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.testUtil.WaitForViewMatcher
 import com.twilio.conversations.app.testUtil.waitUntilPopupStateChanged
 import com.twilio.conversations.app.viewModel.ConversationDetailsViewModel
-import kotlinx.android.synthetic.main.activity_conversation_details.*
 import org.hamcrest.CoreMatchers.allOf
 import org.junit.Before
 import org.junit.BeforeClass
@@ -49,7 +48,7 @@ class ConversationDetailsActivityTest {
     @Test
     fun addChatParticipantSuccess() {
         WaitForViewMatcher.performOnView(withId(R.id.add_chat_participant_button), click())
-        BottomSheetBehavior.from(activityRule.activity.add_chat_participant_sheet).waitUntilPopupStateChanged(BottomSheetBehavior.STATE_EXPANDED)
+        BottomSheetBehavior.from(activityRule.activity.findViewById(R.id.add_chat_participant_sheet)).waitUntilPopupStateChanged(BottomSheetBehavior.STATE_EXPANDED)
         WaitForViewMatcher.performOnView(withId(R.id.add_chat_participant_id_input), replaceText(participantSid), closeSoftKeyboard())
         WaitForViewMatcher.performOnView(withId(R.id.add_chat_participant_id_cancel_button), click())
 
@@ -63,7 +62,7 @@ class ConversationDetailsActivityTest {
     @Test
     fun addNonChatParticipantSuccess() {
         WaitForViewMatcher.performOnView(withId(R.id.add_non_chat_participant_button), click())
-        BottomSheetBehavior.from(activityRule.activity.add_non_chat_participant_sheet).waitUntilPopupStateChanged(BottomSheetBehavior.STATE_EXPANDED)
+        BottomSheetBehavior.from(activityRule.activity.findViewById(R.id.add_non_chat_participant_sheet)).waitUntilPopupStateChanged(BottomSheetBehavior.STATE_EXPANDED)
         WaitForViewMatcher.performOnView(withId(R.id.add_non_chat_participant_phone_input), replaceText(participantPhone), closeSoftKeyboard())
         WaitForViewMatcher.performOnView(withId(R.id.add_non_chat_participant_proxy_input), replaceText(participantProxyPhone), closeSoftKeyboard())
         WaitForViewMatcher.performOnView(withId(R.id.add_non_chat_participant_id_cancel_button), click())
@@ -90,7 +89,7 @@ class ConversationDetailsActivityTest {
         val conversationAuthor = "UITester"
         val conversationCreatedDate = "23 May 2020"
         WaitForViewMatcher.performOnView(withId(R.id.conversation_rename_button), scrollTo(), click())
-        BottomSheetBehavior.from(activityRule.activity.rename_conversation_sheet).waitUntilPopupStateChanged(BottomSheetBehavior.STATE_EXPANDED)
+        BottomSheetBehavior.from(activityRule.activity.findViewById(R.id.rename_conversation_sheet)).waitUntilPopupStateChanged(BottomSheetBehavior.STATE_EXPANDED)
         WaitForViewMatcher.performOnView(withId(R.id.rename_conversation_input), replaceText(updatedConversationName), closeSoftKeyboard())
         WaitForViewMatcher.performOnView(withId(R.id.rename_conversation_cancel_button), click())
         UiThreadStatement.runOnUiThread {

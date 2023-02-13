@@ -1,6 +1,5 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'com.google.gms.google-services'
 apply plugin: 'com.google.firebase.crashlytics'
@@ -70,7 +69,6 @@ android {
 
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_11.toString()
-        useIR = true
         freeCompilerArgs += [
                 "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
                 "-Xopt-in=kotlinx.coroutines.ObsoleteCoroutinesApi",
@@ -105,9 +103,9 @@ android {
 
 dependencies {
     // Twilio
-    implementation "com.twilio:conversations-android-with-symbols:4.0.2"
+    implementation "com.twilio:conversations-android-with-symbols:5.0.0"
     // or without symbols:
-    // implementation "com.twilio:conversations-android:4.0.2"
+    // implementation "com.twilio:conversations-android:5.0.0"
 
     // Kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"

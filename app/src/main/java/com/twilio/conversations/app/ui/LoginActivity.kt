@@ -26,7 +26,6 @@ import com.twilio.conversations.app.common.extensions.lazyViewModel
 import com.twilio.conversations.app.common.extensions.onSubmit
 import com.twilio.conversations.app.common.injector
 import com.twilio.conversations.app.databinding.ActivityLoginBinding
-import kotlinx.android.synthetic.main.activity_login.*
 import timber.log.Timber
 
 class LoginActivity : AppCompatActivity() {
@@ -99,21 +98,21 @@ class LoginActivity : AppCompatActivity() {
 
     private fun signInFailed(error: ConversationsError) {
         when (error) {
-            EMPTY_USERNAME -> usernameInputLayout.error = getString(R.string.enter_username)
+            EMPTY_USERNAME -> binding.usernameInputLayout.error = getString(R.string.enter_username)
 
-            EMPTY_PASSWORD -> passwordInputLayout.error = getString(R.string.enter_password)
+            EMPTY_PASSWORD -> binding.passwordInputLayout.error = getString(R.string.enter_password)
 
             EMPTY_USERNAME_AND_PASSWORD -> {
-                usernameInputLayout.error = getString(R.string.enter_username)
-                passwordInputLayout.error = getString(R.string.enter_password)
+                binding.usernameInputLayout.error = getString(R.string.enter_username)
+                binding.passwordInputLayout.error = getString(R.string.enter_password)
             }
 
-            TOKEN_ACCESS_DENIED -> passwordInputLayout.error = getString(R.string.token_access_denied)
+            TOKEN_ACCESS_DENIED -> binding.passwordInputLayout.error = getString(R.string.token_access_denied)
 
             NO_INTERNET_CONNECTION,
             TOKEN_ERROR -> showNoInternetDialog()
 
-            else -> passwordInputLayout.error = getErrorMessage(error, R.string.sign_in_error)
+            else -> binding.passwordInputLayout.error = getErrorMessage(error, R.string.sign_in_error)
         }
     }
 
