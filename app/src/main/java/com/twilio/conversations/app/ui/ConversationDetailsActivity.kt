@@ -16,9 +16,9 @@ import timber.log.Timber
 
 class ConversationDetailsActivity : BaseActivity() {
     private lateinit var binding: ActivityConversationDetailsBinding
-    private val renameConversationSheet by lazy { BottomSheetBehavior.from(binding.renameConversationSheet.root) }
-    private val addChatParticipantSheet by lazy { BottomSheetBehavior.from(binding.addChatParticipantSheet.root) }
-    private val addNonChatParticipantSheet by lazy { BottomSheetBehavior.from(binding.addNonChatParticipantSheet.root) }
+    private val renameConversationSheetBehavior by lazy { BottomSheetBehavior.from(binding.renameConversationSheet.root) }
+    private val addChatParticipantSheetBehavior by lazy { BottomSheetBehavior.from(binding.addChatParticipantSheet.root) }
+    private val addNonChatParticipantSheetBehavior by lazy { BottomSheetBehavior.from(binding.addNonChatParticipantSheet.root) }
     private val sheetListener by lazy { SheetListener(binding.sheetBackground) { hideKeyboard() } }
     private val progressDialog: AlertDialog by lazy {
         AlertDialog.Builder(this)
@@ -44,16 +44,16 @@ class ConversationDetailsActivity : BaseActivity() {
     }
 
     override fun onBackPressed() {
-        if (renameConversationSheet.isShowing()) {
-            renameConversationSheet.hide()
+        if (renameConversationSheetBehavior.isShowing()) {
+            renameConversationSheetBehavior.hide()
             return
         }
-        if (addChatParticipantSheet.isShowing()) {
-            addChatParticipantSheet.hide()
+        if (addChatParticipantSheetBehavior.isShowing()) {
+            addChatParticipantSheetBehavior.hide()
             return
         }
-        if (addNonChatParticipantSheet.isShowing()) {
-            addNonChatParticipantSheet.hide()
+        if (addNonChatParticipantSheetBehavior.isShowing()) {
+            addNonChatParticipantSheetBehavior.hide()
             return
         }
         super.onBackPressed()
@@ -63,22 +63,22 @@ class ConversationDetailsActivity : BaseActivity() {
         setSupportActionBar(binding.conversationDetailsToolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         binding.conversationDetailsToolbar.setNavigationOnClickListener { onBackPressed() }
-        renameConversationSheet.addBottomSheetCallback(sheetListener)
-        addChatParticipantSheet.addBottomSheetCallback(sheetListener)
-        addNonChatParticipantSheet.addBottomSheetCallback(sheetListener)
+        renameConversationSheetBehavior.addBottomSheetCallback(sheetListener)
+        addChatParticipantSheetBehavior.addBottomSheetCallback(sheetListener)
+        addNonChatParticipantSheetBehavior.addBottomSheetCallback(sheetListener)
         title = getString(R.string.details_title)
 
         binding.addChatParticipantButton.setOnClickListener {
             Timber.d("Add chat participant clicked")
             binding.addChatParticipantSheet.addChatParticipantIdInput.text?.clear()
-            addChatParticipantSheet.show()
+            addChatParticipantSheetBehavior.show()
         }
 
         binding.addNonChatParticipantButton.setOnClickListener {
             Timber.d("Add non-chat participant clicked")
             binding.addNonChatParticipantSheet.addNonChatParticipantPhoneInput.text?.clear()
             binding.addNonChatParticipantSheet.addNonChatParticipantProxyInput.text?.clear()
-            addNonChatParticipantSheet.show()
+            addNonChatParticipantSheetBehavior.show()
         }
 
         binding.participantsListButton.setOnClickListener {
@@ -88,7 +88,7 @@ class ConversationDetailsActivity : BaseActivity() {
 
         binding.conversationRenameButton.setOnClickListener {
             Timber.d("Show rename conversation popup clicked")
-            renameConversationSheet.show()
+            renameConversationSheetBehavior.show()
         }
 
         binding.conversationMuteButton.setOnClickListener {
@@ -106,38 +106,38 @@ class ConversationDetailsActivity : BaseActivity() {
         }
 
         binding.sheetBackground.setOnClickListener {
-            renameConversationSheet.hide()
-            addChatParticipantSheet.hide()
-            addNonChatParticipantSheet.hide()
+            renameConversationSheetBehavior.hide()
+            addChatParticipantSheetBehavior.hide()
+            addNonChatParticipantSheetBehavior.hide()
         }
 
         binding.renameConversationSheet.renameConversationCancelButton.setOnClickListener {
-            renameConversationSheet.hide()
+            renameConversationSheetBehavior.hide()
         }
 
         binding.renameConversationSheet.renameConversationButton.setOnClickListener {
             Timber.d("Conversation rename clicked")
-            renameConversationSheet.hide()
+            renameConversationSheetBehavior.hide()
             conversationDetailsViewModel.renameConversation(binding.renameConversationSheet.renameConversationInput.text.toString())
         }
 
         binding.addChatParticipantSheet.addChatParticipantIdCancelButton.setOnClickListener {
-            addChatParticipantSheet.hide()
+            addChatParticipantSheetBehavior.hide()
         }
 
         binding.addChatParticipantSheet.addChatParticipantIdButton.setOnClickListener {
             Timber.d("Add chat participant clicked")
-            addChatParticipantSheet.hide()
+            addChatParticipantSheetBehavior.hide()
             conversationDetailsViewModel.addChatParticipant(binding.addChatParticipantSheet.addChatParticipantIdInput.text.toString())
         }
 
         binding.addNonChatParticipantSheet.addNonChatParticipantIdCancelButton.setOnClickListener {
-            addNonChatParticipantSheet.hide()
+            addNonChatParticipantSheetBehavior.hide()
         }
 
         binding.addNonChatParticipantSheet.addNonChatParticipantIdButton.setOnClickListener {
             Timber.d("Add non-chat participant clicked")
-            addNonChatParticipantSheet.hide()
+            addNonChatParticipantSheetBehavior.hide()
             conversationDetailsViewModel.addNonChatParticipant(
                     binding.addNonChatParticipantSheet.addNonChatParticipantPhoneInput.text.toString(),
                     binding.addNonChatParticipantSheet.addNonChatParticipantProxyInput.text.toString(),
