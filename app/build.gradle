@@ -182,3 +182,16 @@ if (hasProperty("googleServicesJson")) {
         into(projectDir)
     }
 }
+
+// Fix Powermocks on JDK-17: https://stackoverflow.com/questions/69896191/powermock-compatibility-with-jdk-17
+tasks.withType(Test).configureEach {
+    jvmArgs += [
+            '--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED',
+            '--add-opens=java.base/java.util=ALL-UNNAMED',
+            '--add-opens=java.base/java.lang=ALL-UNNAMED',
+            '--add-opens=java.base/java.lang.invoke=ALL-UNNAMED',
+            '--add-opens=java.prefs/java.util.prefs=ALL-UNNAMED',
+            '--add-opens=java.base/java.nio.charset=ALL-UNNAMED',
+            '--add-opens=java.base/java.net=ALL-UNNAMED'
+    ]
+}
