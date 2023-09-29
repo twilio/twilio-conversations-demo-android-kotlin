@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 data class MessageDataItem(
     val sid: String,
     val conversationSid: String,
-    val participantSid: String,
+    val participantSid: String?,
     val type: Int,
     val author: String,
     val dateCreated: Long,
