@@ -21,3 +21,10 @@
 #-renamesourcefileattribute SourceFile
 
 -dontwarn org.xmlpull.v1.**
+
+# Suppress R8 warnings.
+-dontwarn com.**
+-dontwarn java.**
+-dontwarn javax.**
+-dontwarn org.**
+-dontwarn edu.umd.cs.findbugs.annotations.SuppressFBWarnings

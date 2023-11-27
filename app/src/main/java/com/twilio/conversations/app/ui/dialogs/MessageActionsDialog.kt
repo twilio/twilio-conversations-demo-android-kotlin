@@ -7,6 +7,7 @@ import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.ViewGroup
+import com.twilio.conversations.app.common.call
 import com.twilio.conversations.app.common.enums.MessageType.MEDIA
 import com.twilio.conversations.app.common.extensions.applicationContext
 import com.twilio.conversations.app.common.extensions.lazyActivityViewModel

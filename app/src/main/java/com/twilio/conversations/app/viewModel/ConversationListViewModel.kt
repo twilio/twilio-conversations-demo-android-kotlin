@@ -7,6 +7,7 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.twilio.conversations.app.common.SingleLiveEvent
 import com.twilio.conversations.app.common.asConversationListViewItems
+import com.twilio.conversations.app.common.call
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.merge
 import com.twilio.conversations.app.data.models.ConversationListViewItem

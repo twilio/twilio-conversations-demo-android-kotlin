@@ -4,6 +4,7 @@ import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.twilio.conversations.app.common.SingleLiveEvent
+import com.twilio.conversations.app.common.call
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.extensions.toConversationsError
 import com.twilio.conversations.app.manager.LoginManager
@@ -54,6 +55,6 @@ class SplashViewModel(
     private suspend fun delayAndShowLoginScreen(error: ConversationsError) {
         val elapsedTime = SystemClock.uptimeMillis() - startTime
         delay(3000 - elapsedTime) // Delay to avoid UI blinking
-        onShowLoginScreen.call(error)
+        onShowLoginScreen.value = error
     }
 }

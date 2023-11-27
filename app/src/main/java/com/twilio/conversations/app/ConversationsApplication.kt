@@ -3,9 +3,8 @@ package com.twilio.conversations.app
 import android.app.Application
 import androidx.emoji.bundled.BundledEmojiCompatConfig
 import androidx.emoji.text.EmojiCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.google.firebase.FirebaseApp
 import com.google.firebase.analytics.FirebaseAnalytics
@@ -23,9 +22,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class ConversationsApplication : Application(), LifecycleObserver {
+class ConversationsApplication : Application() {
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    private val appForegroundObserver = AppForegroundObserver()
 
     private var isForegrounded = false
 
@@ -45,7 +46,7 @@ class ConversationsApplication : Application(), LifecycleObserver {
         LocalCacheProvider.createInstance(this)
         ConversationsRepositoryImpl.createInstance(ConversationsClientWrapper.INSTANCE, LocalCacheProvider.INSTANCE)
 
-        ProcessLifecycleOwner.get().lifecycle.addObserver(this)
+        ProcessLifecycleOwner.get().lifecycle.addObserver(appForegroundObserver)
 
         ConversationsClientWrapper.INSTANCE.onUpdateTokenFailure += { signOut() }
     }
@@ -65,16 +66,16 @@ class ConversationsApplication : Application(), LifecycleObserver {
         }
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    fun onAppBackgrounded() {
-        isForegrounded = false
-    }
+    private inner class AppForegroundObserver : DefaultLifecycleObserver {
+        override fun onStop(owner: LifecycleOwner) {
+            isForegrounded = false
+        }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_START)
-    fun onAppForegrounded() {
-        isForegrounded = true
+        override fun onStart(owner: LifecycleOwner) {
+            isForegrounded = true
 
-        runOnForeground()
-        runOnForeground = {}
+            runOnForeground()
+            runOnForeground = {}
+        }
     }
 }

@@ -4,8 +4,12 @@ import android.app.Activity
 import android.app.DownloadManager
 import android.content.ContentResolver
 import android.content.Context
+import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
+import android.os.Build.VERSION.SDK_INT
+import android.os.Bundle
+import android.os.Parcelable
 import android.provider.OpenableColumns
 import android.view.KeyEvent.ACTION_DOWN
 import android.view.KeyEvent.KEYCODE_ENTER
@@ -27,6 +31,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputLayout
 import com.twilio.conversations.app.R
 import com.twilio.conversations.app.common.enums.ConversationsError
+import java.io.Serializable
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -161,4 +166,14 @@ fun TextInputLayout.enableErrorResettingOnTextChanged() {
     editText?.doOnTextChanged { _, _, _, _ ->
         error = null
     }
+}
+
+inline fun <reified T : Serializable> Intent.serializable(key: String): T? = when {
+    SDK_INT >= 34 -> getSerializableExtra(key, T::class.java)
+    else -> @Suppress("DEPRECATION") getParcelableExtra(key) as? T
+}
+
+inline fun <reified T : Parcelable> Bundle.parcelable(key: String): T? = when {
+    SDK_INT >= 34 -> getParcelable(key, T::class.java)
+    else -> @Suppress("DEPRECATION") getParcelable(key) as? T
 }

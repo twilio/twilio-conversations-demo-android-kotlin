@@ -14,6 +14,6 @@ fun ParticipantDataItem.toParticipantMock(conversation: Conversation): Participa
     whenCall(participant.attributes).thenReturn(Attributes("\"\""))
     whenCall(participant.lastReadMessageIndex).thenReturn(lastReadMessageIndex)
     whenCall(participant.lastReadTimestamp).thenReturn(lastReadTimestamp)
-    whenCall(participant.type).thenReturn(Participant.Type.CHAT)
+    whenCall(participant.channel).thenReturn("chat")
     return participant
 }

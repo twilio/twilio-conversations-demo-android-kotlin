@@ -1,11 +1,11 @@
 wrapper {
-    gradleVersion = '7.5.1'
+    gradleVersion = '8.1.1'
     distributionType = Wrapper.DistributionType.ALL
 }
 
 buildscript {
-    ext.kotlin_version = '1.8.0'
-    ext.kotlinx_coroutines_version = '1.6.0'
+    ext.kotlin_version = '1.9.20'
+    ext.kotlinx_coroutines_version = '1.7.3'
     ext.mockk_version = '1.12.2'
     ext.paging_version = '2.1.2'
     ext.room_version = '2.4.2'
@@ -16,10 +16,10 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.3.1'
+        classpath 'com.android.tools.build:gradle:8.1.4'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.google.gms:google-services:4.3.10'
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.7.1'
+        classpath 'com.google.gms:google-services:4.4.0'
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.9'
     }
 }
 

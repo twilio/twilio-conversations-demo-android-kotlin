@@ -24,6 +24,7 @@ import com.twilio.conversations.app.common.extensions.enableErrorResettingOnText
 import com.twilio.conversations.app.common.extensions.getErrorMessage
 import com.twilio.conversations.app.common.extensions.lazyViewModel
 import com.twilio.conversations.app.common.extensions.onSubmit
+import com.twilio.conversations.app.common.extensions.serializable
 import com.twilio.conversations.app.common.injector
 import com.twilio.conversations.app.databinding.ActivityLoginBinding
 import timber.log.Timber
@@ -141,7 +142,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun showStartupSnackbarIfNeeded() {
-        val error = intent.getSerializableExtra(EXTRA_ERROR) as? ConversationsError ?: return
+        val error = intent.serializable<ConversationsError>(EXTRA_ERROR) ?: return
         if (error == NO_STORED_CREDENTIALS) return
 
         showSnackbar(getErrorMessage(error))

@@ -11,6 +11,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.twilio.conversations.app.R
+import com.twilio.conversations.app.common.call
 import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.testUtil.replaceDynamicUi

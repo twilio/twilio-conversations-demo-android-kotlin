@@ -15,9 +15,8 @@ import androidx.core.app.NotificationCompat.PRIORITY_HIGH
 import androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.twilio.conversations.ConversationsClient
 import com.twilio.conversations.NotificationPayload
@@ -34,7 +33,7 @@ private const val NOTIFICATION_CONVERSATION_ID = "twilio_notification_id"
 private const val NOTIFICATION_NAME = "Twilio Notification"
 private const val NOTIFICATION_ID = 1234
 
-interface FCMManager : LifecycleObserver {
+interface FCMManager : DefaultLifecycleObserver {
     suspend fun onNewToken(token: String)
     suspend fun onMessageReceived(payload: NotificationPayload)
     fun showNotification(payload: NotificationPayload)
@@ -118,7 +117,8 @@ class FCMManagerImpl(
 
     fun buildNotification(payload: NotificationPayload): Notification {
         val intent = getTargetIntent(payload.type, payload.conversationSid)
-        val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_ONE_SHOT)
+        val pendingIntent = PendingIntent.getActivity(context, 0, intent,
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE)
 
         val title = when (payload.type) {
             NotificationPayload.Type.NEW_MESSAGE -> context.getString(R.string.notification_new_message)
@@ -167,13 +167,11 @@ class FCMManagerImpl(
         notificationManager.notify(NOTIFICATION_ID, notification)
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    fun onAppBackgrounded() {
+    override fun onStop(owner: LifecycleOwner) {
         isBackgrounded = true
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_START)
-    fun onAppForegrounded() {
+    override fun onStart(owner: LifecycleOwner) {
         isBackgrounded = false
         notificationManager.cancel(NOTIFICATION_ID)
     }

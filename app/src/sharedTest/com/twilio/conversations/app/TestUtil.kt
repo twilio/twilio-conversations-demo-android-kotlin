@@ -14,9 +14,9 @@ private fun <T> SingleLiveEvent<T>.getOrAwaitValue(
 ): T {
     var data: T? = null
     val latch = CountDownLatch(1)
-    val observer = object : Observer<T> {
-        override fun onChanged(o: T?) {
-            data = o
+    val observer = object : Observer<T?> {
+        override fun onChanged(value: T?) {
+            data = value
             latch.countDown()
             this@getOrAwaitValue.removeObserver(this)
         }
@@ -33,10 +33,10 @@ private fun <T> SingleLiveEvent<T>.getOrAwaitValue(
     return data as T
 }
 
-fun <T> SingleLiveEvent<T>.verifyCalled(
+fun SingleLiveEvent<Unit>.verifyCalled(
     time: Long = 2,
     timeUnit: TimeUnit = TimeUnit.SECONDS
-) = assert(getOrAwaitValue(time, timeUnit) == null)
+) = assert(getOrAwaitValue(time, timeUnit) == Unit)
 
 fun <T> SingleLiveEvent<T>.awaitValue(
     value: T,

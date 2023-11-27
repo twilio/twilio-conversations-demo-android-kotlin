@@ -2,7 +2,6 @@ package com.twilio.conversations.app.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.twilio.conversations.app.R
 import com.twilio.conversations.app.common.extensions.lazyViewModel
 import com.twilio.conversations.app.common.injector
 import com.twilio.conversations.app.ui.fragments.SplashFragment
@@ -46,7 +45,7 @@ open class BaseActivity : AppCompatActivity() {
         // So here we return the background back to the color from base theme.
 
         val a = theme.obtainStyledAttributes(
-            R.style.Theme_MaterialComponents_Light,
+            com.google.android.material.R.style.Theme_MaterialComponents_Light,
             intArrayOf(android.R.attr.windowBackground)
         )
 
