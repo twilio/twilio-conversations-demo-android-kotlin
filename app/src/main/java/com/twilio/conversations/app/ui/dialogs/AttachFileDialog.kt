@@ -8,7 +8,7 @@ import android.provider.OpenableColumns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
+import androidx.activity.result.contract.ActivityResultContracts.GetMultipleContents
 import androidx.activity.result.contract.ActivityResultContracts.TakePicture
 import androidx.core.content.FileProvider
 import com.twilio.conversations.app.common.enums.ConversationsError
@@ -19,6 +19,7 @@ import com.twilio.conversations.app.common.injector
 import com.twilio.conversations.app.databinding.DialogAttachFileBinding
 import timber.log.Timber
 import java.io.File
+import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -38,8 +39,8 @@ class AttachFileDialog : BaseBottomSheetDialogFragment() {
         dismiss()
     }
 
-    private val openDocument = registerForActivityResult(OpenDocument()) { uri: Uri? ->
-        uri?.let { sendMediaMessage(it) }
+    private val openDocument = registerForActivityResult(GetMultipleContents()) { uris: List<Uri>? ->
+        uris?.let { sendMediaMessage(it) }
         dismiss()
     }
 
@@ -65,7 +66,7 @@ class AttachFileDialog : BaseBottomSheetDialogFragment() {
         }
 
         binding.fileManager.setOnClickListener {
-            openDocument.launch(arrayOf("*/*"))
+            openDocument.launch("*/*")
         }
     }
 
@@ -85,19 +86,32 @@ class AttachFileDialog : BaseBottomSheetDialogFragment() {
         takePicture.launch(imageCaptureUri)
     }
 
-    fun sendMediaMessage(uri: Uri) {
-        val contentResolver = requireContext().contentResolver
-        val inputStream = contentResolver.openInputStream(uri)
-        val type = contentResolver.getType(uri)
-        val name = contentResolver.getString(uri, OpenableColumns.DISPLAY_NAME)
-        if (inputStream != null) {
-            messageListViewModel.sendMediaMessage(uri.toString(), inputStream, name, type)
+    private fun sendMediaMessage(uris: List<Uri>) {
+        val mediaFiles = uris.mapNotNull { generateMediaFile(it) }
+        messageListViewModel.sendMediasMessage(mediaFiles)
+    }
+
+    private fun sendMediaMessage(uri: Uri) {
+        val mediaFile = generateMediaFile(uri)
+        if (mediaFile != null) {
+            messageListViewModel.sendMediasMessage(listOf(mediaFile))
         } else {
             messageListViewModel.onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
             Timber.w("Could not get input stream for file reading: $uri")
         }
     }
 
+    private fun generateMediaFile(uri: Uri): MediaFile? {
+        val contentResolver = requireContext().contentResolver
+        val inputStream = contentResolver.openInputStream(uri)
+        val type = contentResolver.getType(uri)
+        val name = contentResolver.getString(uri, OpenableColumns.DISPLAY_NAME)
+        if (inputStream == null) {
+            Timber.w("Could not get input stream for file reading: $uri")
+            return null
+        }
+        return MediaFile(uri = uri.toString(), inputStream = inputStream, name = name, mimeType = type)
+    }
 
     companion object {
 
@@ -112,3 +126,5 @@ class AttachFileDialog : BaseBottomSheetDialogFragment() {
         }
     }
 }
+
+data class MediaFile(val uri: String, val inputStream: InputStream, val name: String?, val mimeType: String?)

@@ -35,6 +35,7 @@ import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.manager.MessageListManager
 import com.twilio.conversations.app.repository.ConversationsRepository
+import com.twilio.conversations.app.ui.dialogs.MediaFile
 import com.twilio.util.TwilioException
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -143,11 +144,11 @@ class MessageListViewModel(
         }
     }
 
-    fun sendMediaMessage(uri: String, inputStream: InputStream, fileName: String?, mimeType: String?) =
+    fun sendMediasMessage(mediaFiles: List<MediaFile>) =
         viewModelScope.launch {
             val messageUuid = UUID.randomUUID().toString()
             try {
-                messageListManager.sendMediaMessage(uri, inputStream, fileName, mimeType, messageUuid)
+                messageListManager.sendMediasMessage(mediaFiles, messageUuid)
                 onMessageSent.call()
                 Timber.d("Media message sent: $messageUuid")
             } catch (e: TwilioException) {

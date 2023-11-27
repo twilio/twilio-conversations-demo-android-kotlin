@@ -8,10 +8,11 @@ import com.twilio.conversations.app.data.localCache.dao.ConversationsDao
 import com.twilio.conversations.app.data.localCache.dao.MessagesDao
 import com.twilio.conversations.app.data.localCache.dao.ParticipantsDao
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
+import com.twilio.conversations.app.data.localCache.entity.Media
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 
-@Database(entities = [ConversationDataItem::class, MessageDataItem::class, ParticipantDataItem::class], version = 1, exportSchema = false)
+@Database(entities = [ConversationDataItem::class, MessageDataItem::class, ParticipantDataItem::class, Media::class], version = 2, exportSchema = false)
 abstract class LocalCacheProvider : RoomDatabase() {
 
     abstract fun conversationsDao(): ConversationsDao

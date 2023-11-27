@@ -21,6 +21,7 @@ import com.twilio.conversations.app.testUtil.CoroutineTestRule
 import com.twilio.conversations.app.testUtil.waitCalled
 import com.twilio.conversations.app.testUtil.waitNotCalled
 import com.twilio.conversations.app.testUtil.waitValue
+import com.twilio.conversations.app.ui.dialogs.MediaFile
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -172,10 +173,10 @@ class MessageListViewModelTest {
     }
 
     @Test
-    fun `sendMediaMessage should call onMessageSent on success`() = runBlocking {
-        coEvery { messageListManager.sendMediaMessage(any(), any(), any(), any(), any()) } returns Unit
+    fun `sendMediasMessage should call onMessageSent on success`() = runBlocking {
+        coEvery { messageListManager.sendMediasMessage(any(), any()) } returns Unit
         messageListViewModel = MessageListViewModel(context, conversationSid, conversationsRepository, messageListManager)
-        messageListViewModel.sendMediaMessage("", mock(InputStream::class.java), null, null)
+        messageListViewModel.sendMediasMessage(listOf(MediaFile("", mock(InputStream::class.java), null, null)))
 
         assertTrue(messageListViewModel.onMessageSent.waitCalled())
         assertTrue(messageListViewModel.onMessageError.waitNotCalled())
@@ -183,9 +184,9 @@ class MessageListViewModelTest {
 
     @Test
     fun `sendMediaMessage should call onMessageError on failure`() = runBlocking {
-        coEvery { messageListManager.sendMediaMessage(any(), any(), any(), any(), any()) } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
+        coEvery { messageListManager.sendMediasMessage(any(), any())} throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
         messageListViewModel = MessageListViewModel(context, conversationSid, conversationsRepository, messageListManager)
-        messageListViewModel.sendMediaMessage("", mock(InputStream::class.java), null, null)
+        messageListViewModel.sendMediasMessage(listOf(MediaFile("", mock(InputStream::class.java), null, null)))
 
         assertTrue(messageListViewModel.onMessageSent.waitNotCalled())
         assertTrue(messageListViewModel.onMessageError.waitValue(ConversationsError.MESSAGE_SEND_FAILED))

@@ -13,10 +13,14 @@ import com.twilio.conversations.app.common.enums.SendStatus
 import com.twilio.conversations.app.common.extensions.firstMedia
 import com.twilio.conversations.app.common.extensions.removeMessage
 import com.twilio.conversations.app.common.toMessageDataItem
+import com.twilio.conversations.app.common.toMessageDataItemWithMedias
 import com.twilio.conversations.app.data.ConversationsClientWrapper
+import com.twilio.conversations.app.data.localCache.entity.Media
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
+import com.twilio.conversations.app.data.localCache.entity.MessageDataItemWithMedias
 import com.twilio.conversations.app.data.models.ReactionAttributes
 import com.twilio.conversations.app.repository.ConversationsRepository
+import com.twilio.conversations.app.ui.dialogs.MediaFile
 import com.twilio.conversations.extensions.advanceLastReadMessageIndex
 import com.twilio.conversations.extensions.getConversation
 import com.twilio.conversations.extensions.getMessageByIndex
@@ -33,13 +37,7 @@ import java.util.*
 interface MessageListManager {
     suspend fun sendTextMessage(text: String, uuid: String)
     suspend fun retrySendTextMessage(messageUuid: String)
-    suspend fun sendMediaMessage(
-        uri: String,
-        inputStream: InputStream,
-        fileName: String?,
-        mimeType: String?,
-        messageUuid: String
-    )
+    suspend fun sendMediasMessage(mediaFiles: List<MediaFile>, messageUuid: String)
     suspend fun retrySendMediaMessage(inputStream: InputStream, messageUuid: String)
     suspend fun updateMessageStatus(messageUuid: String, sendStatus: SendStatus, errorCode: Int = 0)
     suspend fun updateMessageMediaDownloadState(
@@ -110,13 +108,7 @@ class MessageListManagerImpl(
         conversationsRepository.updateMessageByUuid(sentMessage)
     }
 
-    override suspend fun sendMediaMessage(
-        uri: String,
-        inputStream: InputStream,
-        fileName: String?,
-        mimeType: String?,
-        messageUuid: String
-    ) {
+    override suspend fun sendMediasMessage(mediaFiles: List<MediaFile>, messageUuid: String) {
         val identity = conversationsClient.getConversationsClient().myIdentity
         val conversation = conversationsClient.getConversationsClient().getConversation(conversationSid)
         val participantSid = conversation.getParticipantByIdentity(identity).sid
@@ -134,23 +126,25 @@ class MessageListManagerImpl(
             Direction.OUTGOING.value,
             SendStatus.SENDING.value,
             messageUuid,
-            mediaFileName = fileName,
-            mediaUploadUri = uri,
-            mediaType = mimeType
+            mediaFileName = mediaFiles.firstOrNull()?.name,
+            mediaUploadUri = mediaFiles.firstOrNull()?.uri,
+            mediaType = mediaFiles.firstOrNull()?.mimeType
         )
         conversationsRepository.insertMessage(message)
 
         val sentMessage = conversation.sendMessage {
             this.attributes = attributes
-            addMedia(
-                inputStream,
-                mimeType ?: "",
-                fileName,
-                createMediaUploadListener(uri, messageUuid)
-            )
-        }.toMessageDataItem(identity, messageUuid)
+            mediaFiles.forEach {
+                addMedia(
+                    it.inputStream,
+                    it.mimeType ?: "",
+                    it.name,
+                    createMediaUploadListener(it.uri, messageUuid)
+                )
+            }
+        }.toMessageDataItemWithMedias(identity, messageUuid)
 
-        conversationsRepository.updateMessageByUuid(sentMessage)
+        conversationsRepository.updateMessageAndMedias(sentMessage)
     }
 
     override suspend fun retrySendMediaMessage(

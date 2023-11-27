@@ -23,10 +23,13 @@ import com.twilio.conversations.app.common.extensions.asMessageCount
 import com.twilio.conversations.app.common.extensions.asMessageDateString
 import com.twilio.conversations.app.common.extensions.firstMedia
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
+import com.twilio.conversations.app.data.localCache.entity.Media
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
+import com.twilio.conversations.app.data.localCache.entity.MessageDataItemWithMedias
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.*
 import com.twilio.conversations.app.manager.friendlyName
+import com.twilio.conversations.extensions.getTemporaryContentUrl
 
 fun Conversation.toConversationDataItem(): ConversationDataItem {
     return ConversationDataItem(
@@ -45,6 +48,38 @@ fun Conversation.toConversationDataItem(): ConversationDataItem {
         0,
         this.status.value,
         this.notificationLevel.value
+    )
+}
+
+fun Message.toMessageDataItemWithMedias(currentUserIdentity: String = participant.identity, uuid: String = ""): MessageDataItemWithMedias {
+    return MessageDataItemWithMedias(
+        messageDataItem = MessageDataItem(
+            sid = this.sid,
+            conversationSid = this.conversationSid,
+            participantSid = this.participantSid,
+            type = if (this.attachedMedia.any()) MessageType.MEDIA.value else MessageType.TEXT.value,
+            author = this.author,
+            dateCreated = this.dateCreatedAsDate.time,
+            body = this.body ?: "",
+            index = this.messageIndex,
+            attributes = this.attributes.toString(),
+            direction = if (this.author == currentUserIdentity) Direction.OUTGOING.value else Direction.INCOMING.value,
+            sendStatus = if (this.author == currentUserIdentity) SendStatus.SENT.value else SendStatus.UNDEFINED.value,
+            uuid = uuid,
+            mediaSid = firstMedia?.sid,
+            mediaFileName = firstMedia?.filename,
+            mediaType = firstMedia?.contentType,
+            mediaSize = firstMedia?.size
+        ),
+        medias = this.attachedMedia.map {
+            Media(
+                sid = it.sid,
+                fileName = it.filename,
+                type = it.contentType,
+                size = it.size,
+                messageUuid = uuid
+            )
+        }
     )
 }
 

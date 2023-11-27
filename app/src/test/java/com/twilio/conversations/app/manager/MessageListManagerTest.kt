@@ -26,6 +26,7 @@ import com.twilio.conversations.app.repository.ConversationsRepository
 import com.twilio.conversations.app.testUtil.CoroutineTestRule
 import com.twilio.conversations.app.testUtil.toMessageMock
 import com.twilio.conversations.app.testUtil.whenCall
+import com.twilio.conversations.app.ui.dialogs.MediaFile
 import com.twilio.conversations.extensions.getConversation
 import com.twilio.conversations.extensions.getMessageByIndex
 import com.twilio.conversations.extensions.getTemporaryContentUrl
@@ -241,7 +242,7 @@ class MessageListManagerTest {
     }
 
     @Test
-    fun `sendMediaMessage() should update local cache with send status SENT on success`() = runBlockingTest {
+    fun `sendMediasMessage() should update local cache with send status SENT on success`() = runBlockingTest {
         val messageUuid = "uuid"
         val mediaUri = "uri"
         val fileName = "fileName"
@@ -254,7 +255,7 @@ class MessageListManagerTest {
                 this.addMedia(any(), any(), any(), any<MediaUploadListener>())
             }
         } returns message.toMessageMock(participant)
-        messageListManager.sendMediaMessage(mediaUri, mockk(), fileName, mimeType, messageUuid)
+        messageListManager.sendMediasMessage(listOf(MediaFile(mediaUri, mockk(), fileName, mimeType)), messageUuid)
 
         verify(conversationsRepository).insertMessage(argThat {
             type == MessageType.MEDIA.value
@@ -268,7 +269,7 @@ class MessageListManagerTest {
     }
 
     @Test
-    fun `sendMediaMessage() should update local cache with send status SENDING on failure`() = runBlockingTest {
+    fun `sendMediasMessage() should update local cache with send status SENDING on failure`() = runBlockingTest {
         val messageUuid = "uuid"
         val mediaUri = "uri"
         val fileName = "fileName"
@@ -282,7 +283,7 @@ class MessageListManagerTest {
             }
         } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
         try {
-            messageListManager.sendMediaMessage(mediaUri, mockk(), fileName, mimeType, messageUuid)
+            messageListManager.sendMediasMessage(listOf(MediaFile(mediaUri, mockk(), fileName, mimeType)), messageUuid)
         } catch (e: TwilioException) {
             assert(ConversationsError.MESSAGE_SEND_FAILED == e.toConversationsError())
         }
@@ -309,7 +310,7 @@ class MessageListManagerTest {
     }
 
     @Test
-    fun `sendMediaMessage() should NOT update local cache with on participant failure`() = runBlockingTest {
+    fun `sendMediasMessage() should NOT update local cache with on participant failure`() = runBlockingTest {
         val messageUuid = "uuid"
         val mediaUri = "uri"
         val fileName = "fileName"
@@ -318,7 +319,7 @@ class MessageListManagerTest {
         every { participant.sid } returns message.participantSid
         coEvery { conversation.getParticipantByIdentity(any()) } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
         try {
-            messageListManager.sendMediaMessage(mediaUri, mockk(), fileName, mimeType, messageUuid)
+            messageListManager.sendMediasMessage(listOf(MediaFile(mediaUri, mockk(), fileName, mimeType)), messageUuid)
         } catch (e: TwilioException) {
             assert(ConversationsError.MESSAGE_SEND_FAILED == e.toConversationsError())
         }
