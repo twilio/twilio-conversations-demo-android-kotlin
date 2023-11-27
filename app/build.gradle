@@ -1,3 +1,6 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
@@ -5,16 +8,16 @@ apply plugin: 'com.google.gms.google-services'
 apply plugin: 'com.google.firebase.crashlytics'
 
 android {
-    compileSdkVersion 33
-    buildToolsVersion = "33.0.0"
+    namespace "com.twilio.conversations.app"
+    compileSdk 34
     if (findProperty("androidNdkVersion")) {
         ndkVersion androidNdkVersion // Correct NDK setup is necessary for stripping native symbols in release build
     }
     testBuildType System.getProperty('testBuildType', 'debug').toLowerCase()
     defaultConfig {
         applicationId "com.twilio.conversations.app"
-        minSdkVersion 21
-        targetSdkVersion 33
+        minSdk 21
+        targetSdk 34
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -70,9 +73,9 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_11.toString()
         freeCompilerArgs += [
-                "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-                "-Xopt-in=kotlinx.coroutines.ObsoleteCoroutinesApi",
-                "-Xopt-in=kotlinx.coroutines.FlowPreview"]
+                "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                "-opt-in=kotlinx.coroutines.ObsoleteCoroutinesApi",
+                "-opt-in=kotlinx.coroutines.FlowPreview"]
     }
 
     testOptions {
@@ -98,14 +101,15 @@ android {
     buildFeatures {
         viewBinding = true
         dataBinding = true
+        buildConfig = true
     }
 }
 
 dependencies {
     // Twilio
-    implementation "com.twilio:conversations-android-with-symbols:5.0.0"
+    implementation "com.twilio:conversations-android-with-symbols:6.0.3"
     // or without symbols:
-    // implementation "com.twilio:conversations-android:5.0.0"
+    // implementation "com.twilio:conversations-android:6.0.3"
 
     // Kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
@@ -194,4 +198,10 @@ tasks.withType(Test).configureEach {
             '--add-opens=java.base/java.nio.charset=ALL-UNNAMED',
             '--add-opens=java.base/java.net=ALL-UNNAMED'
     ]
+}
+
+tasks.withType(KotlinCompile).configureEach {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
+    }
 }

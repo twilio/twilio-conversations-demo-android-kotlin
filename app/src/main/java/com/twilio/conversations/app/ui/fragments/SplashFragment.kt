@@ -1,9 +1,12 @@
 package com.twilio.conversations.app.ui.fragments
 
 import android.app.Dialog
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.window.OnBackInvokedDispatcher
+import androidx.core.os.BuildCompat
 import androidx.fragment.app.DialogFragment
 import com.twilio.conversations.app.R
 
@@ -15,9 +18,18 @@ class SplashFragment : DialogFragment() {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return object : Dialog(requireContext(), theme) {
-            override fun onBackPressed() {
-                activity?.moveTaskToBack(true)
+        return if (Build.VERSION.SDK_INT >= 33) {
+            Dialog(requireContext(), theme).apply {
+                onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) {
+                    activity?.moveTaskToBack(true)
+                }
+            }
+        } else {
+            object : Dialog(requireContext(), theme) {
+                @Deprecated("Deprecated in Java")
+                override fun onBackPressed() {
+                    activity?.moveTaskToBack(true)
+                }
             }
         }
     }

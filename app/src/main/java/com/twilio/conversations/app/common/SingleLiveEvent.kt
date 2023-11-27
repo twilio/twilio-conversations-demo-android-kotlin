@@ -41,11 +41,9 @@ class SingleLiveEvent<T> : MutableLiveData<T>() {
         pending.set(true)
         super.setValue(t)
     }
-    /**
-     * Used for cases where T is Void, to make calls cleaner.
-     */
-    @MainThread
-    fun call(t: T? = null) {
-        value = t
-    }
 }
+
+/**
+ * Used for cases where T is Void, to make calls cleaner.
+ */
+fun SingleLiveEvent<Unit>.call() = setValue(Unit)

@@ -15,6 +15,7 @@ import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.extensions.applicationContext
 import com.twilio.conversations.app.common.extensions.getString
 import com.twilio.conversations.app.common.extensions.lazyActivityViewModel
+import com.twilio.conversations.app.common.extensions.parcelable
 import com.twilio.conversations.app.common.injector
 import com.twilio.conversations.app.databinding.DialogAttachFileBinding
 import timber.log.Timber
@@ -45,7 +46,7 @@ class AttachFileDialog : BaseBottomSheetDialogFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        savedInstanceState?.let { imageCaptureUri = it.getParcelable(IMAGE_CAPTURE_URI) }
+        savedInstanceState?.let { imageCaptureUri = it.parcelable(IMAGE_CAPTURE_URI) }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {

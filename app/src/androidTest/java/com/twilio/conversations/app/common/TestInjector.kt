@@ -25,12 +25,12 @@ import com.twilio.conversations.app.viewModel.ConversationListViewModel
 import com.twilio.conversations.app.viewModel.MessageListViewModel
 import com.twilio.conversations.app.viewModel.ParticipantListViewModel
 import com.twilio.conversations.app.viewModel.SplashViewModel
-import kotlinx.coroutines.channels.BroadcastChannel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.receiveAsFlow
 
 val testInjector: TestInjector get() = injector as? TestInjector ?: error("You must call setupTestInjector() first")
 
@@ -38,13 +38,13 @@ fun setupTestInjector() = setupTestInjector(TestInjector())
 
 open class TestInjector : Injector() {
 
-    val typingParticipantsListConversation = BroadcastChannel<List<ParticipantDataItem>>(1)
-    val messageResultConversation = BroadcastChannel<RepositoryResult<PagedList<MessageListViewItem>>>(1)
+    val typingParticipantsListConversation = Channel<List<ParticipantDataItem>>(1)
+    val messageResultConversation = Channel<RepositoryResult<PagedList<MessageListViewItem>>>(1)
 
     var userConversationRepositoryResult : Flow<RepositoryResult<List<ConversationDataItem>>> = emptyFlow()
     var participantRepositoryResult : Flow<RepositoryResult<List<ParticipantDataItem>>> = emptyFlow()
-    var typingParticipantsList = typingParticipantsListConversation.asFlow()
-    var messageResult = messageResultConversation.asFlow()
+    var typingParticipantsList = typingParticipantsListConversation.receiveAsFlow()
+    var messageResult = messageResultConversation.receiveAsFlow()
 
     private val repositoryMock: ConversationsRepository = mock {
         whenever(it.getUserConversations()) doAnswer { userConversationRepositoryResult }

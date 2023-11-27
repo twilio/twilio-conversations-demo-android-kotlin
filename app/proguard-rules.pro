@@ -33,9 +33,15 @@
 
 # Used by espresso in UI tests
 -keepclassmembers class androidx.recyclerview.widget.RecyclerView { scrollToPosition(int); }
+-keep public class com.google.android.material.R$* { *; }
 
 # AndroidX
 -keep class androidx.** { *; }
 
 # Timber
 -keepclassmembers class timber.log.Timber { *; }
+
+# Fix compile-time error: missing classes detected while running R8
+-dontwarn com.google.errorprone.annotations.Immutable
+-dontwarn org.slf4j.impl.StaticLoggerBinder
+-dontwarn org.slf4j.impl.StaticMDCBinder

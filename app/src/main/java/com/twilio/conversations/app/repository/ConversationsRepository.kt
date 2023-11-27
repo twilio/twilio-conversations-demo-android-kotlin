@@ -3,7 +3,6 @@ package com.twilio.conversations.app.repository
 import androidx.paging.PagedList
 import com.twilio.conversations.Conversation
 import com.twilio.conversations.Message
-import com.twilio.conversations.Participant.Type.CHAT
 import com.twilio.conversations.User
 import com.twilio.conversations.app.common.DefaultDispatcherProvider
 import com.twilio.conversations.app.common.DispatcherProvider
@@ -42,15 +41,15 @@ import com.twilio.util.TwilioException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.channels.BroadcastChannel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -188,7 +187,7 @@ class ConversationsRepositoryImpl(
 
     override fun getMessages(conversationSid: String, pageSize: Int): Flow<RepositoryResult<PagedList<MessageListViewItem>>> {
         Timber.v("getMessages($conversationSid, $pageSize)")
-        val requestStatusConversation = BroadcastChannel<RepositoryRequestStatus>(BUFFERED)
+        val requestStatusConversation = Channel<RepositoryRequestStatus>(BUFFERED)
         val boundaryCallback = object : PagedList.BoundaryCallback<MessageListViewItem>() {
             override fun onZeroItemsLoaded() {
                 Timber.v("BoundaryCallback.onZeroItemsLoaded()")
@@ -232,7 +231,9 @@ class ConversationsRepositoryImpl(
                 requestStatusConversation.send(COMPLETE)
             }
 
-        return combine(pagedListFlow, requestStatusConversation.asFlow().distinctUntilChanged() ) { data, status -> RepositoryResult(data, status) }
+        return combine(pagedListFlow, requestStatusConversation.consumeAsFlow().distinctUntilChanged()) { data, status ->
+            RepositoryResult(data, status)
+        }
     }
 
     override fun insertMessage(message: MessageDataItem) {
@@ -370,7 +371,7 @@ class ConversationsRepositoryImpl(
             conversation.waitForSynchronization()
             conversation.participantsList.forEach { participant ->
                 // Getting user is currently supported for chat participants only
-                val user = if (participant.type == CHAT) participant.getAndSubscribeUser() else null
+                val user = if (participant.channel == "chat") participant.getAndSubscribeUser() else null
                 localCache.participantsDao().insertOrReplace(participant.asParticipantDataItem(user = user))
             }
             emit(COMPLETE)

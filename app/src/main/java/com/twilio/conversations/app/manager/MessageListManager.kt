@@ -194,11 +194,11 @@ class MessageListManagerImpl(
                 )
             }
 
-            override fun onProgress(uploadedBytes: kotlin.Long) {
-                Timber.d("Upload progress for $uri: $uploadedBytes bytes")
+            override fun onProgress(bytesSent: Long) {
+                Timber.d("Upload progress for $uri: $bytesSent bytes")
                 conversationsRepository.updateMessageMediaUploadStatus(
                     messageUuid,
-                    uploadedBytes = uploadedBytes
+                    uploadedBytes = bytesSent
                 )
             }
 

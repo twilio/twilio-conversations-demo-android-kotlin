@@ -96,7 +96,7 @@ class ParticipantListActivityTest {
         participantListViewModel.getConversationParticipants()
 
         onView(withId(R.id.filter_participants)).perform(click())
-        onView(withId(R.id.search_src_text)).perform(typeTextIntoFocusedView("d"))
+        onView(withId(com.google.android.material.R.id.search_src_text)).perform(typeTextIntoFocusedView("d"))
 
         validateParticipantItems(listOf(participantBcd, participantCde).asParticipantListViewItems())
     }

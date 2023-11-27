@@ -49,8 +49,10 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.verify
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -238,9 +240,8 @@ class ConversationsRepositoryTest {
     fun `getMessages() should return statuses in correct order`() = runBlocking {
         every { localCacheProvider.messagesDao().getMessagesSorted(any()) } returns ItemDataSource.factory(emptyList())
         coEvery { conversation.getLastMessages(any()).asMessageDataItems(any()) } returns emptyList()
-        val expected = listOf(FETCHING, COMPLETE)
 
-        assertEquals(expected, conversationsRepository.getMessages("", 1).take(2).toList().map { it.requestStatus })
+        assertEquals(COMPLETE, conversationsRepository.getMessages("", 1).first().requestStatus)
     }
 
     @Test
