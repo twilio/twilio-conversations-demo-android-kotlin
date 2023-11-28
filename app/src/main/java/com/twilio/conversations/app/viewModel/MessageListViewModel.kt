@@ -66,6 +66,10 @@ class MessageListViewModel(
         .asLiveData(viewModelScope.coroutineContext)
         .map { it.data }
 
+    val contentTemplateItems = conversationsRepository.getContentTemplates(conversationSid)
+        .asLiveData(viewModelScope.coroutineContext)
+        .map { it.data }
+
     val onMessageError = SingleLiveEvent<ConversationsError>()
 
     val onMessageSent = SingleLiveEvent<Unit>()

@@ -151,6 +151,15 @@ class MessageListActivity : BaseActivity() {
             AttachFileDialog.getInstance(messageListViewModel.conversationSid)
                 .showNow(supportFragmentManager, null)
         }
+        binding.templatesButton.setOnClickListener {
+            // Todo: open templates
+            messageListViewModel.contentTemplateItems.observe(this) { contentTemplates ->
+              println("@output@: start observing")
+              contentTemplates.map {
+                println("@output@: " + it)
+              }
+            }
+        }
     }
 
     private fun showRemoveMessageDialog() {

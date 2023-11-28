@@ -7,6 +7,7 @@ import com.twilio.conversations.Participant.Type.CHAT
 import com.twilio.conversations.User
 import com.twilio.conversations.app.common.DefaultDispatcherProvider
 import com.twilio.conversations.app.common.DispatcherProvider
+import com.twilio.conversations.app.common.asContentTemplateItem
 import com.twilio.conversations.app.common.asMessageDataItems
 import com.twilio.conversations.app.common.asMessageListViewItems
 import com.twilio.conversations.app.common.asParticipantDataItem
@@ -25,6 +26,7 @@ import com.twilio.conversations.app.data.localCache.LocalCacheProvider
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
+import com.twilio.conversations.app.data.models.ContentTemplateItem
 import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus.COMPLETE
@@ -34,6 +36,7 @@ import com.twilio.conversations.app.data.models.RepositoryRequestStatus.SUBSCRIB
 import com.twilio.conversations.app.data.models.RepositoryResult
 import com.twilio.conversations.extensions.ConversationListener
 import com.twilio.conversations.extensions.ConversationsClientListener
+import com.twilio.conversations.extensions.getContentTemplates
 import com.twilio.conversations.extensions.getConversation
 import com.twilio.conversations.extensions.getLastMessages
 import com.twilio.conversations.extensions.getMessagesBefore
@@ -68,6 +71,7 @@ interface ConversationsRepository {
     // Interim solution till paging v3.0 is available as an alpha version.
     // It has support for converting PagedList types
     fun getMessages(conversationSid: String, pageSize: Int): Flow<RepositoryResult<PagedList<MessageListViewItem>>>
+    fun getContentTemplates(conversationSid: String): Flow<RepositoryResult<List<ContentTemplateItem>>>
     fun insertMessage(message: MessageDataItem)
     fun updateMessageByUuid(message: MessageDataItem)
     fun updateMessageStatus(messageUuid: String, sendStatus: Int, errorCode: Int)
@@ -233,6 +237,22 @@ class ConversationsRepositoryImpl(
             }
 
         return combine(pagedListFlow, requestStatusConversation.asFlow().distinctUntilChanged() ) { data, status -> RepositoryResult(data, status) }
+    }
+
+    override fun getContentTemplates(conversationSid: String): Flow<RepositoryResult<List<ContentTemplateItem>>> = flow {
+      Timber.v("getContentTemplates($conversationSid)")
+      val list = conversationsClientWrapper
+        .getConversationsClient()
+        .getContentTemplates()
+      emit(
+        RepositoryResult(
+          list.map {
+            println(it)
+            it.asContentTemplateItem()
+          },
+          COMPLETE
+        )
+      )
     }
 
     override fun insertMessage(message: MessageDataItem) {

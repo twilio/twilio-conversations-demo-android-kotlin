@@ -27,6 +27,7 @@ import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.*
 import com.twilio.conversations.app.manager.friendlyName
+import com.twilio.conversations.content.ContentTemplate
 
 fun Conversation.toConversationDataItem(): ConversationDataItem {
     return ConversationDataItem(
@@ -169,6 +170,11 @@ fun List<ConversationDataItem>.asConversationListViewItems(context: Context) =
     map { it.asConversationListViewItem(context) }
 
 fun List<Message>.asMessageDataItems(identity: String) = map { it.toMessageDataItem(identity) }
+
+fun ContentTemplate.asContentTemplateItem() = ContentTemplateItem(
+    this.sid,
+    this.friendlyName
+)
 
 fun List<MessageDataItem>.asMessageListViewItems() =
     mapIndexed { index, item -> item.toMessageListViewItem(isAuthorChanged(index)) }

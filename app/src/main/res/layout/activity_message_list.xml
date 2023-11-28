@@ -69,9 +69,22 @@
                 android:layout_marginStart="9dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_attach"
-                app:layout_constraintBottom_toBottomOf="@+id/messageInputHolder"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="@+id/messageInputHolder"
+                app:layout_constraintBottom_toTopOf="@id/templatesButton"
+                app:tint="@color/colorPrimary" />
+
+            <!-- Todo: change icon for right template icon -->
+            <ImageButton
+                android:id="@+id/templatesButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="9dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_copy"
+                app:layout_constraintBottom_toBottomOf="@+id/messageInputHolder"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/messageAttachmentButton"
                 app:tint="@color/colorPrimary" />
 
             <com.google.android.material.textfield.TextInputLayout
