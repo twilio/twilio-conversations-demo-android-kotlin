@@ -1,5 +1,6 @@
 package com.twilio.conversations.app.data.localCache.dao
 
+import android.media.browse.MediaBrowser.MediaItem
 import androidx.paging.DataSource
 import androidx.room.Dao
 import androidx.room.Delete
@@ -7,7 +8,9 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import com.twilio.conversations.app.data.localCache.entity.Media
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
+import com.twilio.conversations.app.data.localCache.entity.MessageDataItemWithMedias
 
 @Dao
 interface MessagesDao {
@@ -34,7 +37,10 @@ interface MessagesDao {
 
     // Insert a message when it doesn't exist or replace it if it does exist.
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertOrReplace(message: MessageDataItem)
+    fun insertOrReplace(message: MessageDataItem): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertOrReplace(medias: List<Media>)
 
     // Update single Message Status
     @Query("UPDATE message_table SET sendStatus = :sendStatus, errorCode = :errorCode WHERE uuid = :uuid")
@@ -43,6 +49,14 @@ interface MessagesDao {
     // Update single Message
     @Query("UPDATE message_table SET sid = :sid, sendStatus = :sendStatus, `index` = :index, mediaSize = :mediaSize WHERE uuid = :uuid")
     fun updateByUuid(sid: String, uuid: String, sendStatus: Int, index: Long, mediaSize: Long?)
+
+    @Transaction
+    fun updateByUuidOrInsert(message: MessageDataItemWithMedias) {
+        if (message.messageDataItem.uuid.isNotEmpty() && getMessageByUuid(message.messageDataItem.uuid) != null) {
+            updateByUuid(message.messageDataItem.sid, message.messageDataItem.uuid, message.messageDataItem.sendStatus, message.messageDataItem.index, message.messageDataItem.mediaSize)
+            insertOrReplace(message.medias)
+        }
+    }
 
     @Transaction
     fun updateByUuidOrInsert(message: MessageDataItem) {

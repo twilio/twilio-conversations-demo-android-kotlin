@@ -2,7 +2,7 @@ package com.twilio.conversations.app.ui
 
 import android.app.Activity.RESULT_OK
 import android.app.Instrumentation.ActivityResult
-import android.content.Intent.ACTION_OPEN_DOCUMENT
+import android.content.Intent.ACTION_GET_CONTENT
 import android.provider.MediaStore.ACTION_IMAGE_CAPTURE
 import android.provider.MediaStore.EXTRA_OUTPUT
 import android.text.format.Formatter
@@ -29,7 +29,6 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.gson.Gson
-import com.twilio.conversations.Message
 import com.twilio.conversations.app.MESSAGE_COUNT
 import com.twilio.conversations.app.R
 import com.twilio.conversations.app.adapters.MessageListAdapter
@@ -417,7 +416,7 @@ class MessageListActivityTest {
 
         intended(
             allOf(
-                hasAction(ACTION_OPEN_DOCUMENT),
+                hasAction(ACTION_GET_CONTENT),
                 hasType("*/*")
             )
         )

@@ -23,6 +23,7 @@ import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.localCache.LocalCacheProvider
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
+import com.twilio.conversations.app.data.localCache.entity.MessageDataItemWithMedias
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
@@ -69,6 +70,7 @@ interface ConversationsRepository {
     fun getMessages(conversationSid: String, pageSize: Int): Flow<RepositoryResult<PagedList<MessageListViewItem>>>
     fun insertMessage(message: MessageDataItem)
     fun updateMessageByUuid(message: MessageDataItem)
+    fun updateMessageAndMedias(message: MessageDataItemWithMedias)
     fun updateMessageStatus(messageUuid: String, sendStatus: Int, errorCode: Int)
     fun getTypingParticipants(conversationSid: String): Flow<List<ParticipantDataItem>>
     fun getConversationParticipants(conversationSid: String): Flow<RepositoryResult<List<ParticipantDataItem>>>
@@ -247,6 +249,13 @@ class ConversationsRepositoryImpl(
         launch {
             localCache.messagesDao().updateByUuidOrInsert(message)
             updateConversationLastMessage(message.conversationSid)
+        }
+    }
+
+    override fun updateMessageAndMedias(message: MessageDataItemWithMedias) {
+        launch {
+            localCache.messagesDao().updateByUuidOrInsert(message)
+            updateConversationLastMessage(message.messageDataItem.conversationSid)
         }
     }
 
