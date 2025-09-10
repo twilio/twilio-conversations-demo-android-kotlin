@@ -107,9 +107,9 @@ android {
 
 dependencies {
     // Twilio
-    implementation "com.twilio:conversations-android-with-symbols:6.0.3"
+    // implementation "com.twilio:conversations-android-with-symbols:6.0.3"
     // or without symbols:
-    // implementation "com.twilio:conversations-android:6.0.3"
+    implementation "com.twilio:conversations-android:6.2.0"
 
     // Kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
