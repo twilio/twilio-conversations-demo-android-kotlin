@@ -8,7 +8,7 @@ import android.provider.OpenableColumns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
+import androidx.activity.result.contract.ActivityResultContracts.OpenMultipleDocuments
 import androidx.activity.result.contract.ActivityResultContracts.TakePicture
 import androidx.core.content.FileProvider
 import com.twilio.conversations.app.common.enums.ConversationsError
@@ -39,8 +39,8 @@ class AttachFileDialog : BaseBottomSheetDialogFragment() {
         dismiss()
     }
 
-    private val openDocument = registerForActivityResult(OpenDocument()) { uri: Uri? ->
-        uri?.let { sendMediaMessage(it) }
+    private val openMultipleDocuments = registerForActivityResult(OpenMultipleDocuments()) { uriList: List<Uri>? ->
+        uriList?.map { uri -> sendMediaMessage(uri) }
         dismiss()
     }
 
@@ -66,7 +66,7 @@ class AttachFileDialog : BaseBottomSheetDialogFragment() {
         }
 
         binding.fileManager.setOnClickListener {
-            openDocument.launch(arrayOf("*/*"))
+            openMultipleDocuments.launch(arrayOf("*/*"))
         }
     }
 

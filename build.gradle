@@ -1,10 +1,10 @@
 wrapper {
-    gradleVersion = '8.1.1'
+    gradleVersion = '8.5'
     distributionType = Wrapper.DistributionType.ALL
 }
 
 buildscript {
-    ext.kotlin_version = '1.9.20'
+    ext.kotlin_version = '1.9.21'
     ext.kotlinx_coroutines_version = '1.7.3'
     ext.mockk_version = '1.12.2'
     ext.paging_version = '2.1.2'
@@ -16,7 +16,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.1.4'
+        classpath 'com.android.tools.build:gradle:8.1.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.google.gms:google-services:4.4.0'
         classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.9'
@@ -33,3 +33,4 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
