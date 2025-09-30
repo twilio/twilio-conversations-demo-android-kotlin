@@ -18,6 +18,7 @@ import com.twilio.conversations.app.common.extensions.lazyActivityViewModel
 import com.twilio.conversations.app.common.extensions.parcelable
 import com.twilio.conversations.app.common.injector
 import com.twilio.conversations.app.databinding.DialogAttachFileBinding
+import com.twilio.conversations.app.manager.MediaInput
 import timber.log.Timber
 import java.io.File
 import java.text.SimpleDateFormat
@@ -40,7 +41,9 @@ class AttachFileDialog : BaseBottomSheetDialogFragment() {
     }
 
     private val openMultipleDocuments = registerForActivityResult(OpenMultipleDocuments()) { uriList: List<Uri>? ->
-        uriList?.map { uri -> sendMediaMessage(uri) }
+        if (uriList != null) {
+            sendMultipleMediaMessage(uriList)
+        }
         dismiss()
     }
 
@@ -97,6 +100,32 @@ class AttachFileDialog : BaseBottomSheetDialogFragment() {
             messageListViewModel.onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
             Timber.w("Could not get input stream for file reading: $uri")
         }
+    }
+
+    fun sendMultipleMediaMessage(uriList: List<Uri>) {
+        var failed = false
+        val contentResolver = requireContext().contentResolver
+        val mediaInput = uriList.map<Uri, MediaInput?> { uri ->
+            val inputStream = contentResolver.openInputStream(uri)
+            val type = contentResolver.getType(uri)
+            val name = contentResolver.getString(uri, OpenableColumns.DISPLAY_NAME)
+            if (inputStream == null) {
+                failed = true;
+                Timber.w("Could not get input stream for file reading: $uri")
+                null
+            } else {
+                MediaInput(uri.toString(), inputStream, name, type)
+            }
+        }
+        if (failed) {
+            messageListViewModel.onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
+
+        }
+
+        messageListViewModel.sendMultipleMediaMessage(mediaInput)
+
+
+
     }
 
 

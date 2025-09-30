@@ -30,6 +30,13 @@ import timber.log.Timber
 import java.io.InputStream
 import java.util.*
 
+data class MediaInput (
+    val uri: String,
+    val inputStream: InputStream,
+    val fileName: String?,
+    val mimeType: String?
+)
+
 interface MessageListManager {
     suspend fun sendTextMessage(text: String, uuid: String)
     suspend fun retrySendTextMessage(messageUuid: String)
@@ -38,6 +45,10 @@ interface MessageListManager {
         inputStream: InputStream,
         fileName: String?,
         mimeType: String?,
+        messageUuid: String
+    )
+    suspend fun sendMultipleMediaMessage(
+        items: List<MediaInput?>,
         messageUuid: String
     )
     suspend fun retrySendMediaMessage(inputStream: InputStream, messageUuid: String)
@@ -81,7 +92,8 @@ class MessageListManagerImpl(
             attributes.toString(),
             Direction.OUTGOING.value,
             SendStatus.SENDING.value,
-            uuid
+            uuid,
+            inputStream = null
         )
         conversationsRepository.insertMessage(message)
 
@@ -136,7 +148,8 @@ class MessageListManagerImpl(
             messageUuid,
             mediaFileName = fileName,
             mediaUploadUri = uri,
-            mediaType = mimeType
+            mediaType = mimeType,
+            inputStream = inputStream
         )
         conversationsRepository.insertMessage(message)
 
@@ -151,6 +164,52 @@ class MessageListManagerImpl(
         }.toMessageDataItem(identity, messageUuid)
 
         conversationsRepository.updateMessageByUuid(sentMessage)
+    }
+
+    override suspend fun sendMultipleMediaMessage(items: List<MediaInput?>, messageUuid: String) {
+        val identity = conversationsClient.getConversationsClient().myIdentity
+        val conversation = conversationsClient.getConversationsClient().getConversation(conversationSid)
+        val participantSid = conversation.getParticipantByIdentity(identity).sid
+        val attributes = Attributes(messageUuid)
+        val processedMedia = items.filterNotNull().map {
+            MessageDataItem(
+                "",
+                conversationSid,
+                participantSid,
+                MessageType.MEDIA.value,
+                identity,
+                Date().time,
+                null,
+                -1,
+                attributes.toString(),
+                Direction.OUTGOING.value,
+                SendStatus.SENDING.value,
+                messageUuid,
+                mediaFileName = it.fileName,
+                mediaUploadUri = it.uri,
+                mediaType = it.mimeType,
+                inputStream = it.inputStream
+            )
+        }
+
+        Timber.e(processedMedia.toString())
+        val message = conversation.sendMessage {
+            processedMedia.forEach {
+                this.attributes = attributes
+                Timber.e(it.inputStream.toString())
+                it.inputStream?.let { it1 ->
+                    addMedia(
+                        it1,
+                        it.mediaType ?: "",
+                        it.mediaFileName,
+                        createMediaUploadListener(it.mediaUploadUri!!, messageUuid)
+                    )
+                }
+            }
+
+        }
+
+        conversationsRepository.updateMessageByUuid(message.toMessageDataItem(identity, messageUuid))
     }
 
     override suspend fun retrySendMediaMessage(

@@ -34,6 +34,7 @@ import com.twilio.conversations.app.common.extensions.queryById
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
+import com.twilio.conversations.app.manager.MediaInput
 import com.twilio.conversations.app.manager.MessageListManager
 import com.twilio.conversations.app.repository.ConversationsRepository
 import com.twilio.util.TwilioException
@@ -149,6 +150,20 @@ class MessageListViewModel(
             val messageUuid = UUID.randomUUID().toString()
             try {
                 messageListManager.sendMediaMessage(uri, inputStream, fileName, mimeType, messageUuid)
+                onMessageSent.call()
+                Timber.d("Media message sent: $messageUuid")
+            } catch (e: TwilioException) {
+                Timber.d("Media message send error: ${e.errorInfo.status}:${e.errorInfo.code} ${e.errorInfo.message}")
+                messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo.code)
+                onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
+            }
+        }
+
+    fun sendMultipleMediaMessage(items: List<MediaInput?>) =
+        viewModelScope.launch {
+            val messageUuid = UUID.randomUUID().toString()
+            try {
+                messageListManager.sendMultipleMediaMessage(items, messageUuid)
                 onMessageSent.call()
                 Timber.d("Media message sent: $messageUuid")
             } catch (e: TwilioException) {
