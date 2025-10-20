@@ -22,7 +22,9 @@ import com.twilio.conversations.app.common.toMessageDataItem
 import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.localCache.LocalCacheProvider
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
+import com.twilio.conversations.app.data.localCache.entity.MediaDataItem
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
+import com.twilio.conversations.app.data.localCache.entity.MessageWithMedia
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
@@ -64,23 +66,25 @@ interface ConversationsRepository {
     fun getConversation(conversationSid: String): Flow<RepositoryResult<ConversationDataItem?>>
     fun getSelfUser(): Flow<User>
     fun getMessageByUuid(messageUuid: String): MessageDataItem?
+    fun getMessageMediaByMessageUuid(messageUuid: String): MessageWithMedia?
     // Interim solution till paging v3.0 is available as an alpha version.
     // It has support for converting PagedList types
     fun getMessages(conversationSid: String, pageSize: Int): Flow<RepositoryResult<PagedList<MessageListViewItem>>>
     fun insertMessage(message: MessageDataItem)
+    fun insertMedia(mediaList: List<MediaDataItem>)
     fun updateMessageByUuid(message: MessageDataItem)
     fun updateMessageStatus(messageUuid: String, sendStatus: Int, errorCode: Int)
     fun getTypingParticipants(conversationSid: String): Flow<List<ParticipantDataItem>>
     fun getConversationParticipants(conversationSid: String): Flow<RepositoryResult<List<ParticipantDataItem>>>
     fun updateMessageMediaDownloadStatus(
-        messageSid: String,
+        mediaSid: String,
         downloadId: Long? = null,
         downloadLocation: String? = null,
         downloadState: Int? = null,
         downloadedBytes: Long? = null
     )
     fun updateMessageMediaUploadStatus(
-        messageUuid: String,
+        mediaSid: String,
         uploading: Boolean? = null,
         uploadedBytes: Long? = null
     )
@@ -184,6 +188,11 @@ class ConversationsRepositoryImpl(
     }
 
     override fun getMessageByUuid(messageUuid: String) = localCache.messagesDao().getMessageByUuid(messageUuid)
+    override fun getMessageMediaByMessageUuid(messageUuid: String): MessageWithMedia? {
+        val media = localCache.mediaDao().getAllMediaByMessageUuid(messageUuid)
+        val message = localCache.messagesDao().getMessageByUuid(messageUuid)
+        return message?.let { MessageWithMedia(it, media) }
+    }
 
     override fun getMessages(conversationSid: String, pageSize: Int): Flow<RepositoryResult<PagedList<MessageListViewItem>>> {
         Timber.v("getMessages($conversationSid, $pageSize)")
@@ -243,6 +252,12 @@ class ConversationsRepositoryImpl(
         }
     }
 
+    override fun insertMedia(mediaList: List<MediaDataItem>) {
+        launch {
+            localCache.mediaDao().insert(mediaList)
+        }
+    }
+
     override fun updateMessageByUuid(message: MessageDataItem) {
         launch {
             localCache.messagesDao().updateByUuidOrInsert(message)
@@ -270,7 +285,7 @@ class ConversationsRepositoryImpl(
     }
 
     override fun updateMessageMediaDownloadStatus(
-        messageSid: String,
+        mediaSid: String,
         downloadId: Long?,
         downloadLocation: String?,
         downloadState: Int?,
@@ -278,31 +293,31 @@ class ConversationsRepositoryImpl(
     ) {
         launch {
             if (downloadId != null) {
-                localCache.messagesDao().updateMediaDownloadId(messageSid, downloadId)
+                localCache.mediaDao().updateMediaDownloadId(mediaSid, downloadId)
             }
             if (downloadLocation != null) {
-                localCache.messagesDao().updateMediaDownloadLocation(messageSid, downloadLocation)
+                localCache.mediaDao().updateMediaDownloadLocation(mediaSid, downloadLocation)
             }
             if (downloadState != null) {
-                localCache.messagesDao().updateMediaDownloadState(messageSid, downloadState)
+                localCache.mediaDao().updateMediaDownloadState(mediaSid, downloadState)
             }
             if (downloadedBytes != null) {
-                localCache.messagesDao().updateMediaDownloadedBytes(messageSid, downloadedBytes)
+                localCache.mediaDao().updateMediaDownloadedBytes(mediaSid, downloadedBytes)
             }
         }
     }
 
     override fun updateMessageMediaUploadStatus(
-        messageUuid: String,
+        mediaSid: String,
         uploading: Boolean?,
         uploadedBytes: Long?
     ) {
         launch {
             if (uploading != null) {
-                localCache.messagesDao().updateMediaUploadStatus(messageUuid, uploading)
+                localCache.mediaDao().updateMediaUploadStatus(mediaSid, uploading)
             }
             if (uploadedBytes != null) {
-                localCache.messagesDao().updateMediaUploadedBytes(messageUuid, uploadedBytes)
+                localCache.mediaDao().updateMediaUploadedBytes(mediaSid, uploadedBytes)
             }
         }
     }

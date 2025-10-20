@@ -14,6 +14,7 @@ import com.twilio.conversations.app.common.extensions.firstMedia
 import com.twilio.conversations.app.common.extensions.removeMessage
 import com.twilio.conversations.app.common.toMessageDataItem
 import com.twilio.conversations.app.data.ConversationsClientWrapper
+import com.twilio.conversations.app.data.localCache.entity.MediaDataItem
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 import com.twilio.conversations.app.data.models.ReactionAttributes
 import com.twilio.conversations.app.repository.ConversationsRepository
@@ -40,13 +41,13 @@ data class MediaInput (
 interface MessageListManager {
     suspend fun sendTextMessage(text: String, uuid: String)
     suspend fun retrySendTextMessage(messageUuid: String)
-    suspend fun sendMediaMessage(
-        uri: String,
-        inputStream: InputStream,
-        fileName: String?,
-        mimeType: String?,
-        messageUuid: String
-    )
+//    suspend fun sendMediaMessage(
+//        uri: String,
+//        inputStream: InputStream,
+//        fileName: String?,
+//        mimeType: String?,
+//        messageUuid: String
+//    )
     suspend fun sendMultipleMediaMessage(
         items: List<MediaInput?>,
         messageUuid: String
@@ -92,8 +93,7 @@ class MessageListManagerImpl(
             attributes.toString(),
             Direction.OUTGOING.value,
             SendStatus.SENDING.value,
-            uuid,
-            inputStream = null
+            uuid
         )
         conversationsRepository.insertMessage(message)
 
@@ -122,56 +122,13 @@ class MessageListManagerImpl(
         conversationsRepository.updateMessageByUuid(sentMessage)
     }
 
-    override suspend fun sendMediaMessage(
-        uri: String,
-        inputStream: InputStream,
-        fileName: String?,
-        mimeType: String?,
-        messageUuid: String
-    ) {
-        val identity = conversationsClient.getConversationsClient().myIdentity
-        val conversation = conversationsClient.getConversationsClient().getConversation(conversationSid)
-        val participantSid = conversation.getParticipantByIdentity(identity).sid
-        val attributes = Attributes(messageUuid)
-        val message = MessageDataItem(
-            "",
-            conversationSid,
-            participantSid,
-            MessageType.MEDIA.value,
-            identity,
-            Date().time,
-            null,
-            -1,
-            attributes.toString(),
-            Direction.OUTGOING.value,
-            SendStatus.SENDING.value,
-            messageUuid,
-            mediaFileName = fileName,
-            mediaUploadUri = uri,
-            mediaType = mimeType,
-            inputStream = inputStream
-        )
-        conversationsRepository.insertMessage(message)
-
-        val sentMessage = conversation.sendMessage {
-            this.attributes = attributes
-            addMedia(
-                inputStream,
-                mimeType ?: "",
-                fileName,
-                createMediaUploadListener(uri, messageUuid)
-            )
-        }.toMessageDataItem(identity, messageUuid)
-
-        conversationsRepository.updateMessageByUuid(sentMessage)
-    }
-
     override suspend fun sendMultipleMediaMessage(items: List<MediaInput?>, messageUuid: String) {
         val identity = conversationsClient.getConversationsClient().myIdentity
         val conversation = conversationsClient.getConversationsClient().getConversation(conversationSid)
         val participantSid = conversation.getParticipantByIdentity(identity).sid
         val attributes = Attributes(messageUuid)
-        val processedMedia = items.filterNotNull().map {
+
+        val newMessage =
             MessageDataItem(
                 "",
                 conversationSid,
@@ -184,19 +141,28 @@ class MessageListManagerImpl(
                 attributes.toString(),
                 Direction.OUTGOING.value,
                 SendStatus.SENDING.value,
-                messageUuid,
+                messageUuid
+            )
+
+        conversationsRepository.insertMessage(newMessage)
+
+        val mediaList = items.filterNotNull().map {
+            MediaDataItem(
+                "",
+                "",
                 mediaFileName = it.fileName,
                 mediaUploadUri = it.uri,
                 mediaType = it.mimeType,
-                inputStream = it.inputStream
+                inputStream = it.inputStream,
+                messageUuid = messageUuid
             )
         }
 
-        Timber.e(processedMedia.toString())
+        conversationsRepository.insertMedia(mediaList)
+
         val message = conversation.sendMessage {
-            processedMedia.forEach {
+            mediaList.forEach {
                 this.attributes = attributes
-                Timber.e(it.inputStream.toString())
                 it.inputStream?.let { it1 ->
                     addMedia(
                         it1,
@@ -216,26 +182,29 @@ class MessageListManagerImpl(
         inputStream: InputStream,
         messageUuid: String
     ) {
-        val message = withContext(dispatchers.io()) { conversationsRepository.getMessageByUuid(messageUuid) } ?: return
-        if (message.sendStatus == SendStatus.SENDING.value) return
-        if (message.mediaUploadUri == null) {
-            Timber.w("Missing mediaUploadUri in retrySendMediaMessage: $message")
+        val messageWithMedia = withContext(dispatchers.io()) { conversationsRepository.getMessageMediaByMessageUuid(messageUuid) } ?: return
+        if (messageWithMedia.message.sendStatus == SendStatus.SENDING.value) return
+        if (messageWithMedia.media?.any{ it.mediaUploadUri == null } == true) {
+            Timber.w("Missing mediaUploadUri in retrySendMediaMessage: ${messageWithMedia.message}")
             return
         }
-        conversationsRepository.updateMessageByUuid(message.copy(sendStatus = SendStatus.SENDING.value))
+        conversationsRepository.updateMessageByUuid(messageWithMedia.message.copy(sendStatus = SendStatus.SENDING.value))
         val identity = conversationsClient.getConversationsClient().myIdentity
         val conversation = conversationsClient.getConversationsClient().getConversation(conversationSid)
 
 
         val sentMessage = conversation.sendMessage {
             this.attributes = Attributes(messageUuid)
-            addMedia(
-                inputStream,
-                message.mediaType ?: "",
-                message.mediaFileName,
-                createMediaUploadListener(message.mediaUploadUri, messageUuid)
-            )
-        }.toMessageDataItem(identity, message.uuid)
+            messageWithMedia.media?.forEach {
+                addMedia(
+                    inputStream,
+                    it.mediaType ?: "",
+                    it.mediaFileName,
+                    createMediaUploadListener(it.mediaUploadUri!!, messageUuid)
+                )
+            }
+
+        }.toMessageDataItem(identity, messageWithMedia.message.uuid)
 
         conversationsRepository.updateMessageByUuid(sentMessage)
     }
@@ -287,12 +256,15 @@ class MessageListManagerImpl(
         downloadedLocation: String?
     ) {
         val message = conversationsClient.getConversationsClient().getConversation(conversationSid).getMessageByIndex(index)
-        conversationsRepository.updateMessageMediaDownloadStatus(
-            messageSid = message.sid,
-            downloadedBytes = downloadedBytes,
-            downloadLocation = downloadedLocation,
-            downloadState = downloadState.value
-        )
+        // @todo fix this logic
+        message.attachedMedia.forEach {
+            conversationsRepository.updateMessageMediaDownloadStatus(
+                mediaSid = it.sid,
+                downloadedBytes = downloadedBytes,
+                downloadLocation = downloadedLocation,
+                downloadState = downloadState.value
+            )
+        }
     }
 
     override suspend fun setReactions(index: Long, reactions: Reactions) {
@@ -326,7 +298,10 @@ class MessageListManagerImpl(
 
     override suspend fun setMessageMediaDownloadId(messageIndex: Long, id: Long) {
         val message = conversationsClient.getConversationsClient().getConversation(conversationSid).getMessageByIndex(messageIndex)
-        conversationsRepository.updateMessageMediaDownloadStatus(messageSid = message.sid, downloadId = id)
+        message.attachedMedia.forEach {
+            conversationsRepository.updateMessageMediaDownloadStatus(it.sid, downloadId = id)
+
+        }
     }
 
     override suspend fun removeMessage(messageIndex: Long) {

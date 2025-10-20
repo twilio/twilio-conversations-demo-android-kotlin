@@ -90,9 +90,11 @@ class MessageListViewModel(
     private val messagesObserver: Observer<PagedList<MessageListViewItem>> =
         Observer { list ->
             list.forEach { message ->
-                if (message?.mediaDownloadState == DownloadState.DOWNLOADING && message.mediaDownloadId != null) {
-                    if (updateMessageMediaDownloadState(message.index, message.mediaDownloadId)) {
-                        observeMessageMediaDownload(message.index, message.mediaDownloadId)
+                message.mediaData.forEach { media ->
+                    if (media.mediaDownloadState == DownloadState.DOWNLOADING && media.mediaDownloadId != null) {
+                        if (updateMessageMediaDownloadState(message.index, media.mediaDownloadId)) {
+                            observeMessageMediaDownload(message.index, media.mediaDownloadId)
+                        }
                     }
                 }
             }
@@ -145,19 +147,19 @@ class MessageListViewModel(
         }
     }
 
-    fun sendMediaMessage(uri: String, inputStream: InputStream, fileName: String?, mimeType: String?) =
-        viewModelScope.launch {
-            val messageUuid = UUID.randomUUID().toString()
-            try {
-                messageListManager.sendMediaMessage(uri, inputStream, fileName, mimeType, messageUuid)
-                onMessageSent.call()
-                Timber.d("Media message sent: $messageUuid")
-            } catch (e: TwilioException) {
-                Timber.d("Media message send error: ${e.errorInfo.status}:${e.errorInfo.code} ${e.errorInfo.message}")
-                messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo.code)
-                onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
-            }
-        }
+//    fun sendMediaMessage(uri: String, inputStream: InputStream, fileName: String?, mimeType: String?) =
+//        viewModelScope.launch {
+//            val messageUuid = UUID.randomUUID().toString()
+//            try {
+//                messageListManager.sendMediaMessage(uri, inputStream, fileName, mimeType, messageUuid)
+//                onMessageSent.call()
+//                Timber.d("Media message sent: $messageUuid")
+//            } catch (e: TwilioException) {
+//                Timber.d("Media message send error: ${e.errorInfo.status}:${e.errorInfo.code} ${e.errorInfo.message}")
+//                messageListManager.updateMessageStatus(messageUuid, SendStatus.ERROR, e.errorInfo.code)
+//                onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
+//            }
+//        }
 
     fun sendMultipleMediaMessage(items: List<MediaInput?>) =
         viewModelScope.launch {
@@ -242,7 +244,7 @@ class MessageListViewModel(
         )
     }
 
-    fun startMessageMediaDownload(messageIndex: Long, fileName: String?) = viewModelScope.launch {
+    fun startMessageMediaDownload(messageIndex: Long, mediaSid: String, fileName: String?) = viewModelScope.launch {
         Timber.d("Start file download for message index $messageIndex")
         updateMessageMediaDownloadStatus(messageIndex, DownloadState.DOWNLOADING)
 

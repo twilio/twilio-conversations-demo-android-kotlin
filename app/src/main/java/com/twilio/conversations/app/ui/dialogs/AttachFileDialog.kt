@@ -95,7 +95,7 @@ class AttachFileDialog : BaseBottomSheetDialogFragment() {
         val type = contentResolver.getType(uri)
         val name = contentResolver.getString(uri, OpenableColumns.DISPLAY_NAME)
         if (inputStream != null) {
-            messageListViewModel.sendMediaMessage(uri.toString(), inputStream, name, type)
+            messageListViewModel.sendMultipleMediaMessage(listOf(MediaInput(uri.toString(), inputStream, name, type)))
         } else {
             messageListViewModel.onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
             Timber.w("Could not get input stream for file reading: $uri")

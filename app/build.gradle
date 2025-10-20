@@ -105,9 +105,18 @@ android {
     }
 }
 
+repositories {
+    google()
+    mavenCentral()
+    flatDir {
+        dirs 'aars'
+    }
+}
+
 dependencies {
     // Twilio
-    implementation "com.twilio:conversations-android-with-symbols:6.0.3"
+//    implementation files('aars/convo-android-release.aar') //    implementation project(":conversations-android")
+    implementation "com.twilio:conversations-android-with-symbols:6.1.1"
     // or without symbols:
     // implementation "com.twilio:conversations-android:6.0.3"
 

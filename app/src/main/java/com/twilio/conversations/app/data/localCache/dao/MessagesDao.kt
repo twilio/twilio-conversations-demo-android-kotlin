@@ -41,13 +41,13 @@ interface MessagesDao {
     fun updateMessageStatus(uuid: String, sendStatus: Int, errorCode: Int)
 
     // Update single Message
-    @Query("UPDATE message_table SET sid = :sid, sendStatus = :sendStatus, `index` = :index, mediaSize = :mediaSize WHERE uuid = :uuid")
-    fun updateByUuid(sid: String, uuid: String, sendStatus: Int, index: Long, mediaSize: Long?)
+    @Query("UPDATE message_table SET sid = :sid, sendStatus = :sendStatus, `index` = :index WHERE uuid = :uuid")
+    fun updateByUuid(sid: String, uuid: String, sendStatus: Int, index: Long)
 
     @Transaction
     fun updateByUuidOrInsert(message: MessageDataItem) {
         if (message.uuid.isNotEmpty() && getMessageByUuid(message.uuid) != null) {
-            updateByUuid(message.sid, message.uuid, message.sendStatus, message.index, message.mediaSize)
+            updateByUuid(message.sid, message.uuid, message.sendStatus, message.index)
         } else {
             insertOrReplace(message)
         }
@@ -55,23 +55,4 @@ interface MessagesDao {
 
     @Delete
     fun delete(message: MessageDataItem)
-
-    @Query("UPDATE message_table SET mediaDownloadState = :downloadState WHERE sid = :messageSid")
-    fun updateMediaDownloadState(messageSid: String, downloadState: Int)
-
-    @Query("UPDATE message_table SET mediaDownloadedBytes = :downloadedBytes WHERE sid = :messageSid")
-    fun updateMediaDownloadedBytes(messageSid: String, downloadedBytes: Long)
-
-    @Query("UPDATE message_table SET mediaUri = :location WHERE sid = :messageSid")
-    fun updateMediaDownloadLocation(messageSid: String, location: String)
-
-    @Query("UPDATE message_table SET mediaDownloadId = :downloadId WHERE sid = :messageSid")
-    fun updateMediaDownloadId(messageSid: String, downloadId: Long)
-
-    @Query("UPDATE message_table SET mediaUploading = :downloading WHERE uuid = :uuid")
-    fun updateMediaUploadStatus(uuid: String, downloading: Boolean)
-
-    @Query("UPDATE message_table SET mediaUploadedBytes = :downloadedBytes WHERE uuid = :uuid")
-    fun updateMediaUploadedBytes(uuid: String, downloadedBytes: Long)
-
 }

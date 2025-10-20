@@ -23,6 +23,7 @@ import com.twilio.conversations.app.common.extensions.asMessageCount
 import com.twilio.conversations.app.common.extensions.asMessageDateString
 import com.twilio.conversations.app.common.extensions.firstMedia
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
+import com.twilio.conversations.app.data.localCache.entity.MediaDataItem
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.*
@@ -49,12 +50,11 @@ fun Conversation.toConversationDataItem(): ConversationDataItem {
 }
 
 fun Message.toMessageDataItem(currentUserIdentity: String = participant.identity, uuid: String = ""): MessageDataItem {
-    val media = firstMedia  // @todo: support multiple media
     return MessageDataItem(
         this.sid,
         this.conversationSid,
         this.participantSid,
-        if (media != null) MessageType.MEDIA.value else MessageType.TEXT.value,
+        if (this.attachedMedia.isNotEmpty()) MessageType.MEDIA.value else MessageType.TEXT.value,
         this.author,
         this.dateCreatedAsDate.time,
         this.body ?: "",
@@ -62,15 +62,11 @@ fun Message.toMessageDataItem(currentUserIdentity: String = participant.identity
         this.attributes.toString(),
         if (this.author == currentUserIdentity) Direction.OUTGOING.value else Direction.INCOMING.value,
         if (this.author == currentUserIdentity) SendStatus.SENT.value else SendStatus.UNDEFINED.value,
-        uuid,
-        media?.sid,
-        media?.filename,
-        media?.contentType,
-        media?.size
+        uuid
     )
 }
 
-fun MessageDataItem.toMessageListViewItem(authorChanged: Boolean): MessageListViewItem {
+fun MessageDataItem.toMessageListViewItem(authorChanged: Boolean, mediaList: List<MediaDataItem>? = null): MessageListViewItem {
     return MessageListViewItem(
         this.sid,
         this.uuid,
@@ -84,17 +80,20 @@ fun MessageDataItem.toMessageListViewItem(authorChanged: Boolean): MessageListVi
         sendStatusIcon = SendStatus.fromInt(this.sendStatus).asLastMesageStatusIcon(),
         getReactions(attributes).asReactionList(),
         MessageType.fromInt(this.type),
-        this.mediaSid,
-        this.mediaFileName,
-        this.mediaType,
-        this.mediaSize,
-        this.mediaUri?.toUri(),
-        this.mediaDownloadId,
-        this.mediaDownloadedBytes,
-        DownloadState.fromInt(this.mediaDownloadState),
-        this.mediaUploading,
-        this.mediaUploadedBytes,
-        this.mediaUploadUri?.toUri(),
+        mediaData= mediaList?.map { media -> MessageMediaViewItem(
+            media.mediaSid,
+            media.mediaFileName,
+            media.mediaType,
+            media.mediaSize,
+            media.mediaUri?.toUri(),
+            media.mediaDownloadId,
+            media.mediaDownloadedBytes,
+            DownloadState.fromInt(media.mediaDownloadState),
+            media.mediaUploading,
+            media.mediaUploadedBytes,
+            media.mediaUploadUri?.toUri()
+        )
+        } ?: emptyList(),
         this.errorCode
     )
 }

@@ -67,9 +67,12 @@ class MessageListActivity : BaseActivity() {
                 Timber.d("Display send error clicked: ${message.uuid}")
                 showSendErrorDialog(message)
             },
-            onDownloadMedia = { message ->
+            onDownloadMedia = { message, media ->
                 Timber.d("Download clicked: $message")
-                messageListViewModel.startMessageMediaDownload(message.index, message.mediaFileName)
+                media.mediaSid?.let {
+                    messageListViewModel.startMessageMediaDownload(message.index,
+                        it, media.mediaFileName)
+                }
             },
             onOpenMedia = { uri, mimeType ->
                 Timber.d("Open clicked")
@@ -207,13 +210,16 @@ class MessageListActivity : BaseActivity() {
         if (message.type == MessageType.TEXT) {
             messageListViewModel.resendTextMessage(message.uuid)
         } else if (message.type == MessageType.MEDIA) {
-            val fileInputStream = message.mediaUploadUri?.let { contentResolver.openInputStream(it) }
-            if (fileInputStream != null) {
-                messageListViewModel.resendMediaMessage(fileInputStream, message.uuid)
-            } else {
-                Timber.w("Could not get input stream for file reading: ${message.mediaUploadUri}")
-                showToast(R.string.err_failed_to_resend_media)
+            message.mediaData?.forEach { media ->
+                val fileInputStream = media.mediaUploadUri?.let { contentResolver.openInputStream(it) }
+                if (fileInputStream != null) {
+                    messageListViewModel.resendMediaMessage(fileInputStream, message.uuid)
+                } else {
+                    Timber.w("Could not get input stream for file reading: ${media.mediaUploadUri}")
+                    showToast(R.string.err_failed_to_resend_media)
+                }
             }
+
         }
     }
 

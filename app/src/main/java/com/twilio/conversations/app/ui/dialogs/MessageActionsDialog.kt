@@ -67,15 +67,15 @@ class MessageActionsDialog : BaseBottomSheetDialogFragment() {
     private fun shareMessage(message: MessageListViewItem) {
         val intent = Intent(Intent.ACTION_SEND)
 
-        if (message.type == MEDIA) {
-            intent.type = message.mediaType
-            val uri = message.mediaUploadUri ?: message.mediaUri ?: return
-            intent.putExtra(Intent.EXTRA_STREAM, uri)
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        } else {
-            intent.type = "text/plain"
-            intent.putExtra(Intent.EXTRA_TEXT, message.body)
-        }
+//        if (message.type == MEDIA) {
+//            intent.type = message.mediaType
+//            val uri = message.mediaUploadUri ?: message.mediaUri ?: return
+//            intent.putExtra(Intent.EXTRA_STREAM, uri)
+//            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+//        } else {
+//            intent.type = "text/plain"
+//            intent.putExtra(Intent.EXTRA_TEXT, message.body)
+//        }
 
         startActivity(Intent.createChooser(intent, null))
     }

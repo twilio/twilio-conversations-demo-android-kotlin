@@ -5,13 +5,15 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.twilio.conversations.app.data.localCache.dao.ConversationsDao
+import com.twilio.conversations.app.data.localCache.dao.MediaDao
 import com.twilio.conversations.app.data.localCache.dao.MessagesDao
 import com.twilio.conversations.app.data.localCache.dao.ParticipantsDao
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
+import com.twilio.conversations.app.data.localCache.entity.MediaDataItem
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 
-@Database(entities = [ConversationDataItem::class, MessageDataItem::class, ParticipantDataItem::class], version = 1, exportSchema = false)
+@Database(entities = [ConversationDataItem::class, MessageDataItem::class, ParticipantDataItem::class, MediaDataItem::class], version = 1, exportSchema = false)
 abstract class LocalCacheProvider : RoomDatabase() {
 
     abstract fun conversationsDao(): ConversationsDao
@@ -19,6 +21,8 @@ abstract class LocalCacheProvider : RoomDatabase() {
     abstract fun messagesDao(): MessagesDao
 
     abstract fun participantsDao(): ParticipantsDao
+
+    abstract fun mediaDao(): MediaDao
 
     companion object {
         val INSTANCE get() = _instance ?: error("call LocalCacheProvider.createInstance() first")

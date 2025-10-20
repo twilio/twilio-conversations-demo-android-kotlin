@@ -20,14 +20,16 @@ import com.twilio.conversations.app.common.enums.DownloadState.NOT_STARTED
 import com.twilio.conversations.app.common.enums.Reaction
 import com.twilio.conversations.app.common.enums.SendStatus
 import com.twilio.conversations.app.data.models.MessageListViewItem
+import com.twilio.conversations.app.data.models.MessageMediaViewItem
 import com.twilio.conversations.app.databinding.RowMessageItemIncomingBinding
 import com.twilio.conversations.app.databinding.RowMessageItemOutgoingBinding
+import com.twilio.conversations.app.databinding.RowMessageMediaItemBinding
 import com.twilio.conversations.app.databinding.ViewReactionItemBinding
 import timber.log.Timber
 
 class MessageListAdapter(
     private val onDisplaySendError: (message: MessageListViewItem) -> Unit,
-    private val onDownloadMedia: (message: MessageListViewItem) -> Unit,
+    private val onDownloadMedia: (message: MessageListViewItem, media: MessageMediaViewItem) -> Unit,
     private val onOpenMedia: (location: Uri, mimeType: String) -> Unit,
     private val onItemLongClick: (messageIndex: Long) -> Unit,
     private val onReactionClicked: (messageIndex: Long) -> Unit
@@ -63,52 +65,6 @@ class MessageListAdapter(
         val binding = holder.binding
         val context = binding.root.context
 
-        val mediaSize = Formatter.formatShortFileSize(context, message.mediaSize ?: 0)
-        val mediaUploadedBytes = Formatter.formatShortFileSize(context, message.mediaUploadedBytes ?: 0)
-        val mediaDownloadedBytes = Formatter.formatShortFileSize(context, message.mediaDownloadedBytes ?: 0)
-
-        val attachmentInfoText = when {
-            message.sendStatus == SendStatus.ERROR -> context.getString(R.string.err_failed_to_upload_media)
-
-            message.mediaUploading -> context.getString(R.string.attachment_uploading, mediaUploadedBytes)
-
-            message.mediaUploadUri != null ||
-                    message.mediaDownloadState == COMPLETED -> context.getString(R.string.attachment_tap_to_open)
-
-            message.mediaDownloadState == NOT_STARTED -> mediaSize
-
-            message.mediaDownloadState == DOWNLOADING -> context.getString(
-                R.string.attachment_downloading,
-                mediaDownloadedBytes
-            )
-
-            message.mediaDownloadState == ERROR -> context.getString(R.string.err_failed_to_download_media)
-
-            else -> error("Never happens")
-        }
-
-        val attachmentInfoColor = when {
-            message.sendStatus == SendStatus.ERROR ||
-                    message.mediaDownloadState == ERROR -> ContextCompat.getColor(context, R.color.colorAccent)
-
-            message.mediaUploading -> ContextCompat.getColor(context, R.color.text_subtitle)
-
-            message.mediaUploadUri != null ||
-                    message.mediaDownloadState == COMPLETED -> ContextCompat.getColor(context, R.color.colorPrimary)
-
-            else -> ContextCompat.getColor(context, R.color.text_subtitle)
-        }
-
-        val attachmentOnClickListener = View.OnClickListener {
-            if (message.mediaDownloadState == COMPLETED && message.mediaUri != null) {
-                onOpenMedia(message.mediaUri, message.mediaType!!)
-            } else if (message.mediaUploadUri != null) {
-                onOpenMedia(message.mediaUploadUri, message.mediaType!!)
-            } else if (message.mediaDownloadState != DOWNLOADING) {
-                onDownloadMedia(message)
-            }
-        }
-
         val longClickListener = View.OnLongClickListener {
             onItemLongClick(message.index)
             return@OnLongClickListener true
@@ -125,23 +81,109 @@ class MessageListAdapter(
         when (binding) {
             is RowMessageItemIncomingBinding -> {
                 binding.message = message
-                addReactions(binding.messageReactionHolder, message)
-                binding.attachmentInfo.text = attachmentInfoText
-                binding.attachmentInfo.setTextColor(attachmentInfoColor)
-                binding.attachmentBackground.setOnClickListener(attachmentOnClickListener)
-                binding.attachmentBackground.setOnLongClickListener(longClickListener)
+//                addReactions(binding.messageReactionHolder, message)
+                updateAttachments(binding.attachmentsContainer, message)
+                binding.attachmentsContainer.setOnLongClickListener(longClickListener)
             }
             is RowMessageItemOutgoingBinding -> {
                 binding.message = message
-                addReactions(binding.messageReactionHolder, message)
-                binding.attachmentInfo.text = attachmentInfoText
-                binding.attachmentInfo.setTextColor(attachmentInfoColor)
-                binding.attachmentBackground.setOnClickListener(attachmentOnClickListener)
-                binding.attachmentBackground.setOnLongClickListener(longClickListener)
+//                addReactions(binding.messageReactionHolder, message)
+                updateAttachments(binding.attachmentsContainer, message)
+                binding.attachmentsContainer.setOnLongClickListener(longClickListener)
             }
             else -> error("Unknown binding type: $binding")
         }
 
+    }
+
+    private fun updateAttachments(
+        attachmentsContainer: android.widget.LinearLayout,
+        message: MessageListViewItem
+    ) {
+        attachmentsContainer.removeAllViews()
+        val context = attachmentsContainer.context
+
+        if (message.mediaData.isEmpty()) {
+            attachmentsContainer.visibility = android.view.View.GONE
+            return
+        }
+        attachmentsContainer.visibility = android.view.View.VISIBLE
+
+        message.mediaData.forEach { mediaItem ->
+            // Inflate a new layout for each attachment
+            val attachmentBinding = RowMessageMediaItemBinding.inflate(
+                LayoutInflater.from(context),
+                attachmentsContainer,
+                false // Attach manually below
+            )
+
+            // Determine text and color for this specific media item
+            val mediaSize = mediaItem.mediaSize?.let { Formatter.formatShortFileSize(context, it) }
+            val mediaUploadedBytes =
+                Formatter.formatShortFileSize(context, mediaItem.mediaUploadedBytes ?: 0)
+            val mediaDownloadedBytes =
+                Formatter.formatShortFileSize(context, mediaItem.mediaDownloadedBytes ?: 0)
+
+            attachmentBinding.attachmentFileName.text = mediaItem.mediaFileName ?: "Attachment"
+
+            val attachmentInfoText = when {
+                message.sendStatus == SendStatus.ERROR -> context.getString(R.string.err_failed_to_upload_media)
+                mediaItem.mediaUploading -> context.getString(
+                    R.string.attachment_uploading,
+                    mediaUploadedBytes
+                )
+
+                mediaItem.mediaUploadUri != null || mediaItem.mediaDownloadState == COMPLETED -> context.getString(
+                    R.string.attachment_tap_to_open
+                )
+
+                mediaItem.mediaDownloadState == NOT_STARTED -> mediaSize
+                mediaItem.mediaDownloadState == DOWNLOADING -> context.getString(
+                    R.string.attachment_downloading,
+                    mediaDownloadedBytes
+                )
+
+                mediaItem.mediaDownloadState == ERROR -> context.getString(R.string.err_failed_to_download_media)
+                else -> ""
+            }
+
+            val attachmentInfoColor = when {
+                message.sendStatus == SendStatus.ERROR || mediaItem.mediaDownloadState == ERROR ->
+                    ContextCompat.getColor(context, R.color.colorAccent)
+
+                mediaItem.mediaUploading || mediaItem.mediaDownloadState == DOWNLOADING ->
+                    ContextCompat.getColor(context, R.color.text_subtitle)
+
+                mediaItem.mediaUploadUri != null || mediaItem.mediaDownloadState == COMPLETED ->
+                    ContextCompat.getColor(context, R.color.colorPrimary)
+
+                else -> ContextCompat.getColor(context, R.color.text_subtitle)
+            }
+
+            attachmentBinding.attachmentInfo.text = attachmentInfoText
+            attachmentBinding.attachmentInfo.setTextColor(attachmentInfoColor)
+
+            // Set click listener for this specific attachment
+            attachmentBinding.root.setOnClickListener {
+                when {
+                    mediaItem.mediaDownloadState == COMPLETED && mediaItem.mediaUri != null ->
+                        mediaItem.mediaType?.let { it1 -> onOpenMedia(mediaItem.mediaUri, it1) }
+
+                    mediaItem.mediaUploadUri != null ->
+                        mediaItem.mediaType?.let { it1 ->
+                            onOpenMedia(mediaItem.mediaUploadUri,
+                                it1
+                            )
+                        }
+
+                    mediaItem.mediaDownloadState != DOWNLOADING && !mediaItem.mediaUploading ->
+                        onDownloadMedia(message, mediaItem) // Pass the specific media item
+                }
+            }
+
+            // Add the newly created attachment view to the container
+            attachmentsContainer.addView(attachmentBinding.root)
+        }
     }
 
     private fun addReactions(rootView: LinearLayout, message: MessageListViewItem) {
