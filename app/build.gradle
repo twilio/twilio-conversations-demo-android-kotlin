@@ -115,7 +115,7 @@ repositories {
 
 dependencies {
     // Twilio
-//    implementation files('aars/convo-android-release.aar') //    implementation project(":conversations-android")
+//    implementation files('aars/convo-android-release.aar')
     implementation "com.twilio:conversations-android-with-symbols:6.1.1"
     // or without symbols:
     // implementation "com.twilio:conversations-android:6.0.3"

@@ -50,12 +50,14 @@
             android:id="@+id/message_background"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginTop="4dp"
+            android:layout_marginStart="16dp"
             android:background="@drawable/bg_message_outgoing"
             app:layout_constraintBottom_toBottomOf="@+id/message_footer"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="@+id/message_background_barrier"
-            app:layout_constraintTop_toTopOf="@+id/message_avatar" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_goneMarginStart="8dp" />
+
 
         <androidx.constraintlayout.widget.Barrier
             android:id="@+id/message_background_barrier"
@@ -66,7 +68,7 @@
             app:constraint_referenced_ids="
                 message_body,
                 message_date,
-                attachment_background" />
+                attachments_container" />
 
         <TextView
             android:id="@+id/message_body"
@@ -84,7 +86,7 @@
             android:textSize="16sp"
             android:visibility="@{message.type == MessageType.MEDIA ? View.GONE : View.VISIBLE}"
             app:layout_constrainedWidth="true"
-            app:layout_constraintEnd_toEndOf="@id/message_background"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="1"
             app:layout_constraintStart_toEndOf="@+id/message_avatar"
             app:layout_constraintTop_toTopOf="@+id/message_background"
@@ -93,31 +95,17 @@
             tools:text="@tools:sample/lorem/random"
             tools:visibility="visible" />
 
-        <View
-            android:id="@+id/attachment_background"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="8dp"
-            android:background="@drawable/bg_message_attachment"
-            app:layout_constraintBottom_toBottomOf="@+id/attachments_container"
-            app:layout_constraintEnd_toEndOf="@+id/message_background"
-            app:layout_constraintHorizontal_bias="1"
-            app:layout_constraintStart_toEndOf="@+id/message_avatar"
-            app:layout_constraintTop_toBottomOf="@+id/message_body"
-            app:layout_goneMarginStart="8dp" />
-
         <LinearLayout
             android:id="@+id/attachments_container"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintEnd_toEndOf="@id/message_background"
-            app:layout_constraintStart_toStartOf="@+id/message_background"
-            app:layout_constraintTop_toTopOf="@+id/message_background"
-            android:visibility="@{false ? View.VISIBLE : View.GONE}"
-            tools:visibility="visible" />
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/message_date"
+            app:layout_constraintEnd_toEndOf="@id/message_body"
+            app:layout_constraintStart_toStartOf="@id/message_body"
+            app:layout_constraintTop_toBottomOf="@id/message_body"
+            tools:visibility="gone" />
 
         <TextView
             android:id="@+id/message_date"
@@ -130,11 +118,9 @@
             android:text="@{message.dateCreated}"
             android:textColor="@color/white"
             android:textSize="12sp"
-            app:layout_constraintBottom_toTopOf="@+id/message_reaction_holder"
-            app:layout_constraintEnd_toStartOf="@+id/message_send_status"
             app:layout_constraintHorizontal_chainStyle="spread_inside"
             app:layout_constraintStart_toStartOf="@+id/message_background"
-            app:layout_constraintTop_toBottomOf="@+id/attachment_background"
+            app:layout_constraintTop_toBottomOf="@id/message_body"
             tools:text="15:58" />
 
         <ImageView
@@ -145,7 +131,6 @@
             android:src="@{message.sendStatusIcon}"
             app:layout_constraintBottom_toBottomOf="@id/message_date"
             app:layout_constraintEnd_toEndOf="@+id/message_background"
-            app:layout_constraintStart_toEndOf="@id/message_date"
             app:layout_constraintTop_toTopOf="@id/message_date"
             app:tint="@{message.sendStatus == SendStatus.ERROR ? @color/message_failed_icon_tint : @color/white}"
             tools:src="@drawable/ic_sent_message" />
@@ -164,12 +149,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:visibility="@{message.sendStatus == SendStatus.ERROR ? View.VISIBLE : View.GONE}"
             android:text="@string/message_send_error"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="1"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/message_background" />
+            android:visibility="@{message.sendStatus == SendStatus.ERROR ? View.VISIBLE : View.GONE}"
+            app:layout_constraintEnd_toEndOf="@+id/message_background"
+            app:layout_constraintTop_toBottomOf="@+id/message_background"
+            tools:visibility="visible" />
+
 
         <LinearLayout
             android:id="@+id/message_reaction_holder"
@@ -195,9 +180,11 @@
             android:id="@+id/attachment_group"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="@{message.type == MessageType.MEDIA ? View.VISIBLE : View.GONE}"
             app:constraint_referenced_ids="attachments_container"
-            tools:visibility="gone" />
+            tools:visibility="visible" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
 </layout>
+
+
