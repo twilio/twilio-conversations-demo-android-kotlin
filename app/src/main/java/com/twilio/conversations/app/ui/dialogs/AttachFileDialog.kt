@@ -8,7 +8,7 @@ import android.provider.OpenableColumns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
+import androidx.activity.result.contract.ActivityResultContracts.OpenMultipleDocuments
 import androidx.activity.result.contract.ActivityResultContracts.TakePicture
 import androidx.core.content.FileProvider
 import com.twilio.conversations.app.common.enums.ConversationsError
@@ -18,6 +18,7 @@ import com.twilio.conversations.app.common.extensions.lazyActivityViewModel
 import com.twilio.conversations.app.common.extensions.parcelable
 import com.twilio.conversations.app.common.injector
 import com.twilio.conversations.app.databinding.DialogAttachFileBinding
+import com.twilio.conversations.app.manager.MediaInput
 import timber.log.Timber
 import java.io.File
 import java.text.SimpleDateFormat
@@ -39,8 +40,10 @@ class AttachFileDialog : BaseBottomSheetDialogFragment() {
         dismiss()
     }
 
-    private val openDocument = registerForActivityResult(OpenDocument()) { uri: Uri? ->
-        uri?.let { sendMediaMessage(it) }
+    private val openMultipleDocuments = registerForActivityResult(OpenMultipleDocuments()) { uriList: List<Uri>? ->
+        if (uriList != null) {
+            sendMultipleMediaMessage(uriList)
+        }
         dismiss()
     }
 
@@ -66,7 +69,7 @@ class AttachFileDialog : BaseBottomSheetDialogFragment() {
         }
 
         binding.fileManager.setOnClickListener {
-            openDocument.launch(arrayOf("*/*"))
+            openMultipleDocuments.launch(arrayOf("*/*"))
         }
     }
 
@@ -92,13 +95,36 @@ class AttachFileDialog : BaseBottomSheetDialogFragment() {
         val type = contentResolver.getType(uri)
         val name = contentResolver.getString(uri, OpenableColumns.DISPLAY_NAME)
         if (inputStream != null) {
-            messageListViewModel.sendMediaMessage(uri.toString(), inputStream, name, type)
+            messageListViewModel.sendMultipleMediaMessage(listOf(MediaInput("", uri.toString(), inputStream, name, type)))
         } else {
             messageListViewModel.onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
             Timber.w("Could not get input stream for file reading: $uri")
         }
     }
 
+    fun sendMultipleMediaMessage(uriList: List<Uri>) {
+        var failed = false
+        val contentResolver = requireContext().contentResolver
+        val mediaInput = uriList.map<Uri, MediaInput?> { uri ->
+            val inputStream = contentResolver.openInputStream(uri)
+            val type = contentResolver.getType(uri)
+            val name = contentResolver.getString(uri, OpenableColumns.DISPLAY_NAME)
+            val uuid = UUID.randomUUID().toString()
+            if (inputStream == null) {
+                failed = true;
+                Timber.w("Could not get input stream for file reading: $uri")
+                null
+            } else {
+                MediaInput(uuid, uri.toString(), inputStream, name, type)
+            }
+        }
+        if (failed) {
+            messageListViewModel.onMessageError.value = ConversationsError.MESSAGE_SEND_FAILED
+
+        }
+
+        messageListViewModel.sendMultipleMediaMessage(mediaInput)
+    }
 
     companion object {
 

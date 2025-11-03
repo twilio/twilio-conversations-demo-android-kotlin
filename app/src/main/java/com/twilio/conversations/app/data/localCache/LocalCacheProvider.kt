@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import com.twilio.conversations.app.data.localCache.converters.AttachmentsListConverter
 import com.twilio.conversations.app.data.localCache.dao.ConversationsDao
 import com.twilio.conversations.app.data.localCache.dao.MessagesDao
 import com.twilio.conversations.app.data.localCache.dao.ParticipantsDao
@@ -12,6 +14,7 @@ import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 
 @Database(entities = [ConversationDataItem::class, MessageDataItem::class, ParticipantDataItem::class], version = 1, exportSchema = false)
+@TypeConverters(AttachmentsListConverter::class)
 abstract class LocalCacheProvider : RoomDatabase() {
 
     abstract fun conversationsDao(): ConversationsDao

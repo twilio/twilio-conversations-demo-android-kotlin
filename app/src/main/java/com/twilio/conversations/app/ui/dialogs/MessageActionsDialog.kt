@@ -65,16 +65,40 @@ class MessageActionsDialog : BaseBottomSheetDialogFragment() {
     }
 
     private fun shareMessage(message: MessageListViewItem) {
-        val intent = Intent(Intent.ACTION_SEND)
-
         if (message.type == MEDIA) {
-            intent.type = message.mediaType
-            val uri = message.mediaUploadUri ?: message.mediaUri ?: return
-            intent.putExtra(Intent.EXTRA_STREAM, uri)
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            shareMediaMessage(message)
         } else {
-            intent.type = "text/plain"
-            intent.putExtra(Intent.EXTRA_TEXT, message.body)
+            shareTextMessage(message)
+        }
+    }
+
+    private fun shareTextMessage(message: MessageListViewItem) {
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, message.body)
+        }
+        startActivity(Intent.createChooser(intent, null))
+    }
+
+    private fun shareMediaMessage(message: MessageListViewItem) {
+        val availableUris = message.attachmentsList.mapNotNull { attachment ->
+            attachment.uploadUri ?: attachment.uri
+        }
+
+        if (availableUris.isEmpty()) return
+
+        val intent = if (availableUris.size == 1) {
+            Intent(Intent.ACTION_SEND).apply {
+                type = message.attachmentsList.first().type ?: "*/*"
+                putExtra(Intent.EXTRA_STREAM, availableUris.first())
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+        } else {
+            Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                type = "*/*"
+                putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(availableUris))
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
         }
 
         startActivity(Intent.createChooser(intent, null))

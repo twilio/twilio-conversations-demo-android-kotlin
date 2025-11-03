@@ -4,9 +4,22 @@ import android.net.Uri
 import com.twilio.conversations.app.common.enums.Direction
 import com.twilio.conversations.app.common.enums.DownloadState
 import com.twilio.conversations.app.common.enums.MessageType
-import com.twilio.conversations.app.common.enums.Reaction
 import com.twilio.conversations.app.common.enums.Reactions
 import com.twilio.conversations.app.common.enums.SendStatus
+
+data class MessageAttachmentViewItem(
+    val sid: String,
+    val fileName: String?,
+    val type: String?,
+    val size: Long?,
+    val uri: Uri?,
+    val downloadId: Long?,
+    val downloadedBytes: Long?,
+    val downloadState: DownloadState,
+    val uploading: Boolean,
+    val uploadedBytes: Long?,
+    val uploadUri: Uri?
+)
 
 data class MessageListViewItem(
     val sid: String,
@@ -21,16 +34,7 @@ data class MessageListViewItem(
     val sendStatusIcon: Int,
     val reactions: Reactions,
     val type: MessageType,
-    val mediaSid: String?,
-    val mediaFileName: String?,
-    val mediaType: String?,
+    val attachmentsList: List<MessageAttachmentViewItem> = emptyList(),
     val mediaSize: Long?,
-    val mediaUri: Uri?,
-    val mediaDownloadId: Long?,
-    val mediaDownloadedBytes: Long?,
-    val mediaDownloadState: DownloadState,
-    val mediaUploading: Boolean,
-    val mediaUploadedBytes: Long?,
-    val mediaUploadUri: Uri?,
     val errorCode: Int
 )

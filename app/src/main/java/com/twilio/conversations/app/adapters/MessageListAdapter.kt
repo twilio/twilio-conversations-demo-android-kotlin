@@ -5,7 +5,10 @@ import android.text.format.Formatter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.databinding.ViewDataBinding
 import androidx.paging.PagedListAdapter
@@ -16,10 +19,9 @@ import com.twilio.conversations.app.common.enums.Direction
 import com.twilio.conversations.app.common.enums.DownloadState.COMPLETED
 import com.twilio.conversations.app.common.enums.DownloadState.DOWNLOADING
 import com.twilio.conversations.app.common.enums.DownloadState.ERROR
-import com.twilio.conversations.app.common.enums.DownloadState.NOT_STARTED
-import com.twilio.conversations.app.common.enums.Reaction
 import com.twilio.conversations.app.common.enums.SendStatus
 import com.twilio.conversations.app.data.models.MessageListViewItem
+import com.twilio.conversations.app.data.models.MessageAttachmentViewItem
 import com.twilio.conversations.app.databinding.RowMessageItemIncomingBinding
 import com.twilio.conversations.app.databinding.RowMessageItemOutgoingBinding
 import com.twilio.conversations.app.databinding.ViewReactionItemBinding
@@ -27,7 +29,7 @@ import timber.log.Timber
 
 class MessageListAdapter(
     private val onDisplaySendError: (message: MessageListViewItem) -> Unit,
-    private val onDownloadMedia: (message: MessageListViewItem) -> Unit,
+    private val onDownloadMedia: (message: MessageListViewItem, media: MessageAttachmentViewItem) -> Unit,
     private val onOpenMedia: (location: Uri, mimeType: String) -> Unit,
     private val onItemLongClick: (messageIndex: Long) -> Unit,
     private val onReactionClicked: (messageIndex: Long) -> Unit
@@ -63,52 +65,6 @@ class MessageListAdapter(
         val binding = holder.binding
         val context = binding.root.context
 
-        val mediaSize = Formatter.formatShortFileSize(context, message.mediaSize ?: 0)
-        val mediaUploadedBytes = Formatter.formatShortFileSize(context, message.mediaUploadedBytes ?: 0)
-        val mediaDownloadedBytes = Formatter.formatShortFileSize(context, message.mediaDownloadedBytes ?: 0)
-
-        val attachmentInfoText = when {
-            message.sendStatus == SendStatus.ERROR -> context.getString(R.string.err_failed_to_upload_media)
-
-            message.mediaUploading -> context.getString(R.string.attachment_uploading, mediaUploadedBytes)
-
-            message.mediaUploadUri != null ||
-                    message.mediaDownloadState == COMPLETED -> context.getString(R.string.attachment_tap_to_open)
-
-            message.mediaDownloadState == NOT_STARTED -> mediaSize
-
-            message.mediaDownloadState == DOWNLOADING -> context.getString(
-                R.string.attachment_downloading,
-                mediaDownloadedBytes
-            )
-
-            message.mediaDownloadState == ERROR -> context.getString(R.string.err_failed_to_download_media)
-
-            else -> error("Never happens")
-        }
-
-        val attachmentInfoColor = when {
-            message.sendStatus == SendStatus.ERROR ||
-                    message.mediaDownloadState == ERROR -> ContextCompat.getColor(context, R.color.colorAccent)
-
-            message.mediaUploading -> ContextCompat.getColor(context, R.color.text_subtitle)
-
-            message.mediaUploadUri != null ||
-                    message.mediaDownloadState == COMPLETED -> ContextCompat.getColor(context, R.color.colorPrimary)
-
-            else -> ContextCompat.getColor(context, R.color.text_subtitle)
-        }
-
-        val attachmentOnClickListener = View.OnClickListener {
-            if (message.mediaDownloadState == COMPLETED && message.mediaUri != null) {
-                onOpenMedia(message.mediaUri, message.mediaType!!)
-            } else if (message.mediaUploadUri != null) {
-                onOpenMedia(message.mediaUploadUri, message.mediaType!!)
-            } else if (message.mediaDownloadState != DOWNLOADING) {
-                onDownloadMedia(message)
-            }
-        }
-
         val longClickListener = View.OnLongClickListener {
             onItemLongClick(message.index)
             return@OnLongClickListener true
@@ -126,22 +82,102 @@ class MessageListAdapter(
             is RowMessageItemIncomingBinding -> {
                 binding.message = message
                 addReactions(binding.messageReactionHolder, message)
-                binding.attachmentInfo.text = attachmentInfoText
-                binding.attachmentInfo.setTextColor(attachmentInfoColor)
-                binding.attachmentBackground.setOnClickListener(attachmentOnClickListener)
-                binding.attachmentBackground.setOnLongClickListener(longClickListener)
+                setupAttachments(binding.attachmentsContainer, message, longClickListener)
             }
             is RowMessageItemOutgoingBinding -> {
                 binding.message = message
                 addReactions(binding.messageReactionHolder, message)
-                binding.attachmentInfo.text = attachmentInfoText
-                binding.attachmentInfo.setTextColor(attachmentInfoColor)
-                binding.attachmentBackground.setOnClickListener(attachmentOnClickListener)
-                binding.attachmentBackground.setOnLongClickListener(longClickListener)
+                setupAttachments(binding.attachmentsContainer, message, longClickListener)
             }
             else -> error("Unknown binding type: $binding")
         }
+    }
 
+    private fun setupAttachments(
+        attachmentsContainer: LinearLayout,
+        message: MessageListViewItem,
+        longClickListener: View.OnLongClickListener
+    ) {
+        attachmentsContainer.removeAllViews()
+
+        message.attachmentsList.forEach { attachment ->
+            val attachmentView = LayoutInflater.from(attachmentsContainer.context)
+                .inflate(R.layout.item_attachment, attachmentsContainer, false)
+
+            val icon = attachmentView.findViewById<ImageView>(R.id.attachment_icon)
+            val fileName = attachmentView.findViewById<TextView>(R.id.attachment_file_name)
+            val info = attachmentView.findViewById<TextView>(R.id.attachment_info)
+            val progress = attachmentView.findViewById<ProgressBar>(R.id.attachment_progress)
+            val failed = attachmentView.findViewById<ImageView>(R.id.attachment_failed)
+
+            fileName.text = attachment.fileName ?: "Unknown file"
+            val size = Formatter.formatShortFileSize(attachmentsContainer.context, attachment.size ?: 0)
+            
+            when {
+                message.sendStatus == SendStatus.ERROR -> {
+                    info.text = attachmentsContainer.context.getString(R.string.err_failed_to_upload_media)
+                    info.setTextColor(ContextCompat.getColor(attachmentsContainer.context, R.color.colorAccent))
+                    failed.visibility = View.VISIBLE
+                    progress.visibility = View.GONE
+                    icon.setImageResource(R.drawable.ic_attachment_to_download)
+                }
+                attachment.downloadState == ERROR -> {
+                    info.text = attachmentsContainer.context.getString(R.string.err_failed_to_download_media)
+                    info.setTextColor(ContextCompat.getColor(attachmentsContainer.context, R.color.colorAccent))
+                    failed.visibility = View.VISIBLE
+                    progress.visibility = View.GONE
+                    icon.setImageResource(R.drawable.ic_attachment_to_download)
+                }
+                attachment.downloadState == DOWNLOADING -> {
+                    val downloadedBytes = Formatter.formatShortFileSize(attachmentsContainer.context, attachment.downloadedBytes ?: 0)
+                    info.text = attachmentsContainer.context.getString(R.string.attachment_downloading, downloadedBytes)
+                    info.setTextColor(ContextCompat.getColor(attachmentsContainer.context, R.color.text_subtitle))
+                    progress.visibility = View.VISIBLE
+                    failed.visibility = View.GONE
+                    icon.setImageResource(R.drawable.ic_attachment_to_download)
+                }
+                attachment.uploading -> {
+                    val uploadedBytes = Formatter.formatShortFileSize(attachmentsContainer.context, attachment.uploadedBytes ?: 0)
+                    info.text = attachmentsContainer.context.getString(R.string.attachment_uploading, uploadedBytes)
+                    info.setTextColor(ContextCompat.getColor(attachmentsContainer.context, R.color.text_subtitle))
+                    progress.visibility = View.VISIBLE
+                    failed.visibility = View.GONE
+                    icon.setImageResource(R.drawable.ic_attachment_to_download)
+                }
+                attachment.downloadState == COMPLETED || attachment.uploadUri != null -> {
+                    info.text = attachmentsContainer.context.getString(R.string.attachment_tap_to_open)
+                    info.setTextColor(ContextCompat.getColor(attachmentsContainer.context, R.color.colorPrimary))
+                    progress.visibility = View.GONE
+                    failed.visibility = View.GONE
+                    icon.setImageResource(R.drawable.ic_attachment_downloaded)
+                }
+                else -> {
+                    info.text = size
+                    info.setTextColor(ContextCompat.getColor(attachmentsContainer.context, R.color.text_subtitle))
+                    progress.visibility = View.GONE
+                    failed.visibility = View.GONE
+                    icon.setImageResource(R.drawable.ic_attachment_to_download)
+                }
+            }
+
+            attachmentView.setOnClickListener {
+                when {
+                    attachment.downloadState == COMPLETED && attachment.uri != null -> {
+                        onOpenMedia(attachment.uri, attachment.type ?: "")
+                    }
+                    attachment.uploadUri != null -> {
+                        onOpenMedia(attachment.uploadUri, attachment.type ?: "")
+                    }
+                    attachment.downloadState != DOWNLOADING -> {
+                        onDownloadMedia(message, attachment)
+                    }
+                }
+            }
+
+            attachmentView.setOnLongClickListener(longClickListener)
+
+            attachmentsContainer.addView(attachmentView)
+        }
     }
 
     private fun addReactions(rootView: LinearLayout, message: MessageListViewItem) {

@@ -20,6 +20,7 @@ import com.twilio.conversations.app.common.extensions.*
 import com.twilio.conversations.app.common.injector
 import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.databinding.ActivityMessageListBinding
+import com.twilio.conversations.app.manager.MediaInput
 import com.twilio.conversations.app.ui.dialogs.AttachFileDialog
 import com.twilio.conversations.app.ui.dialogs.MessageActionsDialog
 import com.twilio.conversations.app.ui.dialogs.ReactionDetailsDialog
@@ -67,9 +68,12 @@ class MessageListActivity : BaseActivity() {
                 Timber.d("Display send error clicked: ${message.uuid}")
                 showSendErrorDialog(message)
             },
-            onDownloadMedia = { message ->
+            onDownloadMedia = { message, media ->
                 Timber.d("Download clicked: $message")
-                messageListViewModel.startMessageMediaDownload(message.index, message.mediaFileName)
+                media.sid?.let {
+                    messageListViewModel.startMessageMediaDownload(message.index,
+                        it, media.fileName)
+                }
             },
             onOpenMedia = { uri, mimeType ->
                 Timber.d("Open clicked")
@@ -207,11 +211,29 @@ class MessageListActivity : BaseActivity() {
         if (message.type == MessageType.TEXT) {
             messageListViewModel.resendTextMessage(message.uuid)
         } else if (message.type == MessageType.MEDIA) {
-            val fileInputStream = message.mediaUploadUri?.let { contentResolver.openInputStream(it) }
-            if (fileInputStream != null) {
-                messageListViewModel.resendMediaMessage(fileInputStream, message.uuid)
-            } else {
-                Timber.w("Could not get input stream for file reading: ${message.mediaUploadUri}")
+            try {
+                val mediaInputs = message.attachmentsList.mapNotNull { attachment ->
+                    attachment.uploadUri?.let { uploadUri ->
+                        val inputStream = contentResolver.openInputStream(uploadUri)
+                        if (inputStream != null) {
+                            MediaInput(
+                                uuid = UUID.randomUUID().toString(),
+                                uri = uploadUri.toString(),
+                                inputStream = inputStream,
+                                fileName = attachment.fileName,
+                                mimeType = attachment.type
+                            )
+                        } else {
+                            null
+                        }
+                    }
+                }
+                if (mediaInputs.isNotEmpty()) {
+                    messageListViewModel.resendMediaMessage(mediaInputs, message.uuid)
+                } else {
+                    showToast(R.string.err_failed_to_resend_media)
+                }
+            } catch (e: Exception) {
                 showToast(R.string.err_failed_to_resend_media)
             }
         }

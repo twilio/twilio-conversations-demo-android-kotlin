@@ -10,6 +10,7 @@ import com.twilio.conversations.app.common.asMessageDataItems
 import com.twilio.conversations.app.common.asMessageListViewItems
 import com.twilio.conversations.app.common.asParticipantDataItem
 import com.twilio.conversations.app.common.enums.CrashIn
+import com.twilio.conversations.app.common.enums.DownloadState
 import com.twilio.conversations.app.common.extensions.getAndSubscribeUser
 import com.twilio.conversations.app.common.extensions.getMessageCount
 import com.twilio.conversations.app.common.extensions.getParticipantCount
@@ -23,6 +24,7 @@ import com.twilio.conversations.app.data.ConversationsClientWrapper
 import com.twilio.conversations.app.data.localCache.LocalCacheProvider
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
+import com.twilio.conversations.app.data.localCache.entity.MessageAttachmentDataItem
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
@@ -74,16 +76,19 @@ interface ConversationsRepository {
     fun getConversationParticipants(conversationSid: String): Flow<RepositoryResult<List<ParticipantDataItem>>>
     fun updateMessageMediaDownloadStatus(
         messageSid: String,
+        attachmentSid: String,
         downloadId: Long? = null,
         downloadLocation: String? = null,
-        downloadState: Int? = null,
+        downloadState: DownloadState? = null,
         downloadedBytes: Long? = null
     )
     fun updateMessageMediaUploadStatus(
         messageUuid: String,
+        attachmentUuid: String,
         uploading: Boolean? = null,
         uploadedBytes: Long? = null
     )
+    fun updateMessageAttachments(messageUuid: String, attachments: List<MessageAttachmentDataItem>)
     fun simulateCrash(where: CrashIn)
     fun clear()
     fun subscribeToConversationsClientEvents()
@@ -271,39 +276,46 @@ class ConversationsRepositoryImpl(
 
     override fun updateMessageMediaDownloadStatus(
         messageSid: String,
+        attachmentSid: String,
         downloadId: Long?,
         downloadLocation: String?,
-        downloadState: Int?,
+        downloadState: DownloadState?,
         downloadedBytes: Long?
     ) {
         launch {
             if (downloadId != null) {
-                localCache.messagesDao().updateMediaDownloadId(messageSid, downloadId)
+               localCache.messagesDao().updateAttachmentDownloadId(messageSid, attachmentSid, downloadId)
             }
             if (downloadLocation != null) {
-                localCache.messagesDao().updateMediaDownloadLocation(messageSid, downloadLocation)
+               localCache.messagesDao().updateAttachmentUri(messageSid, attachmentSid, downloadLocation)
             }
             if (downloadState != null) {
-                localCache.messagesDao().updateMediaDownloadState(messageSid, downloadState)
+                localCache.messagesDao().updateAttachmentDownloadState(messageSid, attachmentSid, downloadState)
             }
             if (downloadedBytes != null) {
-                localCache.messagesDao().updateMediaDownloadedBytes(messageSid, downloadedBytes)
+                localCache.messagesDao().updateAttachmentDownloadProgress(messageSid, attachmentSid, downloadedBytes)
             }
         }
     }
 
     override fun updateMessageMediaUploadStatus(
         messageUuid: String,
+        attachmentUuid: String,
         uploading: Boolean?,
         uploadedBytes: Long?
     ) {
         launch {
             if (uploading != null) {
-                localCache.messagesDao().updateMediaUploadStatus(messageUuid, uploading)
+               localCache.messagesDao().updateMediaUploadStatus(messageUuid, attachmentUuid, uploadedBytes = 0, uploading)
             }
-            if (uploadedBytes != null) {
-                localCache.messagesDao().updateMediaUploadedBytes(messageUuid, uploadedBytes)
-            }
+        }
+    }
+
+    override fun updateMessageAttachments(messageUuid: String, attachments: List<MessageAttachmentDataItem>) {
+        launch {
+            val message = localCache.messagesDao().getMessageByUuid(messageUuid) ?: return@launch
+            val updatedMessage = message.copy(attachmentsList = attachments)
+            localCache.messagesDao().insertOrReplace(updatedMessage)
         }
     }
 
