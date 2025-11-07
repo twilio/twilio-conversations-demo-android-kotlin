@@ -510,8 +510,8 @@ class MessageListActivityTest {
         // Validate media messages
         if (message.type == MessageType.MEDIA) {
             val mediaMatcher = when {
-                message.mediaDownloadState == DOWNLOADING -> hasDescendant(withId(R.id.attachment_progress))
-                message.mediaDownloadState == COMPLETED -> hasDescendant(withText(R.string.attachment_tap_to_open))
+                message.attachmentsList.first().downloadState == DOWNLOADING -> hasDescendant(withId(R.id.attachment_progress))
+                message.attachmentsList.first().downloadState == COMPLETED -> hasDescendant(withText(R.string.attachment_tap_to_open))
                 else -> hasDescendant(
                     withText(
                         Formatter.formatShortFileSize(
@@ -532,7 +532,7 @@ class MessageListActivityTest {
                                     hasSibling(
                                         allOf(
                                             withId(R.id.attachment_file_name),
-                                            withText(message.mediaFileName)
+                                            withText(message.attachmentsList.first().fileName)
                                         )
                                     )
                                 )
@@ -541,7 +541,7 @@ class MessageListActivityTest {
                                 allOf(
                                     withId(R.id.attachment_progress),
                                     withEffectiveVisibility(
-                                        if (message.mediaDownloadState == DOWNLOADING)
+                                        if (message.attachmentsList.first().downloadState == DOWNLOADING)
                                             Visibility.VISIBLE else Visibility.GONE
                                     )
                                 )

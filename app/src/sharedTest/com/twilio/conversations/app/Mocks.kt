@@ -9,6 +9,7 @@ import com.twilio.conversations.app.common.enums.MessageType
 import com.twilio.conversations.app.common.enums.SendStatus
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
+import com.twilio.conversations.app.data.localCache.entity.MessageAttachmentDataItem
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.ConversationDetailsViewItem
 import com.twilio.conversations.app.data.models.ParticipantListViewItem
@@ -46,21 +47,11 @@ fun createTestMessageDataItem(sid: String = UUID.randomUUID().toString(),
                               direction: Int = 0,
                               sendStatus: Int = 0,
                               uuid: String = UUID.randomUUID().toString(),
-                              mediaSid: String? = null,
-                              mediaFileName: String? = null,
-                              mediaType: String? = null,
+                              attachmentsList: List<MessageAttachmentDataItem> = emptyList(),
                               mediaSize: Long? = null,
-                              mediaUri: String? = null,
-                              mediaDownloadId: Long? = null,
-                              mediaDownloadedBytes: Long? = null,
-                              mediaDownloadState: Int = NOT_STARTED.value,
-                              mediaUploading: Boolean = false,
-                              mediaUploadedBytes: Long? = null,
-                              mediaUploadUri: String? = null
+                              errorCode: Int = 0
 ) = MessageDataItem(sid, conversationSid, participantSid, type, author, dateCreated, body,
-    index, attributes, direction, sendStatus, uuid, mediaSid, mediaFileName, mediaType,
-    mediaSize, mediaUri, mediaDownloadId, mediaDownloadedBytes, mediaDownloadState, mediaUploading,
-    mediaUploadedBytes, mediaUploadUri)
+    index, attributes, direction, sendStatus, uuid, attachmentsList, mediaSize, errorCode)
 
 fun createTestParticipantDataItem(
     sid: String = "",
@@ -115,11 +106,31 @@ fun getMockedMessages(count: Int, body: String, conversationSid: String, directi
                       mediaFileName: String = "", mediaSize: Long = 0, mediaDownloadState: DownloadState = NOT_STARTED,
                       mediaUri: String? = null, mediaDownloadedBytes: Long? = null,
                       sendStatus: SendStatus = SendStatus.UNDEFINED): List<MessageDataItem> {
+    val attachmentsList = if (mediaFileName.isNotEmpty()) {
+        listOf(
+            MessageAttachmentDataItem(
+                uuid = UUID.randomUUID().toString(),
+                sid = "",
+                fileName = mediaFileName,
+                type = "image/jpeg",
+                size = mediaSize,
+                uri = mediaUri,
+                downloadId = null,
+                downloadedBytes = mediaDownloadedBytes,
+                downloadState = mediaDownloadState,
+                uploading = false,
+                uploadedBytes = null,
+                uploadUri = null
+            )
+        )
+    } else {
+        emptyList()
+    }
+    
     val messages = Array(count) { index ->
         createTestMessageDataItem(conversationSid = conversationSid, index = index.toLong(),
             body = "${body}_$index", direction = direction, author = author, attributes = attributes,
-        type = type.value, mediaFileName = mediaFileName, mediaSize = mediaSize, mediaDownloadState = mediaDownloadState.value,
-        mediaUri = mediaUri, mediaDownloadedBytes = mediaDownloadedBytes, sendStatus = sendStatus.value)
+            type = type.value, attachmentsList = attachmentsList, sendStatus = sendStatus.value)
     }
     return messages.toList()
 }
