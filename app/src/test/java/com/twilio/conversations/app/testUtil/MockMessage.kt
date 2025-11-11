@@ -10,21 +10,24 @@ import com.twilio.conversations.app.common.enums.MessageType
 import com.twilio.conversations.app.common.extensions.asDateString
 import com.twilio.conversations.app.common.extensions.firstMedia
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
-import io.mockk.every
-import io.mockk.mockk
 import org.powermock.api.mockito.PowerMockito
 import java.util.*
 
 fun MessageDataItem.toMessageMock(participant: Participant): Message {
     val message = PowerMockito.mock(Message::class.java)
 
-    every { message.firstMedia } returns if (type == MessageType.TEXT.value) null else mockk {
-        every { sid } returns (mediaSid ?: "")
-        every { contentType } returns (mediaType ?: "")
-        every { category } returns MediaCategory.MEDIA
-        every { filename } returns mediaFileName
-        every { size } returns (mediaSize ?: 0)
-    }
+    whenCall(message.firstMedia).thenReturn(
+        if (type == MessageType.TEXT.value || attachmentsList.isEmpty()) null else {
+            val firstAttachment = attachmentsList.first()
+            PowerMockito.mock(com.twilio.conversations.Media::class.java).apply {
+                whenCall(sid).thenReturn(firstAttachment.sid)
+                whenCall(contentType).thenReturn(firstAttachment.type ?: "")
+                whenCall(category).thenReturn(MediaCategory.MEDIA)
+                whenCall(filename).thenReturn(firstAttachment.fileName)
+                whenCall(size).thenReturn(firstAttachment.size ?: 0)
+            }
+        }
+    )
     whenCall(message.sid).thenReturn(sid)
     whenCall(message.author).thenReturn(author)
     whenCall(message.conversationSid).thenReturn(conversationSid)
