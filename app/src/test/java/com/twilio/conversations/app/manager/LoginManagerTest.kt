@@ -23,7 +23,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
@@ -79,33 +79,33 @@ class LoginManagerTest {
     }
 
     @Test
-    fun `signIn() should attempt sign in`() = runBlockingTest {
+    fun `signIn() should attempt sign in`() = runTest {
         loginManager.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
         verify(conversationsClientWrapper, times(1)).create(VALID_CREDENTIAL, VALID_CREDENTIAL)
     }
 
     @Test
-    fun `signInUsingStoredCredentials() should attempt sign in`() = runBlockingTest {
+    fun `signInUsingStoredCredentials() should attempt sign in`() = runTest {
         credentialStorageNotEmpty(credentialStorage, VALID_CREDENTIAL)
         loginManager.signInUsingStoredCredentials()
         verify(conversationsClientWrapper, times(1)).create(VALID_CREDENTIAL, VALID_CREDENTIAL)
     }
 
     @Test
-    fun `signInUsingStoredCredentials() should not attempt sign in when credential storage is empty`() = runBlockingTest {
+    fun `signInUsingStoredCredentials() should not attempt sign in when credential storage is empty`() = runTest {
         credentialStorageEmpty(credentialStorage)
         runCatching { loginManager.signInUsingStoredCredentials() }
         verify(conversationsClientWrapper, times(0)).create(INVALID_CREDENTIAL, INVALID_CREDENTIAL)
     }
 
     @Test
-    fun `signIn() should attempt to store credentials when client is created`() = runBlockingTest {
+    fun `signIn() should attempt to store credentials when client is created`() = runTest {
         loginManager.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
         verify(credentialStorage, times(1)).storeCredentials(VALID_CREDENTIAL, VALID_CREDENTIAL)
     }
 
     @Test
-    fun `signIn() should not attempt to clear credentials when fatal error occurred`() = runBlockingTest {
+    fun `signIn() should not attempt to clear credentials when fatal error occurred`() = runTest {
         val error = ConversationsError.TOKEN_ACCESS_DENIED
         whenCall(conversationsClientWrapper.create(INVALID_CREDENTIAL, INVALID_CREDENTIAL)).then { throw createTwilioException(error) }
         runCatching { loginManager.signIn(INVALID_CREDENTIAL, INVALID_CREDENTIAL) }
@@ -113,7 +113,7 @@ class LoginManagerTest {
     }
 
     @Test
-    fun `signIn() should not attempt to store credentials when error occurred`() = runBlockingTest {
+    fun `signIn() should not attempt to store credentials when error occurred`() = runTest {
         val error = ConversationsError.GENERIC_ERROR
         whenCall(conversationsClientWrapper.create(INVALID_CREDENTIAL, INVALID_CREDENTIAL)).then { throw createTwilioException(error) }
         runCatching { loginManager.signIn(INVALID_CREDENTIAL, INVALID_CREDENTIAL) }
@@ -121,13 +121,13 @@ class LoginManagerTest {
     }
 
     @Test
-    fun `signInUsingStoredCredentials() should not attempt to store credentials`() = runBlockingTest {
+    fun `signInUsingStoredCredentials() should not attempt to store credentials`() = runTest {
         loginManager.signInUsingStoredCredentials()
         verify(credentialStorage, times(0)).storeCredentials(VALID_CREDENTIAL, VALID_CREDENTIAL)
     }
 
     @Test
-    fun `signInUsingStoredCredentials() should attempt to clear credentials when fatal error occurred`() = runBlockingTest {
+    fun `signInUsingStoredCredentials() should attempt to clear credentials when fatal error occurred`() = runTest {
         credentialStorageNotEmpty(credentialStorage, OUTDATED_CREDENTIAL)
         val error = ConversationsError.TOKEN_ACCESS_DENIED
         whenCall(conversationsClientWrapper.create(OUTDATED_CREDENTIAL, OUTDATED_CREDENTIAL)).then { throw createTwilioException(error) }
@@ -136,7 +136,7 @@ class LoginManagerTest {
     }
 
     @Test
-    fun `signOut should clear credentials`() = runBlockingTest {
+    fun `signOut should clear credentials`() = runTest {
         credentialStorageNotEmpty(credentialStorage, OUTDATED_CREDENTIAL)
         loginManager.signOut()
 

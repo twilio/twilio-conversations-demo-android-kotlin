@@ -20,9 +20,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
@@ -68,28 +67,28 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `Should attempt sign in when not loading`() = runBlockingTest {
+    fun `Should attempt sign in when not loading`() = runTest {
         loginViewModel.isLoading.value = false
         loginViewModel.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
         verify(loginManager, times(1)).signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
     }
 
     @Test
-    fun `Should not attempt sign in when loading`() = runBlockingTest {
+    fun `Should not attempt sign in when loading`() = runTest {
         loginViewModel.isLoading.value = true
         loginViewModel.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
         verify(loginManager, times(0)).signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
     }
 
     @Test
-    fun `Should not attempt sign in with invalid credentials`() = runBlockingTest {
+    fun `Should not attempt sign in with invalid credentials`() = runTest {
         loginViewModel.signIn(INVALID_CREDENTIAL, INVALID_CREDENTIAL)
         verify(loginManager, times(0)).signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
     }
 
     @DelicateCoroutinesApi
     @Test
-    fun `Should set isLoading to true while attempting sign in and unchanged when done`() = runBlocking {
+    fun `Should set isLoading to true while attempting sign in and unchanged when done`() = runTest {
             assertEquals(false, loginViewModel.isLoading.waitValue())
 
             GlobalScope.launch {
@@ -102,19 +101,19 @@ class LoginViewModelTest {
         }
 
     @Test
-    fun `Should call onSignInSuccess when sign in successful`() = runBlockingTest {
+    fun `Should call onSignInSuccess when sign in successful`() = runTest {
         loginViewModel.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
         assertTrue(loginViewModel.onSignInSuccess.waitCalled())
     }
 
     @Test
-    fun `Should not call onSignInError when sign in successful`() = runBlockingTest {
+    fun `Should not call onSignInError when sign in successful`() = runTest {
         loginViewModel.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
         assertFalse(loginViewModel.onSignInError.waitCalled())
     }
 
     @Test
-    fun `Should call onSignInError when sign in fails`() = runBlockingTest {
+    fun `Should call onSignInError when sign in fails`() = runTest {
         val error = ConversationsError.TOKEN_ACCESS_DENIED
         whenCall(loginManager.signIn(INVALID_CREDENTIAL, INVALID_CREDENTIAL)).then { throw createTwilioException(error) }
         loginViewModel.signIn(INVALID_CREDENTIAL, INVALID_CREDENTIAL)
@@ -122,7 +121,7 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `Should not call onSignInSuccess when sign in fails`() = runBlockingTest {
+    fun `Should not call onSignInSuccess when sign in fails`() = runTest {
         val error = ConversationsError.TOKEN_ERROR
         whenCall(loginManager.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)).then { throw createTwilioException(error) }
         loginViewModel.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
