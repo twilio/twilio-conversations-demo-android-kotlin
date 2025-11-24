@@ -25,14 +25,12 @@ gcloud firebase test android run \
         --timeout=30m \
         --app "$APK_RUNNER_APP" \
         --test "$APK_RUNNER_ANDROID_TEST" \
-        --device model=Nexus5,version=21,orientation=portrait \
-        --device model=Nexus5,version=21,orientation=landscape \
-        --device model=walleye,version=27,orientation=portrait \
-        --device model=walleye,version=27,orientation=landscape \
-        --device model=judypn,version=28,orientation=portrait \
-        --device model=judypn,version=28,orientation=landscape \
-        --device model=flame,version=29,orientation=portrait \
-        --device model=flame,version=29,orientation=landscape \
+        --device model=MediumPhone.arm,version=27,orientation=portrait \
+        --device model=MediumPhone.arm,version=27,orientation=landscape \
+        --device model=blueline,version=28,orientation=portrait \
+        --device model=blueline,version=28,orientation=landscape \
+        --device model=redfin,version=30,orientation=portrait \
+        --device model=redfin,version=30,orientation=landscape \
         2>&1 | tee $LOG_FILE
 
 EXIT_CODE=${PIPESTATUS[0]}
