@@ -16,18 +16,22 @@ import java.util.*
 fun MessageDataItem.toMessageMock(participant: Participant): Message {
     val message = PowerMockito.mock(Message::class.java)
 
-    whenCall(message.firstMedia).thenReturn(
-        if (type == MessageType.TEXT.value || attachmentsList.isEmpty()) null else {
-            val firstAttachment = attachmentsList.first()
+    val mediaList = if (type == MessageType.TEXT.value || attachmentsList.isEmpty()) {
+        emptyList()
+    } else {
+        listOf(
             PowerMockito.mock(com.twilio.conversations.Media::class.java).apply {
+                val firstAttachment = attachmentsList.first()
                 whenCall(sid).thenReturn(firstAttachment.sid)
                 whenCall(contentType).thenReturn(firstAttachment.type ?: "")
                 whenCall(category).thenReturn(MediaCategory.MEDIA)
                 whenCall(filename).thenReturn(firstAttachment.fileName)
                 whenCall(size).thenReturn(firstAttachment.size ?: 0)
             }
-        }
-    )
+        )
+    }
+    
+    whenCall(message.attachedMedia).thenReturn(mediaList)
     whenCall(message.sid).thenReturn(sid)
     whenCall(message.author).thenReturn(author)
     whenCall(message.conversationSid).thenReturn(conversationSid)

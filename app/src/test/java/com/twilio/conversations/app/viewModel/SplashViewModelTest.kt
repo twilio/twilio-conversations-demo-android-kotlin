@@ -5,17 +5,15 @@ import com.twilio.conversations.app.common.enums.ConversationsError
 import com.twilio.conversations.app.common.extensions.createTwilioException
 import com.twilio.conversations.app.data.CredentialStorage
 import com.twilio.conversations.app.manager.LoginManager
+import com.twilio.conversations.app.testUtil.CoroutineTestRule
 import com.twilio.conversations.app.testUtil.waitCalled
 import com.twilio.conversations.app.testUtil.whenCall
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ObsoleteCoroutinesApi
-import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -38,6 +36,10 @@ import org.powermock.modules.junit4.PowerMockRunner
 class SplashViewModelTest {
 
     @Rule
+    @JvmField
+    var coroutineTestRule = CoroutineTestRule(UnconfinedTestDispatcher())
+
+    @Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
     private lateinit var splashViewModel: SplashViewModel
@@ -49,15 +51,7 @@ class SplashViewModelTest {
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
-
         splashViewModel = SplashViewModel(loginManager)
-    }
-
-    @After
-    fun tearDown() {
-        reset(credentialStorage)
-        Dispatchers.resetMain()
     }
 
     @Test

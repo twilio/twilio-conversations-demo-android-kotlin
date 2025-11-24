@@ -188,8 +188,9 @@ class ConversationsRepositoryTest {
         val conversation = createTestConversationDataItem().toConversationMock()
 
         clientListener.onConversationDeleted(conversation)
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(timeout = 10_000) { localCacheProvider.conversationsDao().delete(conversation.sid) }
+        verify { localCacheProvider.conversationsDao().delete(conversation.sid) }
         confirmVerified(localCacheProvider)
     }
 
@@ -202,14 +203,15 @@ class ConversationsRepositoryTest {
         every { localCacheProvider.messagesDao().getLastMessage(conversation.sid) } returns lastMessage
 
         clientListener.onConversationAdded(conversation.toConversationMock())
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(timeout = 10_000) { localCacheProvider.conversationsDao().insert(conversation) }
-        verify(timeout = 10_000) { localCacheProvider.conversationsDao().update(conversation.sid,
+        verify { localCacheProvider.conversationsDao().insert(conversation) }
+        verify { localCacheProvider.conversationsDao().update(conversation.sid,
             conversation.participatingStatus, conversation.notificationLevel, conversation.friendlyName) }
 
         // Also should update the last message of the conversation in local cache
-        verify(timeout = 10_000) { localCacheProvider.messagesDao().getLastMessage(conversation.sid) }
-        verify(timeout = 10_000) { localCacheProvider.conversationsDao().updateLastMessage(conversation.sid, lastMessage.body!!, lastMessage.sendStatus, lastMessage.dateCreated) }
+        verify { localCacheProvider.messagesDao().getLastMessage(conversation.sid) }
+        verify { localCacheProvider.conversationsDao().updateLastMessage(conversation.sid, lastMessage.body!!, lastMessage.sendStatus, lastMessage.dateCreated) }
 
         confirmVerified(localCacheProvider)
     }
@@ -223,6 +225,7 @@ class ConversationsRepositoryTest {
         every { localCacheProvider.messagesDao().getLastMessage(conversation.sid) } returns lastMessage
 
         clientListener.onConversationUpdated(conversation.toConversationMock(), Conversation.UpdateReason.ATTRIBUTES)
+        testDispatcher.scheduler.advanceUntilIdle()
 
         verify(timeout = 10_000) { localCacheProvider.conversationsDao().insert(conversation) }
         verify(timeout = 10_000) { localCacheProvider.conversationsDao().update(conversation.sid,
@@ -318,6 +321,7 @@ class ConversationsRepositoryTest {
 
         conversationsRepository = ConversationsRepositoryImpl(conversationsClientWrapper, localCacheProvider)
         clientListener.onConversationAdded(conversation)
+        testDispatcher.scheduler.advanceUntilIdle()
 
         val participant = mockk<Participant>()
         val user = mockk<User>()
@@ -336,13 +340,12 @@ class ConversationsRepositoryTest {
         // When calling ConversationListener.onTypingStarted(..)
         listenerSlot.captured.onTypingStarted(conversation, participant)
 
-        // Then the local cache is updated with that participant
-        verify { localCacheProvider.participantsDao().insertOrReplace(participantDataItemTyping) }
-
         // When calling ConversationListener.onTypingEnded(..)
         listenerSlot.captured.onTypingEnded(conversation, participant)
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Then the local cache is updated with that participant
+        verify { localCacheProvider.participantsDao().insertOrReplace(participantDataItemTyping) }
         verify { localCacheProvider.participantsDao().insertOrReplace(participantDataItemNotTyping) }
     }
 
@@ -356,8 +359,9 @@ class ConversationsRepositoryTest {
         prepareConversationsRepository(conversation)
 
         conversationListenerCaptor.value.onMessageDeleted(message)
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(timeout = 10_000) { localCacheProvider.messagesDao().delete(expectedMessage) }
+        verify { localCacheProvider.messagesDao().delete(expectedMessage) }
     }
 
     @Test
@@ -370,8 +374,9 @@ class ConversationsRepositoryTest {
         prepareConversationsRepository(conversation)
 
         conversationListenerCaptor.value.onMessageUpdated(message, Message.UpdateReason.BODY)
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(timeout = 10_000) { localCacheProvider.messagesDao().insertOrReplace(expectedMessage) }
+        verify { localCacheProvider.messagesDao().insertOrReplace(expectedMessage) }
     }
 
     @Test
@@ -384,8 +389,9 @@ class ConversationsRepositoryTest {
         prepareConversationsRepository(conversation)
 
         conversationListenerCaptor.value.onMessageAdded(message)
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(timeout = 10_000) { localCacheProvider.messagesDao().updateByUuidOrInsert(expectedMessage) }
+        verify { localCacheProvider.messagesDao().updateByUuidOrInsert(expectedMessage) }
     }
 
     private fun prepareConversationsRepository(conversation: Conversation) {
@@ -399,5 +405,6 @@ class ConversationsRepositoryTest {
         conversationsRepository = ConversationsRepositoryImpl(conversationsClientWrapper, localCacheProvider,
             coroutineTestRule.testDispatcherProvider)
         clientListener.onConversationAdded(conversation)
+        testDispatcher.scheduler.advanceUntilIdle()
     }
 }

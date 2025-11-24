@@ -22,6 +22,7 @@ import com.twilio.conversations.app.common.extensions.firstMedia
 import com.twilio.conversations.app.common.extensions.toConversationsError
 import com.twilio.conversations.app.createTestMessageDataItem
 import com.twilio.conversations.app.data.ConversationsClientWrapper
+import com.twilio.conversations.app.data.localCache.entity.MessageAttachmentDataItem
 import com.twilio.conversations.app.manager.MediaInput
 import com.twilio.conversations.app.repository.ConversationsRepository
 import com.twilio.conversations.app.testUtil.CoroutineTestRule
@@ -91,7 +92,6 @@ class MessageListManagerTest {
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
-        Dispatchers.setMain(Dispatchers.Unconfined)
 
         mockkStatic("com.twilio.conversations.app.common.extensions.TwilioExtensionsKt")
         mockkStatic("com.twilio.conversations.app.common.DataConverterKt")
@@ -107,11 +107,6 @@ class MessageListManagerTest {
         coEvery { conversationsClientWrapper.getConversationsClient() } returns conversationsClient
 
         messageListManager = MessageListManagerImpl(conversationSid, conversationsClientWrapper, conversationsRepository, coroutineTestRule.testDispatcherProvider)
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
     }
 
     @Test
@@ -360,8 +355,17 @@ class MessageListManagerTest {
         val mediaUri = "uri"
         val fileName = "fileName"
         val mimeType = "mimeType"
+        val attachmentsList = listOf(
+            MessageAttachmentDataItem(
+                uuid = UUID.randomUUID().toString(),
+                sid = "media-sid",
+                fileName = fileName,
+                type = mimeType,
+                size = 1024
+            )
+        )
         val message = createTestMessageDataItem(uuid = messageUuid, author = participantIdentity,
-            sendStatus = SendStatus.ERROR.value, type = MessageType.MEDIA.value)
+            sendStatus = SendStatus.ERROR.value, type = MessageType.MEDIA.value, attachmentsList = attachmentsList)
         every { participant.sid } returns message.participantSid
         coEvery {
             conversation.sendMessage {
@@ -399,8 +403,17 @@ class MessageListManagerTest {
         val mediaUri = "uri"
         val fileName = "fileName"
         val mimeType = "mimeType"
+        val attachmentsList = listOf(
+            MessageAttachmentDataItem(
+                uuid = UUID.randomUUID().toString(),
+                sid = "media-sid",
+                fileName = fileName,
+                type = mimeType,
+                size = 1024
+            )
+        )
         val message = createTestMessageDataItem(uuid = messageUuid, author = participantIdentity,
-            sendStatus = SendStatus.SENDING.value, type = MessageType.MEDIA.value)
+            sendStatus = SendStatus.SENDING.value, type = MessageType.MEDIA.value, attachmentsList = attachmentsList)
         coEvery { participant.sid } returns message.participantSid
         coEvery {
             conversation.sendMessage {
@@ -429,9 +442,18 @@ class MessageListManagerTest {
         val mediaUri = "uri"
         val fileName = "fileName"
         val mimeType = "mimeType"
+        val attachmentsList = listOf(
+            MessageAttachmentDataItem(
+                uuid = UUID.randomUUID().toString(),
+                sid = "media-sid",
+                fileName = fileName,
+                type = mimeType,
+                size = 1024
+            )
+        )
         val message = createTestMessageDataItem(uuid = messageUuid, author = participantIdentity,
-            sendStatus = SendStatus.ERROR.value, type = MessageType.MEDIA.value)
-        coEvery { participant.sid } returns message.participantSid
+            sendStatus = SendStatus.ERROR.value, type = MessageType.MEDIA.value, attachmentsList = attachmentsList)
+        every { participant.sid } returns message.participantSid
         coEvery {
             conversation.sendMessage {
                 this.attributes = any()
@@ -481,7 +503,8 @@ class MessageListManagerTest {
         val message = mockk<Message>()
         val media = mockk<Media>()
         coEvery { conversation.getMessageByIndex(messageIndex) } returns message
-        every { message.firstMedia } returns media
+        every { message.attachedMedia } returns listOf(media)
+        every { media.sid } returns attachmentSid
         coEvery { media.getTemporaryContentUrl() } returns mediaTempUrl
 
         assertEquals(mediaTempUrl, messageListManager.getMediaContentTemporaryUrl(messageIndex, attachmentSid))
