@@ -86,20 +86,15 @@ class LoginViewModelTest {
         verify(loginManager, times(0)).signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
     }
 
-    @DelicateCoroutinesApi
     @Test
     fun `Should set isLoading to true while attempting sign in and unchanged when done`() = runTest {
-            val loginViewModel = LoginViewModel(loginManager, connectivityMonitor)
-            assertEquals(false, loginViewModel.isLoading.waitValue())
+        val loginViewModel = LoginViewModel(loginManager, connectivityMonitor)
+        assertEquals(false, loginViewModel.isLoading.value)
 
-            GlobalScope.launch {
-                assertEquals(true, loginViewModel.isLoading.waitValue())
-            }
+        loginViewModel.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
 
-            loginViewModel.signIn(VALID_CREDENTIAL, VALID_CREDENTIAL)
-
-            assertEquals(true, loginViewModel.isLoading.waitValue())
-        }
+        assertEquals(true, loginViewModel.isLoading.value)
+    }
 
     @Test
     fun `Should call onSignInSuccess when sign in successful`() = runTest {
