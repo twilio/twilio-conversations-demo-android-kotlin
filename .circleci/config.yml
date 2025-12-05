@@ -113,12 +113,33 @@ jobs:
       - run: 
           name: Run androidTest in Firebase Test Lab
           command: |
+            rm -f /tmp/tests-to-run.txt
+            
+            circleci tests glob "app/src/androidTest/java/**/ui/*Test.kt" | \
+              sed 's/app\/src\/androidTest\/java\///g' | \
+              sed 's/\//./g' | \
+              sed 's/\.kt$//g' | \
+              circleci tests run \
+                --command=">/tmp/tests-to-run.txt xargs echo" \
+                --verbose
+            TEST_TARGETS=""
+            FIRST=true
+            for testclass in $(cat /tmp/tests-to-run.txt); do
+              if [ "$FIRST" = true ]; then
+                TEST_TARGETS="class ${testclass}"
+                FIRST=false
+              else
+                TEST_TARGETS="${TEST_TARGETS},class ${testclass}"
+              fi
+            done
+
             ./bin/run-tests-in-gcloud.sh \
                 app/build/outputs/apk/<< parameters.build-type >>/app-<< parameters.build-type >>.apk \
                 app/build/outputs/apk/androidTest/<< parameters.build-type >>/app-<< parameters.build-type >>-androidTest.apk \
                 /tmp/junit \
                 /tmp/gcloud-results \
-                -<< parameters.build-type >>
+                -<< parameters.build-type >> \
+                "$TEST_TARGETS"
       - store_artifacts:
           name: Uploading FTL tests artifacts
           path: /tmp/gcloud-results
