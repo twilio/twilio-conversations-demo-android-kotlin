@@ -516,38 +516,29 @@ class MessageListActivityTest {
                     withText(
                         Formatter.formatShortFileSize(
                             InstrumentationRegistry.getInstrumentation().targetContext,
-                            message.mediaSize ?: 0
+                            message.attachmentsList.first().size ?: 0
                         )
                     )
                 )
             }
+            // For messages with attachments, check within the message item
+            // The attachment views are now nested inside an attachments container
             WaitForViewMatcher.assertOnView(
                 atPosition(
                     index, allOf(
                         withId(R.id.message_item),
-                        allOf(
-                            hasDescendant(
-                                allOf(
-                                    withId(R.id.attachment_icon),
-                                    hasSibling(
-                                        allOf(
-                                            withId(R.id.attachment_file_name),
-                                            withText(message.attachmentsList.first().fileName)
-                                        )
-                                    )
+                        hasDescendant(withId(R.id.attachment_file_name)),
+                        hasDescendant(withText(message.attachmentsList.first().fileName)),
+                        hasDescendant(
+                            allOf(
+                                withId(R.id.attachment_progress),
+                                withEffectiveVisibility(
+                                    if (message.attachmentsList.first().downloadState == DOWNLOADING)
+                                        Visibility.VISIBLE else Visibility.GONE
                                 )
-                            ),
-                            hasDescendant(
-                                allOf(
-                                    withId(R.id.attachment_progress),
-                                    withEffectiveVisibility(
-                                        if (message.attachmentsList.first().downloadState == DOWNLOADING)
-                                            Visibility.VISIBLE else Visibility.GONE
-                                    )
-                                )
-                            ),
-                            mediaMatcher
-                        )
+                            )
+                        ),
+                        mediaMatcher
                     )
                 ), matches(isCompletelyDisplayed())
             )
