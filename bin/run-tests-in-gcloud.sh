@@ -26,8 +26,6 @@ GCLOUD_CMD="gcloud firebase test android run \
         --timeout=30m \
         --app \"$APK_RUNNER_APP\" \
         --test \"$APK_RUNNER_ANDROID_TEST\" \
-        --device model=MediumPhone.arm,version=27,orientation=portrait \
-        --device model=MediumPhone.arm,version=27,orientation=landscape \
         --device model=blueline,version=28,orientation=portrait \
         --device model=blueline,version=28,orientation=landscape \
         --device model=redfin,version=30,orientation=portrait \
