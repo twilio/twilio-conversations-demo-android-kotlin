@@ -29,7 +29,11 @@ GCLOUD_CMD="gcloud firebase test android run \
         --device model=blueline,version=28,orientation=portrait \
         --device model=blueline,version=28,orientation=landscape \
         --device model=redfin,version=30,orientation=portrait \
-        --device model=redfin,version=30,orientation=landscape"
+        --device model=redfin,version=30,orientation=landscape \
+        --device model=oriole,version=33,orientation=portrait \
+        --device model=oriole,version=33,orientation=landscape \
+        --device model=panther,version=34,orientation=portrait \
+        --device model=panther,version=34,orientation=landscape"
 
 if [ -n "$TEST_TARGETS" ]; then
     GCLOUD_CMD="$GCLOUD_CMD --test-targets \"$TEST_TARGETS\""
