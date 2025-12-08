@@ -510,44 +510,35 @@ class MessageListActivityTest {
         // Validate media messages
         if (message.type == MessageType.MEDIA) {
             val mediaMatcher = when {
-                message.mediaDownloadState == DOWNLOADING -> hasDescendant(withId(R.id.attachment_progress))
-                message.mediaDownloadState == COMPLETED -> hasDescendant(withText(R.string.attachment_tap_to_open))
+                message.attachmentsList.first().downloadState == DOWNLOADING -> hasDescendant(withId(R.id.attachment_progress))
+                message.attachmentsList.first().downloadState == COMPLETED -> hasDescendant(withText(R.string.attachment_tap_to_open))
                 else -> hasDescendant(
                     withText(
                         Formatter.formatShortFileSize(
                             InstrumentationRegistry.getInstrumentation().targetContext,
-                            message.mediaSize ?: 0
+                            message.attachmentsList.first().size ?: 0
                         )
                     )
                 )
             }
+            // For messages with attachments, check within the message item
+            // The attachment views are now nested inside an attachments container
             WaitForViewMatcher.assertOnView(
                 atPosition(
                     index, allOf(
                         withId(R.id.message_item),
-                        allOf(
-                            hasDescendant(
-                                allOf(
-                                    withId(R.id.attachment_icon),
-                                    hasSibling(
-                                        allOf(
-                                            withId(R.id.attachment_file_name),
-                                            withText(message.mediaFileName)
-                                        )
-                                    )
+                        hasDescendant(withId(R.id.attachment_file_name)),
+                        hasDescendant(withText(message.attachmentsList.first().fileName)),
+                        hasDescendant(
+                            allOf(
+                                withId(R.id.attachment_progress),
+                                withEffectiveVisibility(
+                                    if (message.attachmentsList.first().downloadState == DOWNLOADING)
+                                        Visibility.VISIBLE else Visibility.GONE
                                 )
-                            ),
-                            hasDescendant(
-                                allOf(
-                                    withId(R.id.attachment_progress),
-                                    withEffectiveVisibility(
-                                        if (message.mediaDownloadState == DOWNLOADING)
-                                            Visibility.VISIBLE else Visibility.GONE
-                                    )
-                                )
-                            ),
-                            mediaMatcher
-                        )
+                            )
+                        ),
+                        mediaMatcher
                     )
                 ), matches(isCompletelyDisplayed())
             )

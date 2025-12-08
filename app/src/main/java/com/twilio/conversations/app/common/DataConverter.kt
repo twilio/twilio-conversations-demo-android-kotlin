@@ -10,7 +10,6 @@ import com.twilio.conversations.Message
 import com.twilio.conversations.Participant
 import com.twilio.conversations.User
 import com.twilio.conversations.app.common.enums.Direction
-import com.twilio.conversations.app.common.enums.DownloadState
 import com.twilio.conversations.app.common.enums.MessageType
 import com.twilio.conversations.app.common.enums.Reaction
 import com.twilio.conversations.app.common.enums.Reactions
@@ -24,6 +23,7 @@ import com.twilio.conversations.app.common.extensions.asMessageDateString
 import com.twilio.conversations.app.common.extensions.firstMedia
 import com.twilio.conversations.app.data.localCache.entity.ConversationDataItem
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
+import com.twilio.conversations.app.data.localCache.entity.MessageAttachmentDataItem
 import com.twilio.conversations.app.data.localCache.entity.ParticipantDataItem
 import com.twilio.conversations.app.data.models.*
 import com.twilio.conversations.app.manager.friendlyName
@@ -63,10 +63,15 @@ fun Message.toMessageDataItem(currentUserIdentity: String = participant.identity
         if (this.author == currentUserIdentity) Direction.OUTGOING.value else Direction.INCOMING.value,
         if (this.author == currentUserIdentity) SendStatus.SENT.value else SendStatus.UNDEFINED.value,
         uuid,
-        media?.sid,
-        media?.filename,
-        media?.contentType,
-        media?.size
+        attachmentsList = this.attachedMedia.map { mediaItem ->
+            MessageAttachmentDataItem(
+                sid = mediaItem.sid,
+                fileName = mediaItem.filename,
+                type = mediaItem.contentType,
+                size = mediaItem.size
+            )
+        },
+        mediaSize = this.attachedMedia.sumOf { it.size }
     )
 }
 
@@ -84,17 +89,22 @@ fun MessageDataItem.toMessageListViewItem(authorChanged: Boolean): MessageListVi
         sendStatusIcon = SendStatus.fromInt(this.sendStatus).asLastMesageStatusIcon(),
         getReactions(attributes).asReactionList(),
         MessageType.fromInt(this.type),
-        this.mediaSid,
-        this.mediaFileName,
-        this.mediaType,
+        attachmentsList = this.attachmentsList.map { attachment ->
+            MessageAttachmentViewItem(
+                attachment.sid,
+                attachment.fileName,
+                attachment.type,
+                attachment.size,
+                attachment.uri?.toUri(),
+                attachment.downloadId,
+                attachment.downloadedBytes,
+                attachment.downloadState,
+                attachment.uploading,
+                attachment.uploadedBytes,
+                attachment.uploadUri?.toUri()
+            )
+        },
         this.mediaSize,
-        this.mediaUri?.toUri(),
-        this.mediaDownloadId,
-        this.mediaDownloadedBytes,
-        DownloadState.fromInt(this.mediaDownloadState),
-        this.mediaUploading,
-        this.mediaUploadedBytes,
-        this.mediaUploadUri?.toUri(),
         this.errorCode
     )
 }

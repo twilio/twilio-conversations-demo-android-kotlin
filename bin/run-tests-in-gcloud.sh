@@ -1,8 +1,8 @@
 #!/bin/bash
 
-if [ ! $# -eq 5 ]; then
+if [ ! $# -eq 5 ] && [ ! $# -eq 6 ]; then
     SELF=`basename $0`
-    echo "Usage: $SELF <APK_RUNNER_APP> <APK_RUNNER_ANDROID_TEST> <RESULTS_DIR> <ARTIFACTS_DIR> <RENAME_SUFFIX>"
+    echo "Usage: $SELF <APK_RUNNER_APP> <APK_RUNNER_ANDROID_TEST> <RESULTS_DIR> <ARTIFACTS_DIR> <RENAME_SUFFIX> [TEST_TARGETS]"
     exit 1
 fi
 
@@ -11,6 +11,7 @@ APK_RUNNER_ANDROID_TEST=$2
 RESULTS_DIR=$3
 ARTIFACTS_DIR=$4
 RENAME_SUFFIX=$5
+TEST_TARGETS=$6
 
 LOG_FILE="$RESULTS_DIR/gcloud_output.txt"
 
@@ -20,20 +21,25 @@ mkdir -p "$RESULTS_DIR"
 echo "gcloud --version"
 gcloud --version
 
-gcloud firebase test android run \
+GCLOUD_CMD="gcloud firebase test android run \
         --type instrumentation \
         --timeout=30m \
-        --app "$APK_RUNNER_APP" \
-        --test "$APK_RUNNER_ANDROID_TEST" \
-        --device model=Nexus5,version=21,orientation=portrait \
-        --device model=Nexus5,version=21,orientation=landscape \
-        --device model=walleye,version=27,orientation=portrait \
-        --device model=walleye,version=27,orientation=landscape \
-        --device model=judypn,version=28,orientation=portrait \
-        --device model=judypn,version=28,orientation=landscape \
-        --device model=flame,version=29,orientation=portrait \
-        --device model=flame,version=29,orientation=landscape \
-        2>&1 | tee $LOG_FILE
+        --app \"$APK_RUNNER_APP\" \
+        --test \"$APK_RUNNER_ANDROID_TEST\" \
+        --device model=blueline,version=28,orientation=portrait \
+        --device model=blueline,version=28,orientation=landscape \
+        --device model=redfin,version=30,orientation=portrait \
+        --device model=redfin,version=30,orientation=landscape \
+        --device model=oriole,version=33,orientation=portrait \
+        --device model=oriole,version=33,orientation=landscape \
+        --device model=panther,version=34,orientation=portrait \
+        --device model=panther,version=34,orientation=landscape"
+
+if [ -n "$TEST_TARGETS" ]; then
+    GCLOUD_CMD="$GCLOUD_CMD --test-targets \"$TEST_TARGETS\""
+fi
+
+eval "$GCLOUD_CMD" 2>&1 | tee $LOG_FILE
 
 EXIT_CODE=${PIPESTATUS[0]}
 echo "gcloud finished with code $EXIT_CODE"

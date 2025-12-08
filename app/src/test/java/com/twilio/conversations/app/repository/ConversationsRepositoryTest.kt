@@ -55,9 +55,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.TestCoroutineDispatcher
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -77,7 +76,7 @@ import org.powermock.modules.junit4.PowerMockRunner
 )
 class ConversationsRepositoryTest {
 
-    private val testDispatcher: TestCoroutineDispatcher = TestCoroutineDispatcher()
+    private val testDispatcher = StandardTestDispatcher()
 
     @Rule
     var coroutineTestRule = CoroutineTestRule(testDispatcher)
@@ -124,7 +123,7 @@ class ConversationsRepositoryTest {
     }
 
     @Test
-    fun `getUserConversations() should return statuses in correct order`() = runBlocking {
+    fun `getUserConversations() should return statuses in correct order`() = runTest {
         every { localCacheProvider.conversationsDao().getUserConversations() } returns flowOf(emptyList())
 
         val actual = conversationsRepository.getUserConversations().toList().map { it.requestStatus }
@@ -134,7 +133,7 @@ class ConversationsRepositoryTest {
     }
 
     @Test
-    fun `getUserConversations() first should return user conversations stored in local cache`() = runBlocking {
+    fun `getUserConversations() first should return user conversations stored in local cache`() = runTest {
         val expectedConversations = getMockedConversations(USER_CONVERSATION_COUNT, "User Conversations").toList()
 
         every { localCacheProvider.conversationsDao().getUserConversations() } returns flowOf(expectedConversations)
@@ -145,7 +144,7 @@ class ConversationsRepositoryTest {
     }
 
     @Test
-    fun `getUserConversations() should fetch conversations and store them in local cache`() = runBlocking {
+    fun `getUserConversations() should fetch conversations and store them in local cache`() = runTest {
         val expectedConversation = createTestConversationDataItem()
 
         every { localCacheProvider.conversationsDao().getUserConversations() } returns flowOf(emptyList())
@@ -160,7 +159,7 @@ class ConversationsRepositoryTest {
     }
 
     @Test
-    fun `getUserConversations() should delete outdated conversations from local cache`() = runBlocking {
+    fun `getUserConversations() should delete outdated conversations from local cache`() = runTest {
         val expectedConversations = getMockedConversations(USER_CONVERSATION_COUNT, "User Conversations").toList()
 
         every { localCacheProvider.conversationsDao().getUserConversations() } returns flowOf(expectedConversations)
@@ -173,7 +172,7 @@ class ConversationsRepositoryTest {
     }
 
     @Test
-    fun `getUserConversations() should return error if cannot fetch conversation`() = runBlocking {
+    fun `getUserConversations() should return error if cannot fetch conversation`() = runTest {
         val expectedConversation = createTestConversationDataItem()
 
         every { localCacheProvider.conversationsDao().getUserConversations() } returns flowOf(emptyList())
@@ -185,17 +184,18 @@ class ConversationsRepositoryTest {
     }
 
     @Test
-    fun `onConversationDeleted should remove received Conversation from local cache when called`() = runBlocking {
+    fun `onConversationDeleted should remove received Conversation from local cache when called`() = runTest {
         val conversation = createTestConversationDataItem().toConversationMock()
 
         clientListener.onConversationDeleted(conversation)
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(timeout = 10_000) { localCacheProvider.conversationsDao().delete(conversation.sid) }
+        verify { localCacheProvider.conversationsDao().delete(conversation.sid) }
         confirmVerified(localCacheProvider)
     }
 
     @Test
-    fun `onConversationAdded should add received Conversation to local cache when called`() = runBlocking {
+    fun `onConversationAdded should add received Conversation to local cache when called`() = runTest {
         val conversation = createTestConversationDataItem()
         coEvery { conversationsClient.getConversation(any()) } returns conversation.toConversationMock()
 
@@ -203,20 +203,21 @@ class ConversationsRepositoryTest {
         every { localCacheProvider.messagesDao().getLastMessage(conversation.sid) } returns lastMessage
 
         clientListener.onConversationAdded(conversation.toConversationMock())
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(timeout = 10_000) { localCacheProvider.conversationsDao().insert(conversation) }
-        verify(timeout = 10_000) { localCacheProvider.conversationsDao().update(conversation.sid,
+        verify { localCacheProvider.conversationsDao().insert(conversation) }
+        verify { localCacheProvider.conversationsDao().update(conversation.sid,
             conversation.participatingStatus, conversation.notificationLevel, conversation.friendlyName) }
 
         // Also should update the last message of the conversation in local cache
-        verify(timeout = 10_000) { localCacheProvider.messagesDao().getLastMessage(conversation.sid) }
-        verify(timeout = 10_000) { localCacheProvider.conversationsDao().updateLastMessage(conversation.sid, lastMessage.body!!, lastMessage.sendStatus, lastMessage.dateCreated) }
+        verify { localCacheProvider.messagesDao().getLastMessage(conversation.sid) }
+        verify { localCacheProvider.conversationsDao().updateLastMessage(conversation.sid, lastMessage.body!!, lastMessage.sendStatus, lastMessage.dateCreated) }
 
         confirmVerified(localCacheProvider)
     }
 
     @Test
-    fun `onConversationUpdated should update received Conversation in local cache when called`() = runBlocking {
+    fun `onConversationUpdated should update received Conversation in local cache when called`() = runTest {
         val conversation = createTestConversationDataItem()
         coEvery { conversationsClient.getConversation(any()) } returns conversation.toConversationMock()
 
@@ -224,6 +225,7 @@ class ConversationsRepositoryTest {
         every { localCacheProvider.messagesDao().getLastMessage(conversation.sid) } returns lastMessage
 
         clientListener.onConversationUpdated(conversation.toConversationMock(), Conversation.UpdateReason.ATTRIBUTES)
+        testDispatcher.scheduler.advanceUntilIdle()
 
         verify(timeout = 10_000) { localCacheProvider.conversationsDao().insert(conversation) }
         verify(timeout = 10_000) { localCacheProvider.conversationsDao().update(conversation.sid,
@@ -237,7 +239,7 @@ class ConversationsRepositoryTest {
     }
 
     @Test
-    fun `getMessages() should return statuses in correct order`() = runBlocking {
+    fun `getMessages() should return statuses in correct order`() = runTest {
         every { localCacheProvider.messagesDao().getMessagesSorted(any()) } returns ItemDataSource.factory(emptyList())
         coEvery { conversation.getLastMessages(any()).asMessageDataItems(any()) } returns emptyList()
 
@@ -245,7 +247,7 @@ class ConversationsRepositoryTest {
     }
 
     @Test
-    fun `getMessages() first should return messages stored in local cache`() = runBlocking {
+    fun `getMessages() first should return messages stored in local cache`() = runTest {
         val conversationSid = "conversation_1"
         val expectedMessages = getMockedMessages(MESSAGE_COUNT, "Message body", conversationSid)
 
@@ -257,7 +259,7 @@ class ConversationsRepositoryTest {
     }
 
     @Test
-    fun `getMessages() should fetch messages and store them in local cache`() = runBlocking {
+    fun `getMessages() should fetch messages and store them in local cache`() = runTest {
         val conversationSid = "conversation_1"
         val expectedMessage = createTestMessageDataItem(conversationSid = conversationSid)
 
@@ -270,7 +272,7 @@ class ConversationsRepositoryTest {
     }
 
     @Test
-    fun `getMessages() should return error if cannot fetch conversation descriptors`() = runBlocking {
+    fun `getMessages() should return error if cannot fetch conversation descriptors`() = runTest {
         every { localCacheProvider.messagesDao().getMessagesSorted(any()) } returns ItemDataSource.factory(emptyList())
         coEvery { conversation.getLastMessages(any()).asMessageDataItems(any()) } throws createTwilioException(UNKNOWN)
 
@@ -281,7 +283,7 @@ class ConversationsRepositoryTest {
     }
 
     @Test
-    fun `getMessages() should return error if cannot fetch conversation`() = runBlocking {
+    fun `getMessages() should return error if cannot fetch conversation`() = runTest {
         val conversationSid = "conversation_1"
         val expectedMessage = createTestMessageDataItem(conversationSid = conversationSid)
 
@@ -295,7 +297,7 @@ class ConversationsRepositoryTest {
     }
 
     @Test
-    fun `getTypingMemebers should return data from LocalCache`() = runBlocking {
+    fun `getTypingMemebers should return data from LocalCache`() = runTest {
         val conversationSid = "123"
         val typingParticipants = listOf(ParticipantDataItem(conversationSid = conversationSid, identity = "asd", sid = "321",
             lastReadMessageIndex = null, lastReadTimestamp = null, friendlyName = "user", isOnline = true))
@@ -305,7 +307,7 @@ class ConversationsRepositoryTest {
     }
 
     @Test
-    fun `participant typing status updated via messageListManagerListener`() = runBlocking {
+    fun `participant typing status updated via messageListManagerListener`() = runTest {
         // Set up a ConversationsRepository and capture the messageListManagerListener that's added to joined conversations
         val conversationsClient = mockk<ConversationsClient>()
         val listenerSlot = slot<ConversationListener>()
@@ -319,6 +321,7 @@ class ConversationsRepositoryTest {
 
         conversationsRepository = ConversationsRepositoryImpl(conversationsClientWrapper, localCacheProvider)
         clientListener.onConversationAdded(conversation)
+        testDispatcher.scheduler.advanceUntilIdle()
 
         val participant = mockk<Participant>()
         val user = mockk<User>()
@@ -337,18 +340,17 @@ class ConversationsRepositoryTest {
         // When calling ConversationListener.onTypingStarted(..)
         listenerSlot.captured.onTypingStarted(conversation, participant)
 
-        // Then the local cache is updated with that participant
-        verify { localCacheProvider.participantsDao().insertOrReplace(participantDataItemTyping) }
-
         // When calling ConversationListener.onTypingEnded(..)
         listenerSlot.captured.onTypingEnded(conversation, participant)
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Then the local cache is updated with that participant
+        verify { localCacheProvider.participantsDao().insertOrReplace(participantDataItemTyping) }
         verify { localCacheProvider.participantsDao().insertOrReplace(participantDataItemNotTyping) }
     }
 
     @Test
-    fun `message deleted via ConversationListener`() = testDispatcher.runBlockingTest {
+    fun `message deleted via ConversationListener`() = runTest {
         val conversationListenerCaptor = ArgumentCaptor.forClass(ConversationListener::class.java)
         val conversation = createTestConversationDataItem().toConversationMock(conversationListenerCaptor = conversationListenerCaptor)
         val participant = createTestParticipantDataItem().toParticipantMock(conversation)
@@ -357,12 +359,13 @@ class ConversationsRepositoryTest {
         prepareConversationsRepository(conversation)
 
         conversationListenerCaptor.value.onMessageDeleted(message)
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(timeout = 10_000) { localCacheProvider.messagesDao().delete(expectedMessage) }
+        verify { localCacheProvider.messagesDao().delete(expectedMessage) }
     }
 
     @Test
-    fun `message updated via ConversationListener`() = testDispatcher.runBlockingTest {
+    fun `message updated via ConversationListener`() = runTest {
         val conversationListenerCaptor = ArgumentCaptor.forClass(ConversationListener::class.java)
         val conversation = createTestConversationDataItem().toConversationMock(conversationListenerCaptor = conversationListenerCaptor)
         val participant = createTestParticipantDataItem().toParticipantMock(conversation)
@@ -371,12 +374,13 @@ class ConversationsRepositoryTest {
         prepareConversationsRepository(conversation)
 
         conversationListenerCaptor.value.onMessageUpdated(message, Message.UpdateReason.BODY)
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(timeout = 10_000) { localCacheProvider.messagesDao().insertOrReplace(expectedMessage) }
+        verify { localCacheProvider.messagesDao().insertOrReplace(expectedMessage) }
     }
 
     @Test
-    fun `message added via ConversationListener`() = testDispatcher.runBlockingTest {
+    fun `message added via ConversationListener`() = runTest {
         val conversationListenerCaptor = ArgumentCaptor.forClass(ConversationListener::class.java)
         val conversation = createTestConversationDataItem().toConversationMock(conversationListenerCaptor = conversationListenerCaptor)
         val participant = createTestParticipantDataItem().toParticipantMock(conversation)
@@ -385,8 +389,9 @@ class ConversationsRepositoryTest {
         prepareConversationsRepository(conversation)
 
         conversationListenerCaptor.value.onMessageAdded(message)
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(timeout = 10_000) { localCacheProvider.messagesDao().updateByUuidOrInsert(expectedMessage) }
+        verify { localCacheProvider.messagesDao().updateByUuidOrInsert(expectedMessage) }
     }
 
     private fun prepareConversationsRepository(conversation: Conversation) {
@@ -400,5 +405,6 @@ class ConversationsRepositoryTest {
         conversationsRepository = ConversationsRepositoryImpl(conversationsClientWrapper, localCacheProvider,
             coroutineTestRule.testDispatcherProvider)
         clientListener.onConversationAdded(conversation)
+        testDispatcher.scheduler.advanceUntilIdle()
     }
 }

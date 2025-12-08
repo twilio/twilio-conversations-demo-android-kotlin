@@ -22,6 +22,8 @@ import com.twilio.conversations.app.common.extensions.firstMedia
 import com.twilio.conversations.app.common.extensions.toConversationsError
 import com.twilio.conversations.app.createTestMessageDataItem
 import com.twilio.conversations.app.data.ConversationsClientWrapper
+import com.twilio.conversations.app.data.localCache.entity.MessageAttachmentDataItem
+import com.twilio.conversations.app.manager.MediaInput
 import com.twilio.conversations.app.repository.ConversationsRepository
 import com.twilio.conversations.app.testUtil.CoroutineTestRule
 import com.twilio.conversations.app.testUtil.toMessageMock
@@ -39,9 +41,9 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.test.TestCoroutineDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -52,6 +54,7 @@ import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
+import java.util.UUID
 
 @RunWith(PowerMockRunner::class)
 @PrepareForTest(
@@ -62,7 +65,7 @@ import org.powermock.modules.junit4.PowerMockRunner
 )
 class MessageListManagerTest {
 
-    private val testDispatcher: TestCoroutineDispatcher = TestCoroutineDispatcher()
+    private val testDispatcher = StandardTestDispatcher()
 
     @Rule
     var coroutineTestRule = CoroutineTestRule(testDispatcher)
@@ -89,7 +92,6 @@ class MessageListManagerTest {
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
-        Dispatchers.setMain(Dispatchers.Unconfined)
 
         mockkStatic("com.twilio.conversations.app.common.extensions.TwilioExtensionsKt")
         mockkStatic("com.twilio.conversations.app.common.DataConverterKt")
@@ -107,13 +109,8 @@ class MessageListManagerTest {
         messageListManager = MessageListManagerImpl(conversationSid, conversationsClientWrapper, conversationsRepository, coroutineTestRule.testDispatcherProvider)
     }
 
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
-
     @Test
-    fun `sendTextMessage() should update local cache with send status SENT on success`() = runBlockingTest {
+    fun `sendTextMessage() should update local cache with send status SENT on success`() = runTest {
         val messageUuid = "uuid"
         val message = createTestMessageDataItem(body = "test message", uuid = messageUuid)
         coEvery { participant.sid } returns message.participantSid
@@ -131,7 +128,7 @@ class MessageListManagerTest {
     }
 
     @Test
-    fun `sendTextMessage() should update local cache with send status SENDING on failure`() = runBlockingTest {
+    fun `sendTextMessage() should update local cache with send status SENDING on failure`() = runTest {
         val message = createTestMessageDataItem(body = "test message", uuid = "uuid")
         coEvery { participant.sid } returns message.participantSid
         coEvery {
@@ -156,7 +153,7 @@ class MessageListManagerTest {
     }
 
     @Test
-    fun `sendTextMessage() should NOT update local cache with on participant failure`() = runBlockingTest {
+    fun `sendTextMessage() should NOT update local cache with on participant failure`() = runTest {
         val message = createTestMessageDataItem(body = "test message", uuid = "uuid")
         coEvery { participant.sid } returns message.participantSid
         coEvery { conversation.getParticipantByIdentity(any()) } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
@@ -176,7 +173,7 @@ class MessageListManagerTest {
     }
 
     @Test
-    fun `retrySendMessage() should update local cache with send status SENT on success`() = runBlockingTest(testDispatcher) {
+    fun `retrySendMessage() should update local cache with send status SENT on success`() = runTest {
         val message = createTestMessageDataItem(body = "test message", uuid = "uuid",
             author = participantIdentity, sendStatus = SendStatus.ERROR.value)
         coEvery { participant.sid } returns message.participantSid
@@ -198,7 +195,7 @@ class MessageListManagerTest {
     }
 
     @Test
-    fun `retrySendMessage() should NOT update local cache if already sending`() = runBlockingTest(testDispatcher) {
+    fun `retrySendMessage() should NOT update local cache if already sending`() = runTest {
         val message = createTestMessageDataItem(body = "test message", uuid = "uuid",
             author = participantIdentity, sendStatus = SendStatus.SENDING.value)
         coEvery { participant.sid } returns message.participantSid
@@ -217,7 +214,7 @@ class MessageListManagerTest {
     }
 
     @Test
-    fun `retrySendMessage() should update local cache with send status SENDING on failure`() = runBlockingTest(testDispatcher) {
+    fun `retrySendMessage() should update local cache with send status SENDING on failure`() = runTest {
         val message = createTestMessageDataItem(body = "test message", uuid = "uuid",
             author = participantIdentity, sendStatus = SendStatus.ERROR.value)
         coEvery { participant.sid } returns message.participantSid
@@ -241,7 +238,7 @@ class MessageListManagerTest {
     }
 
     @Test
-    fun `sendMediaMessage() should update local cache with send status SENT on success`() = runBlockingTest {
+    fun `sendMultipleMediaMessage() should update local cache with send status SENT on success`() = runTest {
         val messageUuid = "uuid"
         val mediaUri = "uri"
         val fileName = "fileName"
@@ -254,21 +251,23 @@ class MessageListManagerTest {
                 this.addMedia(any(), any(), any(), any<MediaUploadListener>())
             }
         } returns message.toMessageMock(participant)
-        messageListManager.sendMediaMessage(mediaUri, mockk(), fileName, mimeType, messageUuid)
+        val mediaInput = MediaInput(UUID.randomUUID().toString(), mediaUri, mockk(), fileName, mimeType)
+        messageListManager.sendMultipleMediaMessage(listOf(mediaInput), messageUuid)
 
         verify(conversationsRepository).insertMessage(argThat {
             type == MessageType.MEDIA.value
                     && body == null
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENDING.value
-                    && mediaFileName == fileName
-                    && mediaUploadUri == mediaUri
-                    && mediaType == mimeType
+                    && attachmentsList.isNotEmpty()
+                    && attachmentsList.first().fileName == fileName
+                    && attachmentsList.first().uri == mediaUri
+                    && attachmentsList.first().type == mimeType
         })
     }
 
     @Test
-    fun `sendMediaMessage() should update local cache with send status SENDING on failure`() = runBlockingTest {
+    fun `sendMultipleMediaMessage() should update local cache with send status SENDING on failure`() = runTest {
         val messageUuid = "uuid"
         val mediaUri = "uri"
         val fileName = "fileName"
@@ -282,7 +281,8 @@ class MessageListManagerTest {
             }
         } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
         try {
-            messageListManager.sendMediaMessage(mediaUri, mockk(), fileName, mimeType, messageUuid)
+            val mediaInput = MediaInput(UUID.randomUUID().toString(), mediaUri, mockk(), fileName, mimeType)
+            messageListManager.sendMultipleMediaMessage(listOf(mediaInput), messageUuid)
         } catch (e: TwilioException) {
             assert(ConversationsError.MESSAGE_SEND_FAILED == e.toConversationsError())
         }
@@ -292,9 +292,10 @@ class MessageListManagerTest {
                     && body == null
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENDING.value
-                    && mediaFileName == fileName
-                    && mediaUploadUri == mediaUri
-                    && mediaType == mimeType
+                    && attachmentsList.isNotEmpty()
+                    && attachmentsList.first().fileName == fileName
+                    && attachmentsList.first().uri == mediaUri
+                    && attachmentsList.first().type == mimeType
         })
 
         verify(conversationsRepository, never()).updateMessageByUuid(argThat {
@@ -302,14 +303,15 @@ class MessageListManagerTest {
                     && body == null
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENT.value
-                    && mediaFileName == fileName
-                    && mediaUploadUri == mediaUri
-                    && mediaType == mimeType
+                    && attachmentsList.isNotEmpty()
+                    && attachmentsList.first().fileName == fileName
+                    && attachmentsList.first().uri == mediaUri
+                    && attachmentsList.first().type == mimeType
         })
     }
 
     @Test
-    fun `sendMediaMessage() should NOT update local cache with on participant failure`() = runBlockingTest {
+    fun `sendMultipleMediaMessage() should NOT update local cache with on participant failure`() = runTest {
         val messageUuid = "uuid"
         val mediaUri = "uri"
         val fileName = "fileName"
@@ -318,7 +320,8 @@ class MessageListManagerTest {
         every { participant.sid } returns message.participantSid
         coEvery { conversation.getParticipantByIdentity(any()) } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
         try {
-            messageListManager.sendMediaMessage(mediaUri, mockk(), fileName, mimeType, messageUuid)
+            val mediaInput = MediaInput(UUID.randomUUID().toString(), mediaUri, mockk(), fileName, mimeType)
+            messageListManager.sendMultipleMediaMessage(listOf(mediaInput), messageUuid)
         } catch (e: TwilioException) {
             assert(ConversationsError.MESSAGE_SEND_FAILED == e.toConversationsError())
         }
@@ -328,9 +331,10 @@ class MessageListManagerTest {
                     && body == null
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENDING.value
-                    && mediaFileName == fileName
-                    && mediaUploadUri == mediaUri
-                    && mediaType == mimeType
+                    && attachmentsList.isNotEmpty()
+                    && attachmentsList.first().fileName == fileName
+                    && attachmentsList.first().uri == mediaUri
+                    && attachmentsList.first().type == mimeType
         })
 
         verify(conversationsRepository, never()).updateMessageByUuid(argThat {
@@ -338,21 +342,30 @@ class MessageListManagerTest {
                     && body == null
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENT.value
-                    && mediaFileName == fileName
-                    && mediaUploadUri == mediaUri
-                    && mediaType == mimeType
+                    && attachmentsList.isNotEmpty()
+                    && attachmentsList.first().fileName == fileName
+                    && attachmentsList.first().uri == mediaUri
+                    && attachmentsList.first().type == mimeType
         })
     }
 
     @Test
-    fun `retrySendMediaMessage() should update local cache with send status SENT on success`() = runBlockingTest(testDispatcher) {
+    fun `retrySendMediaMessage() should update local cache with send status SENT on success`() = runTest {
         val messageUuid = "uuid"
         val mediaUri = "uri"
         val fileName = "fileName"
         val mimeType = "mimeType"
+        val attachmentsList = listOf(
+            MessageAttachmentDataItem(
+                uuid = UUID.randomUUID().toString(),
+                sid = "media-sid",
+                fileName = fileName,
+                type = mimeType,
+                size = 1024
+            )
+        )
         val message = createTestMessageDataItem(uuid = messageUuid, author = participantIdentity,
-            sendStatus = SendStatus.ERROR.value, mediaUploadUri = mediaUri, mediaFileName = fileName,
-            mediaType = mimeType, type = MessageType.MEDIA.value, mediaSid = "sid")
+            sendStatus = SendStatus.ERROR.value, type = MessageType.MEDIA.value, attachmentsList = attachmentsList)
         every { participant.sid } returns message.participantSid
         coEvery {
             conversation.sendMessage {
@@ -361,35 +374,46 @@ class MessageListManagerTest {
             }
         } returns message.toMessageMock(participant)
         whenCall(conversationsRepository.getMessageByUuid(message.uuid)).thenReturn(message)
-        messageListManager.retrySendMediaMessage(mockk(), message.uuid)
+        val mediaInput = MediaInput(UUID.randomUUID().toString(), mediaUri, mockk(), fileName, mimeType)
+        messageListManager.retrySendMediaMessage(listOf(mediaInput), message.uuid)
 
         inOrder(conversationsRepository).verify(conversationsRepository).updateMessageByUuid(argThat {
             type == MessageType.MEDIA.value
                     && body == ""
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENDING.value
-                    && mediaFileName == fileName
-                    && mediaType == mimeType
+                    && attachmentsList.isNotEmpty()
+                    && attachmentsList.first().fileName == fileName
+                    && attachmentsList.first().type == mimeType
         })
         inOrder(conversationsRepository).verify(conversationsRepository).updateMessageByUuid(argThat {
             type == MessageType.MEDIA.value
                     && body == ""
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENT.value
-                    && mediaFileName == fileName
-                    && mediaType == mimeType
+                    && attachmentsList.isNotEmpty()
+                    && attachmentsList.first().fileName == fileName
+                    && attachmentsList.first().type == mimeType
         })
     }
 
     @Test
-    fun `retrySendMediaMessage() should NOT update local cache if already sending`() = runBlockingTest(testDispatcher) {
+    fun `retrySendMediaMessage() should NOT update local cache if already sending`() = runTest {
         val messageUuid = "uuid"
         val mediaUri = "uri"
         val fileName = "fileName"
         val mimeType = "mimeType"
+        val attachmentsList = listOf(
+            MessageAttachmentDataItem(
+                uuid = UUID.randomUUID().toString(),
+                sid = "media-sid",
+                fileName = fileName,
+                type = mimeType,
+                size = 1024
+            )
+        )
         val message = createTestMessageDataItem(uuid = messageUuid, author = participantIdentity,
-            sendStatus = SendStatus.SENDING.value, mediaUploadUri = mediaUri, mediaFileName = fileName,
-            mediaType = mimeType, type = MessageType.MEDIA.value, mediaSid = "sid")
+            sendStatus = SendStatus.SENDING.value, type = MessageType.MEDIA.value, attachmentsList = attachmentsList)
         coEvery { participant.sid } returns message.participantSid
         coEvery {
             conversation.sendMessage {
@@ -398,28 +422,38 @@ class MessageListManagerTest {
             }
         } returns message.toMessageMock(participant)
         whenCall(conversationsRepository.getMessageByUuid(message.uuid)).thenReturn(message)
-        messageListManager.retrySendMediaMessage(mockk(), message.uuid)
+        val mediaInput = MediaInput(UUID.randomUUID().toString(), mediaUri, mockk(), fileName, mimeType)
+        messageListManager.retrySendMediaMessage(listOf(mediaInput), message.uuid)
 
         verify(conversationsRepository, times(0)).updateMessageByUuid(argThat {
             type == MessageType.MEDIA.value
                     && body == ""
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENT.value
-                    && mediaFileName == fileName
-                    && mediaType == mimeType
+                    && attachmentsList.isNotEmpty()
+                    && attachmentsList.first().fileName == fileName
+                    && attachmentsList.first().type == mimeType
         })
     }
 
     @Test
-    fun `retrySendMediaMessage() should update local cache with send status SENDING on failure`() = runBlockingTest(testDispatcher) {
+    fun `retrySendMediaMessage() should update local cache with send status SENDING on failure`() = runTest {
         val messageUuid = "uuid"
         val mediaUri = "uri"
         val fileName = "fileName"
         val mimeType = "mimeType"
+        val attachmentsList = listOf(
+            MessageAttachmentDataItem(
+                uuid = UUID.randomUUID().toString(),
+                sid = "media-sid",
+                fileName = fileName,
+                type = mimeType,
+                size = 1024
+            )
+        )
         val message = createTestMessageDataItem(uuid = messageUuid, author = participantIdentity,
-            sendStatus = SendStatus.ERROR.value, mediaUploadUri = mediaUri, mediaFileName = fileName,
-            mediaType = mimeType, type = MessageType.MEDIA.value, mediaSid = "sid")
-        coEvery { participant.sid } returns message.participantSid
+            sendStatus = SendStatus.ERROR.value, type = MessageType.MEDIA.value, attachmentsList = attachmentsList)
+        every { participant.sid } returns message.participantSid
         coEvery {
             conversation.sendMessage {
                 this.attributes = any()
@@ -429,7 +463,8 @@ class MessageListManagerTest {
         coEvery { conversationsClient.getConversation(any(), any()) } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
         whenCall(conversationsRepository.getMessageByUuid(message.uuid)).thenReturn(message)
         try {
-            messageListManager.retrySendMediaMessage(mockk(), message.uuid)
+            val mediaInput = MediaInput(UUID.randomUUID().toString(), mediaUri, mockk(), fileName, mimeType)
+            messageListManager.retrySendMediaMessage(listOf(mediaInput), message.uuid)
         } catch (e: TwilioException) {
             assert(ConversationsError.MESSAGE_SEND_FAILED == e.toConversationsError())
         }
@@ -439,35 +474,39 @@ class MessageListManagerTest {
                     && body == ""
                     && uuid == messageUuid
                     && sendStatus == SendStatus.SENDING.value
-                    && mediaFileName == fileName
-                    && mediaType == mimeType
+                    && attachmentsList.isNotEmpty()
+                    && attachmentsList.first().fileName == fileName
+                    && attachmentsList.first().type == mimeType
         })
     }
 
     @Test
-    fun `setMessageMediaDownloadId should update repository`() = runBlockingTest {
+    fun `setMessageMediaDownloadId should update repository`() = runTest {
         val messageIndex = 1L
         val downloadId = 2L
+        val attachmentSid = "attachment_sid"
         val messageSid = "sid"
         val message = mockk<Message>()
         every { message.sid } returns messageSid
         coEvery { conversation.getMessageByIndex(messageIndex) } returns message
 
-        messageListManager.setMessageMediaDownloadId(messageIndex, downloadId)
+        messageListManager.setMessageMediaDownloadId(messageIndex, attachmentSid, downloadId)
 
-        verify { conversationsRepository.updateMessageMediaDownloadStatus(messageSid = message.sid, downloadId = downloadId)}
+        verify { conversationsRepository.updateMessageMediaDownloadStatus(messageSid = message.sid, attachmentSid = attachmentSid, downloadId = downloadId)}
     }
 
     @Test
-    fun `getMediaContentTemporaryUrl returns Media getTemporaryContentUrl`() = runBlockingTest {
+    fun `getMediaContentTemporaryUrl returns Media getTemporaryContentUrl`() = runTest {
         val messageIndex = 1L
+        val attachmentSid = "attachment_sid"
         val mediaTempUrl = "url"
         val message = mockk<Message>()
         val media = mockk<Media>()
         coEvery { conversation.getMessageByIndex(messageIndex) } returns message
-        every { message.firstMedia } returns media
+        every { message.attachedMedia } returns listOf(media)
+        every { media.sid } returns attachmentSid
         coEvery { media.getTemporaryContentUrl() } returns mediaTempUrl
 
-        assertEquals(mediaTempUrl, messageListManager.getMediaContentTemporaryUrl(messageIndex))
+        assertEquals(mediaTempUrl, messageListManager.getMediaContentTemporaryUrl(messageIndex, attachmentSid))
     }
 }

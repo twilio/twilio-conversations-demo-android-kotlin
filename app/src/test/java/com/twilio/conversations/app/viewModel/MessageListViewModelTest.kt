@@ -15,6 +15,7 @@ import com.twilio.conversations.app.data.models.MessageListViewItem
 import com.twilio.conversations.app.data.models.RepositoryRequestStatus
 import com.twilio.conversations.app.data.models.RepositoryResult
 import com.twilio.conversations.app.getMockedMessages
+import com.twilio.conversations.app.manager.MediaInput
 import com.twilio.conversations.app.manager.MessageListManager
 import com.twilio.conversations.app.repository.ConversationsRepository
 import com.twilio.conversations.app.testUtil.CoroutineTestRule
@@ -173,9 +174,10 @@ class MessageListViewModelTest {
 
     @Test
     fun `sendMediaMessage should call onMessageSent on success`() = runBlocking {
-        coEvery { messageListManager.sendMediaMessage(any(), any(), any(), any(), any()) } returns Unit
+        coEvery { messageListManager.sendMultipleMediaMessage(any(), any()) } returns Unit
         messageListViewModel = MessageListViewModel(context, conversationSid, conversationsRepository, messageListManager)
-        messageListViewModel.sendMediaMessage("", mock(InputStream::class.java), null, null)
+        val mediaInput = MediaInput(UUID.randomUUID().toString(), "", mock(InputStream::class.java), null, null)
+        messageListViewModel.sendMultipleMediaMessage(listOf(mediaInput))
 
         assertTrue(messageListViewModel.onMessageSent.waitCalled())
         assertTrue(messageListViewModel.onMessageError.waitNotCalled())
@@ -183,9 +185,10 @@ class MessageListViewModelTest {
 
     @Test
     fun `sendMediaMessage should call onMessageError on failure`() = runBlocking {
-        coEvery { messageListManager.sendMediaMessage(any(), any(), any(), any(), any()) } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
+        coEvery { messageListManager.sendMultipleMediaMessage(any(), any()) } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
         messageListViewModel = MessageListViewModel(context, conversationSid, conversationsRepository, messageListManager)
-        messageListViewModel.sendMediaMessage("", mock(InputStream::class.java), null, null)
+        val mediaInput = MediaInput(UUID.randomUUID().toString(), "", mock(InputStream::class.java), null, null)
+        messageListViewModel.sendMultipleMediaMessage(listOf(mediaInput))
 
         assertTrue(messageListViewModel.onMessageSent.waitNotCalled())
         assertTrue(messageListViewModel.onMessageError.waitValue(ConversationsError.MESSAGE_SEND_FAILED))
@@ -195,7 +198,8 @@ class MessageListViewModelTest {
     fun `resendMediaMessage should call onMessageSent on success`() = runBlocking {
         coEvery { messageListManager.retrySendMediaMessage(any(), any()) } returns Unit
         messageListViewModel = MessageListViewModel(context, conversationSid, conversationsRepository, messageListManager)
-        messageListViewModel.resendMediaMessage( mock(InputStream::class.java), "")
+        val mediaInput = MediaInput(UUID.randomUUID().toString(), "", mock(InputStream::class.java), null, null)
+        messageListViewModel.resendMediaMessage(listOf(mediaInput), "")
 
         assertTrue(messageListViewModel.onMessageSent.waitCalled())
         assertTrue(messageListViewModel.onMessageError.waitNotCalled())
@@ -205,7 +209,8 @@ class MessageListViewModelTest {
     fun `resendMediaMessage should call onMessageError on failure`() = runBlocking {
         coEvery { messageListManager.retrySendMediaMessage(any(), any()) } throws createTwilioException(ConversationsError.MESSAGE_SEND_FAILED)
         messageListViewModel = MessageListViewModel(context, conversationSid, conversationsRepository, messageListManager)
-        messageListViewModel.resendMediaMessage( mock(InputStream::class.java), "")
+        val mediaInput = MediaInput(UUID.randomUUID().toString(), "", mock(InputStream::class.java), null, null)
+        messageListViewModel.resendMediaMessage(listOf(mediaInput), "")
 
         assertTrue(messageListViewModel.onMessageSent.waitNotCalled())
         assertTrue(messageListViewModel.onMessageError.waitValue(ConversationsError.MESSAGE_SEND_FAILED))
@@ -217,10 +222,10 @@ class MessageListViewModelTest {
         val downloadState = DownloadState.NOT_STARTED
         val downloadedBytes = 2L
         val downloadLocation = "asd"
-        coEvery { messageListManager.updateMessageMediaDownloadState(any(), any(), any(), any()) } returns Unit
+        coEvery { messageListManager.updateMessageMediaDownloadState(any(), any(), any(), any(), any()) } returns Unit
         messageListViewModel = MessageListViewModel(context, conversationSid, conversationsRepository, messageListManager)
 
-        messageListViewModel.updateMessageMediaDownloadStatus(messageIndex, downloadState, downloadedBytes, downloadLocation)
-        coVerify { messageListManager.updateMessageMediaDownloadState(messageIndex, downloadState, downloadedBytes, downloadLocation) }
+        messageListViewModel.updateMessageMediaDownloadStatus(messageIndex, "attachmentSid", downloadState, downloadedBytes, downloadLocation)
+        coVerify { messageListManager.updateMessageMediaDownloadState(messageIndex, "attachmentSid", downloadState, downloadedBytes, downloadLocation) }
     }
 }

@@ -66,7 +66,7 @@
             app:constraint_referenced_ids="
                 message_body,
                 message_date,
-                attachment_background" />
+                attachments_container" />
 
         <TextView
             android:id="@+id/message_body"
@@ -93,92 +93,20 @@
             tools:text="@tools:sample/lorem/random"
             tools:visibility="visible" />
 
-        <View
-            android:id="@+id/attachment_background"
+        <LinearLayout
+            android:id="@+id/attachments_container"
             android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="12dp"
             android:layout_marginEnd="8dp"
-            android:background="@drawable/bg_message_attachment"
-            app:layout_constraintBottom_toBottomOf="@+id/attachment_footer"
+            android:orientation="vertical"
+            android:visibility="@{message.type == MessageType.MEDIA ? View.VISIBLE : View.GONE}"
             app:layout_constraintEnd_toEndOf="@+id/message_background"
             app:layout_constraintHorizontal_bias="1"
             app:layout_constraintStart_toEndOf="@+id/message_avatar"
             app:layout_constraintTop_toBottomOf="@+id/message_body"
             app:layout_goneMarginStart="8dp" />
-
-        <ImageView
-            android:id="@+id/attachment_icon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:src="@{message.mediaDownloadState == DownloadState.COMPLETED || message.mediaUploadUri != null ? @drawable/ic_attachment_downloaded : @drawable/ic_attachment_to_download}"
-            app:layout_constraintBottom_toBottomOf="@+id/attachment_info"
-            app:layout_constraintStart_toStartOf="@+id/attachment_background"
-            app:layout_constraintTop_toTopOf="@+id/attachment_file_name"
-            tools:src="@drawable/ic_attachment_to_download" />
-
-        <TextView
-            android:id="@+id/attachment_file_name"
-            style="@style/TextViewTitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="16dp"
-            android:ellipsize="middle"
-            android:text="@{message.mediaFileName != null ? message.mediaFileName : @string/attachment_file_name_unknown}"
-            app:layout_constraintEnd_toEndOf="@id/attachment_background"
-            app:layout_constraintStart_toEndOf="@+id/attachment_icon"
-            app:layout_constraintTop_toTopOf="@+id/attachment_background"
-            tools:text="Extremely important attachment.pptx" />
-
-        <ProgressBar
-            android:id="@+id/attachment_progress"
-            android:layout_width="14dp"
-            android:layout_height="14dp"
-            android:layout_marginEnd="10dp"
-            android:indeterminateTint="@color/text_subtitle"
-            android:visibility="@{message.mediaDownloadState == DownloadState.DOWNLOADING ? View.VISIBLE : View.GONE}"
-            app:layout_constraintBottom_toBottomOf="@+id/attachment_info"
-            app:layout_constraintEnd_toStartOf="@+id/attachment_failed"
-            app:layout_constraintStart_toStartOf="@+id/attachment_file_name"
-            app:layout_constraintTop_toTopOf="@+id/attachment_info"
-            tools:visibility="visible" />
-
-        <ImageView
-            android:id="@+id/attachment_failed"
-            android:layout_width="14dp"
-            android:layout_height="14dp"
-            android:layout_marginEnd="10dp"
-            android:src="@drawable/ic_failed_message"
-            android:visibility="@{message.mediaDownloadState == DownloadState.ERROR ? View.VISIBLE : View.GONE}"
-            app:layout_constraintBottom_toBottomOf="@+id/attachment_info"
-            app:layout_constraintEnd_toStartOf="@+id/attachment_info"
-            app:layout_constraintStart_toEndOf="@+id/attachment_progress"
-            app:layout_constraintTop_toTopOf="@+id/attachment_info"
-            tools:visibility="gone" />
-
-        <TextView
-            android:id="@+id/attachment_info"
-            style="@style/TextViewSubtitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:singleLine="true"
-            app:layout_constraintEnd_toEndOf="@id/attachment_background"
-            app:layout_constraintStart_toEndOf="@+id/attachment_failed"
-            app:layout_constraintTop_toBottomOf="@+id/attachment_file_name"
-            tools:text="542kb" />
-
-        <Space
-            android:id="@+id/attachment_footer"
-            android:layout_width="0dp"
-            android:layout_height="10dp"
-            app:layout_constraintEnd_toEndOf="@id/attachment_file_name"
-            app:layout_constraintStart_toStartOf="@+id/attachment_file_name"
-            app:layout_constraintTop_toBottomOf="@+id/attachment_info" />
 
         <TextView
             android:id="@+id/message_date"
@@ -195,7 +123,8 @@
             app:layout_constraintEnd_toStartOf="@+id/message_send_status"
             app:layout_constraintHorizontal_chainStyle="spread_inside"
             app:layout_constraintStart_toStartOf="@+id/message_background"
-            app:layout_constraintTop_toBottomOf="@+id/attachment_background"
+            app:layout_constraintTop_toBottomOf="@+id/attachments_container"
+            app:layout_goneMarginTop="8dp"
             tools:text="15:58" />
 
         <ImageView
@@ -251,19 +180,6 @@
             app:layout_constraintEnd_toEndOf="@id/message_background"
             app:layout_constraintStart_toStartOf="@+id/message_background"
             app:layout_constraintTop_toBottomOf="@+id/message_reaction_holder" />
-
-        <androidx.constraintlayout.widget.Group
-            android:id="@+id/attachment_group"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="@{message.type == MessageType.MEDIA ? View.VISIBLE : View.GONE}"
-            app:constraint_referenced_ids="
-                attachment_info,
-                attachment_icon,
-                attachment_file_name,
-                attachment_background,
-                attachment_footer"
-            tools:visibility="gone" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -23,6 +23,7 @@ import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -33,8 +34,9 @@ class ParticipantListViewModelTest {
     private val conversationSid = "conversationSid"
     private val participant = createTestParticipantListViewItem(sid = "sid")
 
-    @get:Rule
-    var coroutineTestRule = CoroutineTestRule()
+    @Rule
+    @JvmField
+    var coroutineTestRule = CoroutineTestRule(UnconfinedTestDispatcher())
 
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()

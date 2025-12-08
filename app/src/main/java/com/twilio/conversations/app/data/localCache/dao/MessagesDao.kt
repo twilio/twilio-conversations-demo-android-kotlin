@@ -7,6 +7,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import com.twilio.conversations.app.common.enums.DownloadState
 import com.twilio.conversations.app.data.localCache.entity.MessageDataItem
 
 @Dao
@@ -56,22 +57,42 @@ interface MessagesDao {
     @Delete
     fun delete(message: MessageDataItem)
 
-    @Query("UPDATE message_table SET mediaDownloadState = :downloadState WHERE sid = :messageSid")
-    fun updateMediaDownloadState(messageSid: String, downloadState: Int)
+    @Query("SELECT * FROM message_table WHERE sid = :messageSid")
+    fun getMessageForAttachmentsUpdate(messageSid: String): MessageDataItem?
+    
+    @Query("UPDATE message_table SET attachmentsList = :updatedMediaJson WHERE sid = :messageSid")
+    fun updateMessageAttachments(messageSid: String, updatedMediaJson: String)
 
-    @Query("UPDATE message_table SET mediaDownloadedBytes = :downloadedBytes WHERE sid = :messageSid")
-    fun updateMediaDownloadedBytes(messageSid: String, downloadedBytes: Long)
+    @Query("UPDATE message_table SET attachmentsList = :updatedMediaJson WHERE uuid = :messageUuid")
+    fun updateMessageAttachmentsByUuid(messageUuid: String, updatedMediaJson: String)
 
-    @Query("UPDATE message_table SET mediaUri = :location WHERE sid = :messageSid")
-    fun updateMediaDownloadLocation(messageSid: String, location: String)
+    @Transaction
+    fun updateAttachmentDownloadState(messageSid: String, attachmentSid: String, downloadState: DownloadState) {
+        val helper = MediaUpdateHelper()
+        helper.updateAttachmentDownloadState(this, messageSid, attachmentSid, downloadState)
+    }
 
-    @Query("UPDATE message_table SET mediaDownloadId = :downloadId WHERE sid = :messageSid")
-    fun updateMediaDownloadId(messageSid: String, downloadId: Long)
+    @Transaction
+    fun updateAttachmentDownloadProgress(messageSid: String, attachmentSid: String, downloadedBytes: Long) {
+        val helper = MediaUpdateHelper()
+        helper.updateAttachmentDownloadProgress(this, messageSid, attachmentSid, downloadedBytes)
+    }
 
-    @Query("UPDATE message_table SET mediaUploading = :downloading WHERE uuid = :uuid")
-    fun updateMediaUploadStatus(uuid: String, downloading: Boolean)
+    @Transaction
+    fun updateAttachmentUri(messageSid: String, attachmentSid: String, uri: String) {
+        val helper = MediaUpdateHelper()
+        helper.updateAttachmentDownloadLocation(this, messageSid, attachmentSid, uri)
+    }
+    
+    @Transaction
+    fun updateAttachmentDownloadId(messageSid: String, attachmentSid: String, downloadId: Long) {
+        val helper = MediaUpdateHelper()
+        helper.updateAttachmentDownloadId(this, messageSid, attachmentSid, downloadId)
+    }
 
-    @Query("UPDATE message_table SET mediaUploadedBytes = :downloadedBytes WHERE uuid = :uuid")
-    fun updateMediaUploadedBytes(uuid: String, downloadedBytes: Long)
-
+    @Transaction
+    fun updateMediaUploadStatus(messageUuid: String, attachmentUuid: String, uploadedBytes: Long, uploading: Boolean) {
+        val helper = MediaUpdateHelper()
+        helper.updateAttachmentUploadProgressByUuid(this, messageUuid, attachmentUuid, uploadedBytes, uploading)
+    }
 }
